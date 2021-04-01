@@ -1,5 +1,5 @@
-#ifndef _ALLOC_H
-#define _ALLOC_H
+#ifndef _ALLOC_H_
+#define _ALLOC_H_
 
 #include <cstdlib> // size_t
 #include <functional> //std::function

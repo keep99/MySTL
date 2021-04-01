@@ -44,7 +44,7 @@ namespace MySTL {
 
     //该实现参考 SGI STL 源码
     void* alloc::reallocate(void* ptr, size_t old_sz, size_t new_sz) {
-        auto maxBytes = static_cast<size_t>(_MAX_BYTES);
+        size_t maxBytes = static_cast<size_t>(_MAX_BYTES);
         // 新旧内存空间的大小都大于 128 bytes，则第一级内存空间配置器
         if(old_sz > maxBytes && new_sz > maxBytes) {
             return mallocAlloc::reallocate(ptr, new_sz);
