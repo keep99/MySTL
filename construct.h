@@ -1,9 +1,16 @@
+/*
+ * @Description: 
+ * @Author: Chen.Yu
+ * @Date: 2021-04-02 21:56:56
+ * @LastEditTime: 2021-04-02 23:56:10
+ * @LastEditors: Chen.Yu
+ */
 #ifndef _CONSTRUCT_H
 #define _CONSTRUCT_H
 
 #include <new> //placement new
 
-#include "typetraits.h"
+#include "type_traits.h"
 
 namespace MySTL {
     template <class T1, class T2>
@@ -29,13 +36,13 @@ namespace MySTL {
 
     //如果元素的数值型别有 无用的 析构函数，什么也不做，
     template <class ForwardIterator>
-    inline void _destroy_aux(ForwardIterator first, ForwardIterator last, _true_type) {
+    inline void _destroy_aux(ForwardIterator first, ForwardIterator last, true_type) {
 
     }
 
     //如果元素的数值型别有 有用的 析构函数
     template<class ForwardIterator>
-    inline void _destroy_aux(ForwardIterator first, ForwardIterator last, _false_type) {
+    inline void _destroy_aux(ForwardIterator first, ForwardIterator last, false_type) {
         for(; first != last; first++) {
             destroy(&*first);
         }
