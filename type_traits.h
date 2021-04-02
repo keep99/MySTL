@@ -315,466 +315,173 @@ namespace MySTL {
 	using remove_pointer_t = typename remove_pointer<T>::type; // C++ 14
 
 
-
-	/*
-
-	** 萃取传入的T类型的类型特性
-
-	*/
-
+	//type_traits
 	template<class T>
+	struct __type_traits {
+		using this_dummy_member_must_be_first = true_type;
 
-	struct _type_traits
-
-	{
-
-		typedef _false_type		has_trivial_default_constructor;
-
-		typedef _false_type		has_trivial_copy_constructor;
-
-		typedef _false_type		has_trivial_assignment_operator;
-
-		typedef _false_type		has_trivial_destructor;
-
-		typedef _false_type		is_POD_type;
-
+		using has_trivial_default_constructor = false_type;
+		using has_trivial_copy_constructor 	  = false_type;
+		using has_trivial_assignment_operator = false_type;
+		using has_trivial_destructor 		  = false_type;
+		using is_POD_type					  = false_type;
 	};
 
+	template <>
+    struct __type_traits<bool> {
+        using has_trivial_default_constructor = true_type;
+        using has_trivial_copy_constructor    = true_type;
+        using has_trivial_assignment_operator = true_type;
+        using has_trivial_destructor          = true_type;
+        using is_POD_type                     = true_type;
+    };
+
+	template <>
+    struct __type_traits<char> {
+        using has_trivial_default_constructor = true_type;
+        using has_trivial_copy_constructor    = true_type;
+        using has_trivial_assignment_operator = true_type;
+        using has_trivial_destructor          = true_type;
+        using is_POD_type                     = true_type;
+    };
+
+    template <>
+    struct __type_traits<signed char> {
+        using has_trivial_default_constructor = true_type;
+        using has_trivial_copy_constructor    = true_type;
+        using has_trivial_assignment_operator = true_type;
+        using has_trivial_destructor          = true_type;
+        using is_POD_type                     = true_type;
+    };
+
+    template <>
+    struct __type_traits<unsigned char> {
+        using has_trivial_default_constructor = true_type;
+        using has_trivial_copy_constructor    = true_type;
+        using has_trivial_assignment_operator = true_type;
+        using has_trivial_destructor          = true_type;
+        using is_POD_type                     = true_type;
+    };
+
+    template <>
+    struct __type_traits<short> {
+        using has_trivial_default_constructor = true_type;
+        using has_trivial_copy_constructor    = true_type;
+        using has_trivial_assignment_operator = true_type;
+        using has_trivial_destructor          = true_type;
+        using is_POD_type                     = true_type;
+    };
+
+    template <>
+    struct __type_traits<unsigned short> {
+        using has_trivial_default_constructor = true_type;
+        using has_trivial_copy_constructor    = true_type;
+        using has_trivial_assignment_operator = true_type;
+        using has_trivial_destructor          = true_type;
+        using is_POD_type                     = true_type;
+    };
+
+    template <>
+    struct __type_traits<int> {
+        using has_trivial_default_constructor = true_type;
+        using has_trivial_copy_constructor    = true_type;
+        using has_trivial_assignment_operator = true_type;
+        using has_trivial_destructor          = true_type;
+        using is_POD_type                     = true_type;
+    };
+
+    template <>
+    struct __type_traits<unsigned int> {
+        using has_trivial_default_constructor = true_type;
+        using has_trivial_copy_constructor    = true_type;
+        using has_trivial_assignment_operator = true_type;
+        using has_trivial_destructor          = true_type;
+        using is_POD_type                     = true_type;
+    };
+
+    template <>
+    struct __type_traits<long> {
+        using has_trivial_default_constructor = true_type;
+        using has_trivial_copy_constructor    = true_type;
+        using has_trivial_assignment_operator = true_type;
+        using has_trivial_destructor          = true_type;
+        using is_POD_type                     = true_type;
+    };
+
+    template <>
+    struct __type_traits<unsigned long> {
+        using has_trivial_default_constructor = true_type;
+        using has_trivial_copy_constructor    = true_type;
+        using has_trivial_assignment_operator = true_type;
+        using has_trivial_destructor          = true_type;
+        using is_POD_type                     = true_type;
+    };
+
+    template <>
+    struct __type_traits<long long> {
+        using has_trivial_default_constructor = true_type;
+        using has_trivial_copy_constructor    = true_type;
+        using has_trivial_assignment_operator = true_type;
+        using has_trivial_destructor          = true_type;
+        using is_POD_type                     = true_type;
+    };
+
+    template <>
+    struct __type_traits<unsigned long long> {
+        using has_trivial_default_constructor = true_type;
+        using has_trivial_copy_constructor    = true_type;
+        using has_trivial_assignment_operator = true_type;
+        using has_trivial_destructor          = true_type;
+        using is_POD_type                     = true_type;
+    };
+
+    template <>
+    struct __type_traits<float> {
+        using has_trivial_default_constructor = true_type;
+        using has_trivial_copy_constructor    = true_type;
+        using has_trivial_assignment_operator = true_type;
+        using has_trivial_destructor          = true_type;
+        using is_POD_type                     = true_type;
+    };
+
+    template <>
+    struct __type_traits<double> {
+        using has_trivial_default_constructor = true_type;
+        using has_trivial_copy_constructor    = true_type;
+        using has_trivial_assignment_operator = true_type;
+        using has_trivial_destructor          = true_type;
+        using is_POD_type                     = true_type;
+    };
+
+    template <>
+    struct __type_traits<long double> {
+        using has_trivial_default_constructor = true_type;
+        using has_trivial_copy_constructor    = true_type;
+        using has_trivial_assignment_operator = true_type;
+        using has_trivial_destructor          = true_type;
+        using is_POD_type                     = true_type;
+    };
+
+    // 原生指针偏特化版本的 type traits
+    template <class T>
+    struct __type_traits<T*> {
+        using has_trivial_default_constructor = true_type;
+        using has_trivial_copy_constructor    = true_type;
+        using has_trivial_assignment_operator = true_type;
+        using has_trivial_destructor          = true_type;
+        using is_POD_type                     = true_type;
+    };
+
+
+    template <class T>
+    struct __type_traits<const T*> {
+        using has_trivial_default_constructor = true_type;
+        using has_trivial_copy_constructor    = true_type;
+        using has_trivial_assignment_operator = true_type;
+        using has_trivial_destructor          = true_type;
+        using is_POD_type                     = true_type;
+    };
 
-
-	template<>
-
-	struct _type_traits<bool>
-
-	{
-
-		typedef true_type		has_trivial_default_constructor;
-
-		typedef true_type		has_trivial_copy_constructor;
-
-		typedef true_type		has_trivial_assignment_operator;
-
-		typedef true_type		has_trivial_destructor;
-
-		typedef true_type		is_POD_type;
-
-	};
-
-	template<>
-
-	struct _type_traits<char>
-
-	{
-
-		typedef true_type		has_trivial_default_constructor;
-
-		typedef true_type		has_trivial_copy_constructor;
-
-		typedef true_type		has_trivial_assignment_operator;
-
-		typedef true_type		has_trivial_destructor;
-
-		typedef true_type		is_POD_type;
-
-	};
-
-	template<>
-
-	struct _type_traits<unsigned char>
-
-	{
-
-		typedef true_type		has_trivial_default_constructor;
-
-		typedef true_type		has_trivial_copy_constructor;
-
-		typedef true_type		has_trivial_assignment_operator;
-
-		typedef true_type		has_trivial_destructor;
-
-		typedef true_type		is_POD_type;
-
-	};
-
-	template<>
-
-	struct _type_traits<signed char>
-
-	{
-
-		typedef true_type		has_trivial_default_constructor;
-
-		typedef true_type		has_trivial_copy_constructor;
-
-		typedef true_type		has_trivial_assignment_operator;
-
-		typedef true_type		has_trivial_destructor;
-
-		typedef true_type		is_POD_type;
-
-	};
-
-	template<>
-
-	struct _type_traits<wchar_t>
-
-	{
-
-		typedef true_type		has_trivial_default_constructor;
-
-		typedef true_type		has_trivial_copy_constructor;
-
-		typedef true_type		has_trivial_assignment_operator;
-
-		typedef true_type		has_trivial_destructor;
-
-		typedef true_type		is_POD_type;
-
-	};
-
-	template<>
-
-	struct _type_traits<short>
-
-	{
-
-		typedef true_type		has_trivial_default_constructor;
-
-		typedef true_type		has_trivial_copy_constructor;
-
-		typedef true_type		has_trivial_assignment_operator;
-
-		typedef true_type		has_trivial_destructor;
-
-		typedef true_type		is_POD_type;
-
-	};
-
-	template<>
-
-	struct _type_traits<unsigned short>
-
-	{
-
-		typedef true_type		has_trivial_default_constructor;
-
-		typedef true_type		has_trivial_copy_constructor;
-
-		typedef true_type		has_trivial_assignment_operator;
-
-		typedef true_type		has_trivial_destructor;
-
-		typedef true_type		is_POD_type;
-
-	};
-
-	template<>
-
-	struct _type_traits<int>
-
-	{
-
-		typedef true_type		has_trivial_default_constructor;
-
-		typedef true_type		has_trivial_copy_constructor;
-
-		typedef true_type		has_trivial_assignment_operator;
-
-		typedef true_type		has_trivial_destructor;
-
-		typedef true_type		is_POD_type;
-
-	};
-
-	template<>
-
-	struct _type_traits<unsigned int>
-
-	{
-
-		typedef true_type		has_trivial_default_constructor;
-
-		typedef true_type		has_trivial_copy_constructor;
-
-		typedef true_type		has_trivial_assignment_operator;
-
-		typedef true_type		has_trivial_destructor;
-
-		typedef true_type		is_POD_type;
-
-	};
-
-	template<>
-
-	struct _type_traits<long>
-
-	{
-
-		typedef true_type		has_trivial_default_constructor;
-
-		typedef true_type		has_trivial_copy_constructor;
-
-		typedef true_type		has_trivial_assignment_operator;
-
-		typedef true_type		has_trivial_destructor;
-
-		typedef true_type		is_POD_type;
-
-	};
-
-	template<>
-
-	struct _type_traits<unsigned long>
-
-	{
-
-		typedef true_type		has_trivial_default_constructor;
-
-		typedef true_type		has_trivial_copy_constructor;
-
-		typedef true_type		has_trivial_assignment_operator;
-
-		typedef true_type		has_trivial_destructor;
-
-		typedef true_type		is_POD_type;
-
-	};
-
-	template<>
-
-	struct _type_traits<long long>
-
-	{
-
-		typedef true_type		has_trivial_default_constructor;
-
-		typedef true_type		has_trivial_copy_constructor;
-
-		typedef true_type		has_trivial_assignment_operator;
-
-		typedef true_type		has_trivial_destructor;
-
-		typedef true_type		is_POD_type;
-
-	};
-
-	template<>
-
-	struct _type_traits<unsigned long long>
-
-	{
-
-		typedef true_type		has_trivial_default_constructor;
-
-		typedef true_type		has_trivial_copy_constructor;
-
-		typedef true_type		has_trivial_assignment_operator;
-
-		typedef true_type		has_trivial_destructor;
-
-		typedef true_type		is_POD_type;
-
-	};
-
-	template<>
-
-	struct _type_traits<float>
-
-	{
-
-		typedef true_type		has_trivial_default_constructor;
-
-		typedef true_type		has_trivial_copy_constructor;
-
-		typedef true_type		has_trivial_assignment_operator;
-
-		typedef true_type		has_trivial_destructor;
-
-		typedef true_type		is_POD_type;
-
-	};
-
-	template<>
-
-	struct _type_traits<double>
-
-	{
-
-		typedef true_type		has_trivial_default_constructor;
-
-		typedef true_type		has_trivial_copy_constructor;
-
-		typedef true_type		has_trivial_assignment_operator;
-
-		typedef true_type		has_trivial_destructor;
-
-		typedef true_type		is_POD_type;
-
-	};
-
-	template<>
-
-	struct _type_traits<long double>
-
-	{
-
-		typedef true_type		has_trivial_default_constructor;
-
-		typedef true_type		has_trivial_copy_constructor;
-
-		typedef true_type		has_trivial_assignment_operator;
-
-		typedef true_type		has_trivial_destructor;
-
-		typedef true_type		is_POD_type;
-
-	};
-
-
-    //指针是POD类型
-	template<class T>
-
-	struct _type_traits<T*>
-
-	{
-
-		typedef true_type		has_trivial_default_constructor;
-
-		typedef true_type		has_trivial_copy_constructor;
-
-		typedef true_type		has_trivial_assignment_operator;
-
-		typedef true_type		has_trivial_destructor;
-
-		typedef true_type		is_POD_type;
-
-	};
-
-	template<class T>
-
-	struct _type_traits<const T*>
-
-	{
-
-		typedef true_type		has_trivial_default_constructor;
-
-		typedef true_type		has_trivial_copy_constructor;
-
-		typedef true_type		has_trivial_assignment_operator;
-
-		typedef true_type		has_trivial_destructor;
-
-		typedef true_type		is_POD_type;
-
-	};
-
-	template<>
-
-	struct _type_traits<char*>
-
-	{
-
-		typedef true_type		has_trivial_default_constructor;
-
-		typedef true_type		has_trivial_copy_constructor;
-
-		typedef true_type		has_trivial_assignment_operator;
-
-		typedef true_type		has_trivial_destructor;
-
-		typedef true_type		is_POD_type;
-
-	};
-
-	template<>
-
-	struct _type_traits<unsigned char*>
-
-	{
-
-		typedef true_type		has_trivial_default_constructor;
-
-		typedef true_type		has_trivial_copy_constructor;
-
-		typedef true_type		has_trivial_assignment_operator;
-
-		typedef true_type		has_trivial_destructor;
-
-		typedef true_type		is_POD_type;
-
-	};
-
-	template<>
-
-	struct _type_traits<signed char*>
-
-	{
-
-		typedef true_type		has_trivial_default_constructor;
-
-		typedef true_type		has_trivial_copy_constructor;
-
-		typedef true_type		has_trivial_assignment_operator;
-
-		typedef true_type		has_trivial_destructor;
-
-		typedef true_type		is_POD_type;
-
-	};
-
-	template<>
-
-	struct _type_traits<const char*>
-
-	{
-
-		typedef true_type		has_trivial_default_constructor;
-
-		typedef true_type		has_trivial_copy_constructor;
-
-		typedef true_type		has_trivial_assignment_operator;
-
-		typedef true_type		has_trivial_destructor;
-
-		typedef true_type		is_POD_type;
-
-	};
-
-	template<>
-
-	struct _type_traits<const unsigned char*>
-
-	{
-
-		typedef true_type		has_trivial_default_constructor;
-
-		typedef true_type		has_trivial_copy_constructor;
-
-		typedef true_type		has_trivial_assignment_operator;
-
-		typedef true_type		has_trivial_destructor;
-
-		typedef true_type		is_POD_type;
-
-	};
-
-	template<>
-
-	struct _type_traits<const signed char*>
-
-	{
-
-		typedef true_type		has_trivial_default_constructor;
-
-		typedef true_type		has_trivial_copy_constructor;
-
-		typedef true_type		has_trivial_assignment_operator;
-
-		typedef true_type		has_trivial_destructor;
-
-		typedef true_type		is_POD_type;
-
-	};
 }
 
 #endif
