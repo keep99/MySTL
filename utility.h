@@ -2,7 +2,7 @@
  * @Description: 
  * @Author: Chen.Yu
  * @Date: 2021-04-02 15:29:19
- * @LastEditTime: 2021-04-03 15:07:00
+ * @LastEditTime: 2021-04-03 15:12:25
  * @LastEditors: Chen.Yu
  */
 #ifndef _UTILITY_MOVE_FORWARD_H
@@ -46,7 +46,7 @@ namespace MySTL {
     }
 
     template <class ForwardIterator1, class ForwardIterator2> 
-    ForwardIterator2 swap_range(ForwardItertor1 first1, ForwardIterator1 last1, ForwardIterator2 first2) {
+    ForwardIterator2 swap_range(ForwardIterator1 first1, ForwardIterator1 last1, ForwardIterator2 first2) {
         for(; first1 != last1; first1++, first2++) {
             MySTL::swap(*first1, *first2);
         }
