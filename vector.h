@@ -2,7 +2,7 @@
  * @Description: 
  * @Author: Chen.Yu
  * @Date: 2021-04-03 14:03:48
- * @LastEditTime: 2021-04-03 23:52:07
+ * @LastEditTime: 2021-04-04 16:28:14
  * @LastEditors: Chen.Yu
  */
 #ifndef _VECTOR_H_
@@ -216,7 +216,7 @@ namespace MySTL {
             return cbegin() == cend();
         }
 
-        size_type size() const {
+        size_type  size() const {
             return cend() - cbegin():
         }
 
@@ -236,6 +236,17 @@ namespace MySTL {
         void reserve(size_type newCapacity) {
             if (newCapacity > capacity()) {
                 reallocate(newCapacity);
+            }
+        }
+
+        // resize():重新申请并改变当前vector对象的有效空间大小
+        // reserve():重新申请并改变当前vector对象的总空间（_capacity）大小
+        void resize(size_type newSize, const_reference x) {
+            if(newSize < size()) {
+                erase(begin() + newSize, end());
+            }
+            else {
+                insert(end(), newSize - size(), x);
             }
         }
 
