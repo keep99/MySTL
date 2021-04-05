@@ -2,7 +2,7 @@
  * @Description: 
  * @Author: Chen.Yu
  * @Date: 2021-04-04 14:21:48
- * @LastEditTime: 2021-04-04 21:53:48
+ * @LastEditTime: 2021-04-04 22:42:33
  * @LastEditors: Chen.Yu
  */
 #ifndef _LIST_H_
@@ -581,7 +581,9 @@ namespace MySTL
             unique(MySTL::equal_to<T>());
         }
 
-        //参考 SGI STL 的实现
+        // 参考这篇博文：https://www.kancloud.cn/digest/stl-sources/177268
+        // 参考 SGI STL 的实现
+        // 由于 STL 本身的排序算法 sort 接受的是随机访问迭代器，但是双向链表 list 的迭代器是双向迭代器，因此，不能使用 STL 本身的排序算法 sort ，必须得自己定义
         /**
          * @description: 对链表进行归并排序
          * @param  {*}
@@ -589,31 +591,40 @@ namespace MySTL
          */
         template <class Compare>
         void sort(iterator f1, iterator f2, Compare compare) {
+            // 以下判断，如果是空链表或者仅仅只有一个链表节点，不需要排序，直接返回
             if (node_->next == node_ || node_->next->next == node_) {
                 return;
             }
 
-            list carry;
-            list counter[64];
+            list carry;             // carry 链表起到搬运的作用
+            // counter 链表起到中间存储的作用
+            // 对于 counter[i] 里面最多能存储 2 ^ (i + 1) 个节点
+            list counter[64];       
             size_type fill = 0;
             while (!empty()) {
+                // 第一步：将当前链表的第一个节点放在 carry 链表的表头
                 carry.splice(carry.begin(), *this, begin());
                 size_type i = 0;
                 while(i < fill && !counter[i].empty()) {
+                    // 第二步：将链表 carry 合并到 counter[i]
                     counter[i].merge(carry);
+                    // 第三步：交换链表 carry 和 counter[i] 的内容
                     carry.swap(counter[i++]);
                 }
+                // 第四步：交换链表 carry 和 counter[i] 的内容
                 carry.swap(counter[i]);
+                // 第五步：
                 if(i == fill) {
                     ++fill;
                 }
             }
 
-            // 合并 counter 中所有的链表
+            // 第六步：把低位不满足进位的剩余数据全部有序的合并到上一位
             for (size_type j = 0; j < fill; ++j) {
                 counter[j].merge(counter[j - 1]);
             }
 
+            // 第七步：最后将已经排好序的链表内容交换到当前链表
             swap(counter[fill - 1]);
         }
 
