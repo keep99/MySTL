@@ -2,7 +2,7 @@
  * @Description: 
  * @Author: Chen.Yu
  * @Date: 2021-04-04 14:21:48
- * @LastEditTime: 2021-04-04 22:42:33
+ * @LastEditTime: 2021-04-07 23:05:52
  * @LastEditors: Chen.Yu
  */
 #ifndef _LIST_H_
@@ -63,7 +63,7 @@ namespace MySTL
                 return &(operator*());
             }
 
-            self &operator++()
+            self& operator++()
             {
                 node_ = node_->next;
 
@@ -464,6 +464,7 @@ namespace MySTL
             merge(other, compare);
         }
 
+        /* C++ Primer P 587 在类模板自己的作用域中，我们可以直接使用模板名而不提供实参。比如 这里的形参类型，不是 list<T>, 而是直接写 list */
         void merge(list& other) {
             merge(other, MySTL::less<T>());
         }
@@ -748,6 +749,7 @@ namespace MySTL
         return i1 == end1 && i2 == end2;
     }
 
+    /* 以下为 函数模板 */
     template <class T, class Allocator>
     bool operator!=(const list<T, Allocator>& left, const list<T, Allocator>& right) {
         return !(left == right);
