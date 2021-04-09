@@ -2,7 +2,7 @@
  * @Description: 
  * @Author: Chen.Yu
  * @Date: 2021-04-02 21:56:56
- * @LastEditTime: 2021-04-02 23:56:10
+ * @LastEditTime: 2021-04-09 21:21:16
  * @LastEditors: Chen.Yu
  */
 #ifndef _CONSTRUCT_H
@@ -14,11 +14,12 @@
 
 namespace MySTL {
     template <class T1, class T2>
-    inline void construct(T1* ptr1, T2& ptr2) {
+    inline void construct(T1* ptr1, const T2& ptr2) {
         //placement new
         new(ptr1) T1(value);
     }
 
+    // 可变参数模板
     template <class T, class ... Args>
     inline void construct(T* ptr, Args&&... args) {
         ::new(ptr) T(MySTL::forward<Args>(args)...);
@@ -48,6 +49,7 @@ namespace MySTL {
         }
     }    
 
+    // 针对迭代器的 destroy 版本
     template<class ForwardIterator>
     inline void destroy(ForwardIterator first, ForwardIterator last) {
         using valueType = typename iterator_traits<ForwardIterator>::value_type;

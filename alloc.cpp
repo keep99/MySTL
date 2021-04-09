@@ -143,6 +143,7 @@ namespace MySTL {
                     }
                 }
                 end_free = nullptr; //没有内存可用
+                // 调用第一级空间配置器
                 start_free = static_cast<char*>(mallocAlloc::allocate(bytes_to_get));
             }
 

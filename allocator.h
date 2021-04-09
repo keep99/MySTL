@@ -2,7 +2,7 @@
  * @Description: 
  * @Author: Chen.Yu
  * @Date: 2021-04-02 23:56:23
- * @LastEditTime: 2021-04-03 15:40:16
+ * @LastEditTime: 2021-04-09 18:10:14
  * @LastEditors: Chen.Yu
  */
 #ifndef _ALLOCATOR_H
@@ -15,7 +15,7 @@
 #include <cstddef>
 
 namespace MySTL {
-    template<class T>
+    template<typename T>
     class allocator {
     public:
         using value_type        = T;
@@ -41,7 +41,7 @@ namespace MySTL {
                 return 0;
             }
 
-            //直接默认调用第二级空间配置器了？
+            /* SGI 默认使用第二级空间配置器 */
             return static_cast<pointer>(alloc::allocate(sizeof(T) * n));
         }
 

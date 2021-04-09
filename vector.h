@@ -2,7 +2,7 @@
  * @Description: 
  * @Author: Chen.Yu
  * @Date: 2021-04-03 14:03:48
- * @LastEditTime: 2021-04-04 16:28:14
+ * @LastEditTime: 2021-04-09 16:34:13
  * @LastEditors: Chen.Yu
  */
 #ifndef _VECTOR_H_
@@ -333,7 +333,14 @@ namespace MySTL {
             return insert(position, ilist.begin(), ilist.end());
         }
 
+        // TO DO
         // 在容器就地构造函数
+        // C++ Primer P622 转发数据包
+        // 组合使用可变参数模板和forward机制来编写函数
+        // 保持类型信息是一个两阶段的过程;
+        // 1、首先为了保持实参中的类型信息，必须将 emplace 中的函数参数定义为模板类型参数的右值引用
+        // 2、其次，当 empalce 将这些参数传递给 construct 时，我们必须使用 forward 来保持实参的原始类型
+        // 当然这边的有些不同，实现了 empalce ，没有实现 emplace_back?
         template <class... Args>
         iterator emplace(const_iterator position, Args&&... args) {
             return insert(position, T(MySTL::forward<Args>(args)...));
@@ -358,6 +365,7 @@ namespace MySTL {
             return first;
         }
 
+        // TO DO
         // push_back
 
 

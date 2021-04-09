@@ -2,7 +2,7 @@
  * @Description: 
  * @Author: Chen.Yu
  * @Date: 2021-04-04 14:21:48
- * @LastEditTime: 2021-04-07 23:05:52
+ * @LastEditTime: 2021-04-08 21:09:26
  * @LastEditors: Chen.Yu
  */
 #ifndef _LIST_H_
@@ -660,6 +660,7 @@ namespace MySTL
          */
         template <class Y>
         iterator insert_aux(const_iterator position, Y&& value) {
+            // C++ Primer P614 : 当用于一个指向模板参数类型的右值引用函数参数（T&&）时，forward 会保持实参类型的所有细节
             link_type newNode = create_node(MySTL::forward<Y>(value));
             newNode->previous = position.node_->previous;
             newNode->next     = position.node_;
