@@ -1,8 +1,8 @@
 /*
- * @Description: 
+ * @Description: 迭代器总的头文件
  * @Author: Chen.Yu
  * @Date: 2021-04-03 13:45:03
- * @LastEditTime: 2021-04-03 13:59:43
+ * @LastEditTime: 2021-04-10 22:40:36
  * @LastEditors: Chen.Yu
  */
 
@@ -10,38 +10,39 @@
 #define _ITERATOR_H
 
 #include "iterator_base.h"
-#include "iterator_reverse_iterator.h"
-#include "iterator_insert_iterator.h"
-#include "iterator_move_iterator.h"
+#include "iterator_reverse_iterator.h"  // 反向迭代器适配器
+#include "iterator_insert_iterator.h"   // 插入迭代器适配器
+#include "iterator_move_iterator.h"     // 移动迭代器适配器
 
 namespace MySTL {
+    // 四个辅助函数，帮助我们方便使用 插入迭代器，移动迭代器
     template <class Container>
-    back_insert_iterator<Container> back_inserter(Container& c) {
+    inline back_insert_iterator<Container> back_inserter(Container& c) {
         return back_insert_iterator<Container>(c);
     }
 
     template <class Container>
-    front_insert_iterator<Container> front_inserter(Container& c) {
+    inline front_insert_iterator<Container> front_inserter(Container& c) {
         return front_insert_iterator<Container>(c);
     }
 
     template <class Container>
-    insert_iterator<Container> inserter(Container& c, typename Container::iterator i) {
+    inline insert_iterator<Container> inserter(Container& c, typename Container::iterator i) {
         return insert_iterator<Container>(c, i);
     }
 
-    tempalte <class Iterator>
+    template <class Iterator>
     move_iterator<Iterator> make_move_iterator(const Iterator& i) {
         return move_iterator<Iterator>(i);
     }
 
-    template <class C>
-    auto begin(C& c) -> decltype(c.begin()) {
+    template <class Container>
+    auto begin(Container& c) -> decltype(c.begin()) {
         return c.begin();
     }
 
-    template <class C>
-    auto begin(const C& c) -> decltype(c.begin()) {
+    template <class Container>
+    auto begin(const Container& c) -> decltype(c.begin()) {
         return c.begin();
     }
 
@@ -50,63 +51,58 @@ namespace MySTL {
         return &array;
     }
 
-    // C++ 14
-    template< class C >
-    constexpr auto cbegin(const C& c) noexcept
-    -> decltype(tinySTL::begin(c)) {
-        return tinySTL::begin(c);
+    template< class Container>
+    constexpr auto cbegin(const Container& c) noexcept -> decltype(MySTL::begin(c)) {
+        return MySTL::begin(c);
     }
 
-    template <class C>
-    auto end(C& c) -> decltype(c.end()) {
+    template <class Container>
+    auto end(Container& c) -> decltype(c.end()) {
         return c.end();
     }
 
-    template <class C>
-    auto end(const C& c) -> decltype(c.end()) {
+    template <class Container>
+    auto end(const Container& c) -> decltype(c.end()) {
         return c.end();
     }
 
-    template< class T, std::size_t N >
+    template <class T, std::size_t N>
     T* end(T (&array)[N]) {
         return array + N;
     }
 
-    // C++ 14
-    template< class C >
-    constexpr auto cend(const C& c) noexcept
-    -> decltype(tinySTL::end(c)) {
-        return tinySTL::end(c);
+    template <class Container>
+    constexpr auto cend(const Container& c) noexcept -> decltype(MySTL::end(c)) {
+        return MySTL::end(c);
     }
 
-    template <class C>
-    auto rbegin(C& c) -> decltype(c.rbegin()) {
+    template <class Container>
+    auto rbegin(Container& c) -> decltype(c.rbegin()) {
         return c.rbegin();
     }
 
-    template <class C>
-    auto rbegin(const C& c) -> decltype(c.rbegin()) {
+    template <class Container>
+    auto rbegin(const Container& c) -> decltype(c.rbegin()) {
         return c.rbegin();
     }
 
-    template< class T, std::size_t N >
+    template <class T, std::size_t N>
     reverse_iterator<T*> rbegin(T (&array)[N]) {
         return reverse_iterator<T*>(&array);
     }
 
-    // C++ 14
-    template< class C >
-    auto crbegin(const C& c) -> decltype(rbegin(c)) {
+    template <class Container>
+    auto crbegin(const Container& c) -> decltype(rbegin(c)) {
         return rbegin(c);
     }
 
-    template <class C>
-    auto rend(C& c) -> decltype(c.rend()) {
+    template <class Container>
+    auto rend(Container& c) -> decltype(c.rend()) {
         return c.rend();
     }
 
-    template <class C>
-    auto rend(const C& c) -> decltype(c.rend()) {
+    template <class Container>
+    auto rend(const Container& c) -> decltype(c.rend()) {
         return c.rend();
     }
 
@@ -115,18 +111,10 @@ namespace MySTL {
         return reverse_iterator<T*>(array + N);
     }
 
-    // C++ 14
-    template<class C>
-    auto crend(const C& c) -> decltype(rend(c)) {
+    template<class Container>
+    auto crend(const Container& c) -> decltype(rend(c)) {
         return rend(c);
     }
-
-
-
-    
-
 }
-
-
 
 #endif

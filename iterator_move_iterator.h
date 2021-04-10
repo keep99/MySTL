@@ -1,8 +1,8 @@
 /*
- * @Description: 
+ * @Description: 迭代器适配器。move_iterator。其可以实现以移动而非复制的方式，将某个区域空间中的元素移动至另一个指定的空间。
  * @Author: Chen.Yu
  * @Date: 2021-04-02 21:47:37
- * @LastEditTime: 2021-04-03 15:39:35
+ * @LastEditTime: 2021-04-10 22:12:13
  * @LastEditors: Chen.Yu
  */
 #ifndef _ITERATOR_MOVE_ITERATOR_H
@@ -12,7 +12,6 @@
 #include "utility.h"             
 
 namespace MySTL {
-    // 移动迭代器。其可以实现以移动而非复制的方式，将某个区域空间中的元素移动至另一个指定的空间。
     template <class Iterator>
     class move_iterator {
     public:
@@ -38,7 +37,7 @@ namespace MySTL {
             current_ = other.current_;
         }
 
-        iterator_type base() {
+        iterator_type base() const {
             return current_;
         }
         
@@ -52,6 +51,7 @@ namespace MySTL {
             return base();
         }
 
+        // C++ Primer P605 尾置返回类型
         auto operator[](difference_type n) const -> decltype(MySTL::move(current_[n])) {
             return MySTL::move(current_[n]);
         }
@@ -62,7 +62,6 @@ namespace MySTL {
 
             return *this;
         }
-
 
         //后置++
         move_iterator& operator++(int) {
@@ -95,13 +94,13 @@ namespace MySTL {
             return move_iterator(current_ - n);
         }
 
-        move_iterator operator+=(difference_type n) const {
+        move_iterator operator+=(difference_type n) {
             current_ += n;
 
             return *this;
         }
 
-        move_iterator operator-=(difference_type n) const {
+        move_iterator operator-=(difference_type n) {
             current_ -= n;
             
             return *this;
@@ -126,16 +125,14 @@ namespace MySTL {
 
     template <class Iterator1, class Iterator2>
     bool operator>(const move_iterator<Iterator1>& lhs, const move_iterator<Iterator2>& rhs) {
-        return lhs.base() > rhs.base();
+        return rhs < lhs;
     }
 
-    // <= 通过 > 来实现
     template <class Iterator1, class Iterator2>
     bool operator<=(const move_iterator<Iterator1>& lhs, const move_iterator<Iterator2>& rhs) {
-        return !(lhs > rhs);
+        return !(rhs < lhs);
     }
 
-    // >= 通过 < 来实现
     template <class Iterator1, class Iterator2>
     bool operator>=(const move_iterator<Iterator1>& lhs, const move_iterator<Iterator2>& rhs) {
         return !(lhs < rhs);

@@ -1,8 +1,8 @@
 /*
- * @Description: 
+ * @Description: type_traits 负责萃取型别特性
  * @Author: Chen.Yu
  * @Date: 2021-04-02 20:52:32
- * @LastEditTime: 2021-04-02 20:52:47
+ * @LastEditTime: 2021-04-10 23:17:35
  * @LastEditors: Chen.Yu
  */
 #ifndef _TYPE_TRAITS_H_
@@ -31,7 +31,7 @@ namespace MySTL {
 	using true_type   =   integral_constant<bool, true>;
 	using false_type  =   integral_constant<bool, false>;
 
-	// is_same	
+	// is_same
 	template <class T, class U>
 	struct is_same : false_type {};
 
@@ -39,7 +39,7 @@ namespace MySTL {
 	struct is_same<T, T> : true_type {};
 
 	template <class T, class U> 
-	constexpr bool is_same_v = is_same<T, U>::value;
+	bool is_same_v = is_same<T, U>::value;
 
 	// 移除最顶层的 const
 	template <class T>
@@ -49,12 +49,12 @@ namespace MySTL {
 
 	template <class T>
 	struct remove_cast<const T>
-	{		
+	{
 		using type = T;
 	};
 
-	template <class T, class U> 
-	using remove_const_t = typename remove_const<T>::type; // C++ 14
+	template <class T>
+	using remove_const_t = typename remove_const<T>::type;
 
 	// 移除最顶层 volatile
     template <class T>
@@ -67,7 +67,7 @@ namespace MySTL {
         using type = T;
     };
 
-    template <class T, class U> 
+    template <class T>
 	using remove_volatile_t = typename remove_volatile<T>::type; // C++ 14
 
 	//移除最顶层 const、 volatile 或 两者
@@ -76,7 +76,7 @@ namespace MySTL {
 		using type = typename remove_volatile<typename remove_const<T>::type>::type; 
 	};
 
-	template <class T, class U>
+	template <class T>
 	using remove_cv_t = typename remove_cv<T>::type;
 
 	// is_void
@@ -155,7 +155,7 @@ namespace MySTL {
     struct is_array<T[N]> : public true_type {};
 
     template <class T> 
-	bool is_array_v = is_array<T>::value; // C++ 17
+	bool is_array_v = is_array<T>::value; 
 
 
 	//is_pointer 判断 T是否是指向对象或函数的指针
@@ -169,7 +169,7 @@ namespace MySTL {
 	struct is_pointer : public is_pointer_helper<typename remove_cv<T>::type> {};
 
 	template <class T>
-	bool is_pointer_v = is_pointer<T>::value; // C++ 17
+	bool is_pointer_v = is_pointer<T>::value; 
 
 	// is_lvalue_reference 判断 T 是否为左值引用类型
 	template <class T>
@@ -242,7 +242,7 @@ namespace MySTL {
     };
 
     template <class T> 
-	using remove_reference_t = typename remove_reference<T>::type; // C++ 14
+	using remove_reference_t = typename remove_reference<T>::type;
 
 	/**
      * add_lvalue_reference
@@ -288,7 +288,7 @@ namespace MySTL {
     };
 
     template <class T> 
-	using add_rvalue_reference_t = typename add_rvalue_reference<T>::type; // C++ 14
+	using add_rvalue_reference_t = typename add_rvalue_reference<T>::type; 
 
 	// remove_pointer
     // remove_pointer_t
@@ -319,10 +319,10 @@ namespace MySTL {
     };
 
     template <class T> 
-	using remove_pointer_t = typename remove_pointer<T>::type; // C++ 14
+	using remove_pointer_t = typename remove_pointer<T>::type;
 
 
-	//type_traits
+	// type_traits
 	template<class T>
 	struct __type_traits {
 		using this_dummy_member_must_be_first = true_type;

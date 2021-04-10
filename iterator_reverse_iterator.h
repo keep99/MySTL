@@ -1,8 +1,8 @@
 /*
- * @Description: 
+ * @Description: 迭代器适配器。reverse_iterator。可以将一般迭代器的行进方向逆向，使原本应该前进的 operator++ 变为了后退操作。operator-- 变为了前进操作。
  * @Author: Chen.Yu
  * @Date: 2021-04-02 14:50:09
- * @LastEditTime: 2021-04-02 21:52:09
+ * @LastEditTime: 2021-04-10 21:47:58
  * @LastEditors: Chen.Yu
  */
 #ifndef _ITERATOR_REVERSE_ITERATOR_H
@@ -25,12 +25,11 @@ namespace MySTL {
 
         using iterator_type     = Iterator;
 
-        reverse_iterator() : current_() {}
-        explicit reverse_iterator(current) : current_(current) {}
+        reverse_iterator() : {}
+        explicit reverse_iterator(iterator_type x) : current_(x) {}
         
         template <class U>
         explicit reverse_iterator(const reverse_iterator<U>& other) : current_(other.base()) {}
-
         
         template <class U>
         reverse_iterator& operator=(const reverse_iterator<U>& other) {
@@ -38,15 +37,11 @@ namespace MySTL {
             return *this;
         }
 
-        /**
-         * @description: 获取普通迭代器
-         * @param  {*}
-         * @return {*}
-         */
         iterator_type base() const {
             return current_;
         }
 
+        // TO DO
         reference operator*() const {
             return *(current_ - 1);
         }
@@ -55,14 +50,29 @@ namespace MySTL {
             return &(operator*());
         }
 
+        // operator++ 是后退
         reverse_iterator& operator++() {
             --current_;
             return *this;
         }
 
+        // operator++ 是后退
         reverse_iterator& operator++(int) {
             reverse_iterator tmp = *this;
             --current_;
+            return tmp;
+        }
+
+        // operator-- 是前进
+        reverse_iterator& operator--() {
+            ++current_;
+            return *this;
+        }
+
+        // operator-- 是前进
+        reverse_iterator& operator--(int) {
+            reverse_iterator tmp = *this;
+            ++current_;
             return tmp;
         }
 
@@ -85,46 +95,52 @@ namespace MySTL {
         }
 
         reference operator[](difference_type n) const {
-            return *operator+(n);
+            return *((*this + n));
         }
     };
 
     //全局函数，重载 == != > < >= <= + -
-    template <class LeftIterator, class RightIterator>
-    bool operator==(reverse_iterator<LeftIterator> left, reverse_iterator<RightIterator> right) {
+    template <class Iterator>
+    bool operator==(reverse_iterator<Iterator> left, reverse_iterator<Iterator> right) {
         return left.base() == right.base();
     }
-    template <class LeftIterator, class RightIterator>
-    bool operator!=(reverse_iterator<LeftIterator> left, reverse_iterator<RightIterator> right) {
+    template <class Iterator>
+    bool operator!=(reverse_iterator<Iterator> left, reverse_iterator<Iterator> right) {
         return left.base() != right.base();
     }
-    template <class LeftIterator, class RightIterator>
-    bool operator>(reverse_iterator<LeftIterator> left, reverse_iterator<RightIterator> right) {
-        return left.base() > right.base();
+
+    // >
+    // >= < <= 都调用 >
+    template <class Iterator>
+    inline bool operator>(reverse_iterator<Iterator> left, reverse_iterator<Iterator> right) {
+        return right.base() > left.base();
     }
-    template <class LeftIterator, class RightIterator>
-    bool operator>=(reverse_iterator<LeftIterator> left, reverse_iterator<RightIterator> right) {
-        return left.base() >= right.base();
+    // >=
+    template <class Iterator>
+    inline bool operator>=(reverse_iterator<Iterator> left, reverse_iterator<Iterator> right) {
+        return !(right > left);
     }
-    template <class LeftIterator, class RightIterator>
-    bool operator<(reverse_iterator<LeftIterator> left, reverse_iterator<RightIterator> right) {
-        return left.base() < right.base();
+    // <
+    template <class Iterator>
+    inline bool operator<(reverse_iterator<Iterator> left, reverse_iterator<Iterator> right) {
+        return right > left;
     }
-    template <class LeftIterator, class RightIterator>
-    bool operator<=(reverse_iterator<LeftIterator> left, reverse_iterator<RightIterator> right) {
-        return left.base() <= right.base();
+    // <=
+    template <class Iterator>
+    inline bool operator<=(reverse_iterator<Iterator> left, reverse_iterator<Iterator> right) {
+        return !(left > right);
     }
     template <class Iterator>
-    reverse_iterator<Iterator> operator+(
+    inline reverse_iterator<Iterator> operator+(
             typename reverse_iterator<Iterator>::difference_type n,
             const reverse_iterator<Iterator> &it) {
-        return it + n;
+        return reverse_iterator<Iterator>(it.base() - n)
     }
     template <class Iterator>
-    reverse_iterator<Iterator> operator-(
-            typename reverse_iterator<Iterator>::difference_type n,
-            const reverse_iterator<Iterator> &it) {
-        return it - n;
+    inline typename reverse_iterator<Iterator>::difference_type operator-(
+           const reverse_iterator<Iterator>& x,
+           const reverse_iterator<Iterator>& y) {
+        return y.base() - x.base();
     }
     
     /**
@@ -132,11 +148,12 @@ namespace MySTL {
      * @param  {*}
      * @return {*}
      */
+
+    
     template <class Iterator>
     reverse_iterator<Iterator> make_reverse_iterator(Iterator it) {
         return reverse_iterator<Iterator>(it);
     }
-
 }
 
 #endif
