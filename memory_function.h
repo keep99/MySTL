@@ -2,7 +2,7 @@
  * @Description: 内存的基本处理工具 《STL源码剖析》P70。这些内存处理函数具有 "commit or rollback" 语意。
  * @Author: Chen.Yu
  * @Date: 2021-04-02 23:29:46
- * @LastEditTime: 2021-04-12 20:58:50
+ * @LastEditTime: 2021-04-14 02:13:28
  * @LastEditors: Chen.Yu
  */
 #ifndef _MEMORY_FUNCTION_H
@@ -123,7 +123,7 @@ namespace MySTL {
 
     template <class ForwardIterator, class Size, class T>
     void uninitialized_fill_n(ForwardIterator first, Size count, const T& value) {
-        using Value = typename tinySTL::iterator_traits<ForwardIterator>::value_type;
+        using Value = typename MySTL::iterator_traits<ForwardIterator>::value_type;
         ForwardIterator current = first;
         try {
             while (count-- > 0) {
