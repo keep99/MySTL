@@ -2,7 +2,7 @@
  * @Description: list 容器。从这个容器开始，为了清楚，声明和定义分开。
  * @Author: Chen.Yu
  * @Date: 2021-04-04 14:21:48
- * @LastEditTime: 2021-04-15 02:26:59
+ * @LastEditTime: 2021-04-18 22:11:30
  * @LastEditors: Chen.Yu
  */
 #ifndef _LIST_H_
@@ -177,17 +177,29 @@ namespace MySTL
         list(std::initializer_list<T> ilist)
         { insert(begin(), ilist.cbegin(), ilist.cend()); }
 
-        list(list &&other) noexcept : {
-            move_from(other);
+        list(list &&other) noexcept : node_(other.node_) {
+            // 其实不用，一开始就是空链表
+            // move_from(other);
+            other.node_ = nullptr;
         }
 
         list &operator=(const list &other)
         {
             if (this != &other)
             {
-                // 超过这个区域，tmp 自动销毁
-                list tmp(other);
-                swap(tmp);
+                iterator first1 = begin();
+                iterator last1 = end();
+                iterator first2 = const_cast<iterator>(other.begin());
+                iterator last2 = const_cast<iterator>(other.end());
+                while (first1 != last1 && first2 != last2) {
+                    *first1++ = *first2++;
+                }
+                if (first2 == last2) {
+                    erase(first1, last1);
+                }
+                else {
+                    insert(last1, first2, last2);
+                }
             }
 
             return *this;
@@ -197,7 +209,9 @@ namespace MySTL
         {
             if (this != &other)
             {
-                move_from(other);
+                delete_list();
+                node_ = other.node_;
+                other.node_ = nullptr;
             }
 
             return *this;
@@ -205,7 +219,8 @@ namespace MySTL
 
         list &operator=(std::initializer_list<T> ilist)
         {
-            *this = list(ilist);
+            list tmp(ilist.begin(), ilist.end());
+            swap(tmp);
 
             return *this;
         }
@@ -222,7 +237,7 @@ namespace MySTL
             using is_Integral = typename is_integral<InputIterator>;
             assign_dispatch(first, last, is_Integral());
         }
-
+            
         void assign(size_type count, const_reference value)
         {
             fill_assign(count, value);
@@ -273,7 +288,7 @@ namespace MySTL
 
         const_iterator begin() const
         {
-            return static_cast<iterator>(node_->next);
+            return static_cast<const_iterator>(node_->next);
         }
 
         const_iterator cbegin() const
@@ -340,10 +355,8 @@ namespace MySTL
 
         /* 修改器 */
 
-        void clear() {
-            erase(begin(), end());
-        }
 
+        // insert 
         iterator insert(const_iterator position, const_reference value) {
             return insert_aux(position, value);
         }
@@ -369,34 +382,19 @@ namespace MySTL
             return insert(position, ilist.begin(), ilist.end());
         }
 
+        // emplace
         template <class... Args>
         iterator emplace(const_iterator position, Args&&... args) {
             return insert(position, T(MySTL::forward<Args>(args)...));
         }
 
-        iterator erase(const_iterator position) {
-            link_type currentNode = position.node_;
-            link_type previousNode = currentNode->previous;
-            link_type nextNode = currentNode->next;
+        // erase clear
+        iterator erase(const_iterator position);
+        iterator erase(const_iterator first, const_iterator last);
+        void clear() 
+        { erase(begin(), end()); }
 
-            // 在链表中断开节点
-            previousNode->next = nextNode;
-            nextNode->previous = previousNode;
-
-            //销毁节点
-            destroy_node(currentNode);
-
-            return static_cast<iterator>(nextNode);
-        }
-
-        iterator erase(const_iterator first, const_iterator last) {
-            while (first != last) {
-                first = erase(first);
-            }
-
-            return static_cast<iterator>(last.node_);
-        }
-
+        // push_back pop_back 
         void push_back(const_reference value) {
             insert(end(), value);
         }
@@ -407,7 +405,7 @@ namespace MySTL
 
         template <class... Args>
         void emplace_back(Args&&... args) {
-            emplace(end(), MySTL::forward(args)...);
+            emplace(end(), MySTL::forward<Args>(args)...);
         }
 
         void pop_back() {
@@ -431,68 +429,38 @@ namespace MySTL
             erase(begin());
         }
 
-        void resize(size_type count, const_reference value) {
-            if (count == size()) {
-                return;
-            } else if (count < size()) {
-                erase(MySTL::next(begin(), count), end());
-            } else {
-                insert(end(), count - size(), value);
-            }
-        }
+        // resize
+        void resize(size_type count, const_reference value);
 
         void resize(size_type count) {
-            resize(count, T());
+            resize(count, value_type());
         }
 
         void swap(list& other) {
-            using MySTL::swap;
-            swap(node_, other.node_);
+            MySTL::swap(node_, other.node_);
         }
 
 
         /* list 相关操作 */
 
-        // 归并两个已经排过序的链表，将 other 归并到 *this(first1) 中
+        // 合并两个已经排过序的 list，将 other 归并到 *this(first1) 中
         template <class Compare>
-        void merge(list& other, Compare compare) {
-            if (this == other) {
-                return;
-            }
-
-            auto first1 = begin();
-            auto last1 = end();
-            auto first2 = other.begin();
-            auto last2 = end();
-
-            while (first1 != last1 && first2 != last2) {
-                if (compare(*first2, *first1)) {
-                    auto next = first2 + 1;
-                    transfer(first1, first2, next);
-                    first2 = next;
-                } else {
-                    ++first1;
-                }
-
-                if (first2 != last2) {
-                    transfer(last1, first2, last2);
-                }
-            }
-        }
-
-        template <class Compare>
-        void merge(list&& other, Compare compare) {
-            merge(other, compare);
-        }
+        void merge(list& other, Compare compare);
 
         /* C++ Primer P 587 在类模板自己的作用域中，我们可以直接使用模板名而不提供实参。比如 这里的形参类型，不是 list<T>, 而是直接写 list */
         void merge(list& other) {
             merge(other, MySTL::less<T>());
         }
 
-        void merge(list&& other) {
-            merge(other, MySTL::less<T>());
-        }
+        // TO DO
+        // template <class Compare>
+        // void merge(list&& other, Compare compare) {
+        //     merge(other, compare);
+        // }
+
+        // void merge(list&& other) {
+        //     merge(other, MySTL::less<T>());
+        // }
 
         /**
          * @description: 将链表 other 接合到 position 所指的位置之前， other 必须不同于 *this
@@ -503,13 +471,14 @@ namespace MySTL
         void splice(const_iterator position, list& other) {
             if (!other.empty()) {
                 transfer(position, other.begin(), other.end())p;
-            }   
+            }
         }
 
-        void splice(const_iterator postion, list&& other) {
-            splice(position, other);
-        }
+        // void splice(const_iterator position, list&& other) {
+        //     splice(position, other);
+        // }
 
+        // 将 i 所指的元素接合于 position 所指位置之前。
         void splice(iterator position, list&, iterator it) {
             // it 如果 是下面这两种情况，没有意义，什么也不做
             if (position == it || position == it + 1) {
@@ -519,19 +488,23 @@ namespace MySTL
             transfer(position, it, it + 1);
         }
 
-        void splice(iterator position, list&& other, iterator it) {
-            splice(position, other, it);
-        }
+        // 直接调用左值版本
+        // void splice(iterator position, list&& other, iterator it) {
+        //     splice(position, other, it);
+        // }
 
+        // 将 [first, last) 内的所有元素接合于 position 所指位置之前
+        // position 和 [first, last) 可指向同一个 list
+        // 但 position 不能位于 [first, last) 内
         void splice(iterator position, list&, iterator first, iterator last) {
             if (first != last) {
                 transfer(position, first, last);
             }
         }
 
-        void splice(iterator position, list&& other, iterator first, iterator last) {
-            splice(position, other, first, last);
-        }
+        // void splice(iterator position, list&& other, iterator first, iterator last) {
+        //     splice(position, other, first, last);
+        // }
 
         /**
          * @description: 如果链表中有元素符合一元判断式，那么就把这个元素给删除
@@ -539,17 +512,7 @@ namespace MySTL
          * @return {*}
          */
         template <class UnaryPredicate>
-        void remove_if(UnaryPredicate p) {
-            auto first = begin();
-            auto last = end();
-            while (first != last) {
-                if (UnaryPredicate(*first)) {
-                    first = erase(first);
-                } else {
-                    ++first;
-                }
-            }
-        }
+        void remove_if(UnaryPredicate p);
 
         // Lambda 的运用
         void remove(const_reference value) {
@@ -559,40 +522,11 @@ namespace MySTL
         }
 
         // 反转链表 TO DO
-        void reverse() {
-            // 表示链表没有节点或者只有一个节点，不用反转
-            if (node_->next == node || node_->next->next == node_) {
-                return;
-            }
+        void reverse();
 
-            using MySTL::swap;
-            swap(node->previous, node_->next);
-            auto it = node->previous;
-            while (it != node_) {
-                swap(it->previous, it->next);
-                it = it->previous;
-            }
-        }
-
+        // 删除连续的重复元素
         template <class BinaryPredicate>
-        void unique(BinaryPredicate p) {
-            if (node_->next == node || node_->next->next == node_) {
-                return;
-            }
-
-            auto first = begin();
-            auto last = end();
-
-            auto next = first + 1;
-            while (next != last) {
-                if (p(*first, *next)) {
-                    next = erase(next);
-                } else {
-                    ++first;
-                    ++next;
-                }
-            }
-        }
+        void unique(BinaryPredicate pred);
 
         /**
          * @description: 移除数值相同的连续元素
@@ -612,53 +546,17 @@ namespace MySTL
          * @return {*}
          */
         template <class Compare>
-        void sort(iterator f1, iterator f2, Compare compare) {
-            // 以下判断，如果是空链表或者仅仅只有一个链表节点，不需要排序，直接返回
-            if (node_->next == node_ || node_->next->next == node_) {
-                return;
-            }
-
-            list carry;             // carry 链表起到搬运的作用
-            // counter 链表起到中间存储的作用
-            // 对于 counter[i] 里面最多能存储 2 ^ (i + 1) 个节点
-            list counter[64];       
-            size_type fill = 0;
-            while (!empty()) {
-                // 第一步：将当前链表的第一个节点放在 carry 链表的表头
-                carry.splice(carry.begin(), *this, begin());
-                size_type i = 0;
-                while(i < fill && !counter[i].empty()) {
-                    // 第二步：将链表 carry 合并到 counter[i]
-                    counter[i].merge(carry);
-                    // 第三步：交换链表 carry 和 counter[i] 的内容
-                    carry.swap(counter[i++]);
-                }
-                // 第四步：交换链表 carry 和 counter[i] 的内容
-                carry.swap(counter[i]);
-                // 第五步：
-                if(i == fill) {
-                    ++fill;
-                }
-            }
-
-            // 第六步：把低位不满足进位的剩余数据全部有序的合并到上一位
-            for (size_type j = 0; j < fill; ++j) {
-                counter[j].merge(counter[j - 1]);
-            }
-
-            // 第七步：最后将已经排好序的链表内容交换到当前链表
-            swap(counter[fill - 1]);
-        }
+        void sort(iterator f1, iterator f2, Compare compare);
 
 
         void sort() {
             sort(begin(), end(), MySTL::less<T>());
         }
 
-
-
     private:
-        /* 以下是 helper functions，不暴露这些接口 */
+        /* helper functions */
+
+        /* 用 n 个元素为容器赋值 */
         void fill_assign(size_type n, const_reference value);
 
         template <class Integer>
@@ -667,15 +565,8 @@ namespace MySTL
         }
 
         template <class InputIterator>
-        void assign_dispatch(Integer n, Integer value, true_type);
+        void assign_dispatch(InputIterator n, InputIterator value, false_type);
 
-
-
-
-
-
-
-    /*                          以下为第一版                                                                                                          */
         link_type allocate_node() {
             return list_node_allocator::allocate(1);
         }
@@ -684,9 +575,10 @@ namespace MySTL
             list_node_allocator::deallocate(node);
         }
 
-        link_type create_node(const_reference value) {
+        template <class ...Args>
+        link_type create_node(Arg&&... args) {
             auto newNode = allocate_node();
-            return list_node_allocator::construct(newNode, value);
+            return list_node_allocator::construct(newNode, MySTL::forward<Args>(args)...);
         }
 
         link_type destroy_node(link_type node) {
@@ -700,96 +592,312 @@ namespace MySTL
          * @return {*}
          */
         template <class Y>
-        iterator insert_aux(const_iterator position, Y&& value) {
-            // C++ Primer P614 : 当用于一个指向模板参数类型的右值引用函数参数（T&&）时，forward 会保持实参类型的所有细节
-            link_type newNode = create_node(MySTL::forward<Y>(value));
-            newNode->previous = position.node_->previous;
-            newNode->next     = position.node_;
-            newNode->previous->next = newNode->next->previous = newNode;
-
-            return static_cast<iterator>(newNode);
-        }
+        iterator insert_aux(const_iterator position, Y&& value);
 
         template <class InputIterator>
-        iterator insert_range_aux(const_iterator position, InputIterator first, InputIterator last, true_type) {
+        iterator insert_range_aux(const_iterator position, Integer first, Integer last, true_type) {
             insert(position, first, last);
         }
 
         template <class InputIterator>
-        iterator insert_range_aux(const_iterator position, InputIterator first, InputIterator last, false_type) {
-            if (first == last) {
-                return position;
-            }
-
-            auto result = insert(position, *first);
-            while (++first != last) {
-                insert(position, *first);
-            }
-
-            return result;
-        }
+        iterator insert_range_aux(const_iterator position, InputIterator first, InputIterator last, false_type);
 
         /**
-         * @description: 将 [first, last) 范围的节点移动到 position 之前
+         * @description: 将 [first, last) 范围的节点移动到 position 之前。《STL源码剖析》 P139
          * @param  {*}
          * @return {*}
          * @param {iterator} position
          * @param {iterator} first
          * @param {iterator} last
          */
-        void transfer(iterator position, iterator first, iterator last) {
-            auto positionNode = position.node_;
-            auto firstNode = first.node_;
-            auto lastNode = last.node_->previous;
-
-            // 这一段需要画图理解
-            //第一步将 first 的前面的节点 和 last 后面的节点 接起来
-            firstNode->previous->next = last->next;
-            last->next->previous = firstNode->previous;
-
-            //第二步将 first 到 last 这一段插入到 position->previous 到 position 之间
-            firstNode->previous = positionNode->previous;
-            lastNode->next = positionNode;
-            firstNode->previous->next = firstNode;
-            lastNode->next->previous = lastNode;
-        }
+        void transfer(iterator position, iterator first, iterator last);
 
         // 清空链表
-        void delete_list() {
-            if (node_ == nullptr) {
-                return;
-            }
+        void delete_list();
 
-            clear();
-            // node_->data 为 nullptr，所以只需要回收内存空间即可
-            deallocate_node(node_);
-            node_ = nullptr;
-        }
-
-        // 清空链表，然后将 other 所指的链表移动到当前链表
-        void move_from(list& other) {
-            delete_list();
-            node_ = other.node_;
-            other.node_ = nullptr;
-        }
     }; // class list
 
     template <class T, class Allocator>
-    void fill_assign(size_type n, const_reference value) {
+    list<T, Allocator>::iterator list<T, Allocator>::erase(const_iterator position) {
+        link_type currentNode = position.node_;
+        link_type previousNode = currentNode->previous;
+        link_type nextNode = currentNode->next;
 
+        // 在链表中断开节点
+        previousNode->next = nextNode;
+        nextNode->previous = previousNode;
+
+        //销毁节点
+        destroy_node(currentNode);
+
+        return static_cast<iterator>(nextNode);
+    }
+
+    template <class T, class Allocator>
+    list<T, Allocator>::iterator list<T, Allocator>::erase(const_iterator first, const_iterator last) {
+        while (first != last) {
+            first = erase(first);
+        }
+
+        return static_cast<iterator>(last.node_);
+    }
+
+    template <class T, class Allocator>
+    void list<T, Allocator>::fill_assign(size_type n, const_reference value) {
+        iterator i = begin();
+        iterator e = end();
+        for (; i != e && n > 0; --n, ++i) {
+            *i = value;
+        }
+        if (n > 0) {
+            insert(end(), n, value);
+        }
+        else {
+            erase(i, e);
+        }
+     }
+
+    template <class T, class Allocator>
+    template <class InputIterator>
+    void list<T, Allocator>::assign_dispatch(InputIterator first2, InputIterator last2, false_type) {
+        iterator first1 = begin();
+        iterator last1 = end();
+        for(; first1 != last1 && first2 != last2; ++first1, ++first2) {
+            *first1 = *first2;
+        }
+        if(first2 == last2) {
+            erase(first1, last1);
+        }
+        else {
+            insert(l1, f2, l2);
+        }
+    }
+
+    template <class T, class Allocator>
+    void list<T, Allocator>::resize(size_type count, const_reference value) {
+        iterator i = begin();
+        size_type len = 0;
+        for(; i != end() && len < count; ++i, ++len) 
+                ;
+        if(len == count) {
+            erase(i, end());
+        }
+        else {
+            insert(end(), count - len, value);
+        }
+    }
+
+    template <class T, class Allocator>
+    template <class Compare>
+    void list<T, Allocator>::merge(list& other, Compare compare) {
+        if (this == other) {
+            return;
+        }
+
+        auto first1 = begin();
+        auto last1 = end();
+        auto first2 = other.begin();
+        auto last2 = other.end();
+
+        while (first1 != last1 && first2 != last2) {
+            if (compare(*first2, *first1)) {
+                auto next = first2;
+                transfer(first1, first2, ++next);
+                first2 = next;
+            } else {
+                ++first1;
+            }
+
+            if (first2 != last2) {
+                transfer(last1, first2, last2);
+            }
+        }
+    }
+
+    template <class T, class Allocator>
+    template <class UnaryPredicate>
+    void list<T, Allocator>::remove_if(UnaryPredicate p) {
+        auto first = begin();
+        auto last = end();
+        while (first != last) {
+            if (UnaryPredicate(*first)) {
+                // 返回下一个位置
+                first = erase(first);
+            } else {
+                ++first;
+            }
+        }
+    }
+
+    // 反转链表 TO DO
+    template <class T, class Allocator>
+    void list<T, Allocator>::reverse() {
+        // 表示链表没有节点或者只有一个节点，不用反转
+        if (node_->next == node_ || node_->next->next == node_) {
+            return;
+        }
+
+        // TO DO：这个暂时不能理解
+        // using MySTL::swap;
+        // swap(node_->previous, node_->next);
+        // auto it = node->previous;
+        // while (it != node_) {
+        //     swap(it->previous, it->next);
+        //     it = it->previous;
+        // }
+
+        // 《STL源码剖析》 P142
+        iterator first = begin();
+        ++first;
+        while(first != end()) {
+            iterator old = first;
+            ++first;
+            transfer(begin(), old, first);
+        }
+    }
+
+    template <class T, class Allocator>
+    template <class BinaryPredicate>
+    void list<T, Allocator>::unique(BinaryPredicate pred) {
+        // 如果是空链表或者是链表只有一个元素
+        if (node_->next == node_ || node_->next->next == node_) {
+            return;
+        }
+
+        auto first = begin();
+        auto last = end();
+
+        auto next = ++first;
+        while (next != last) {
+            if (pred(*first, *next)) {
+                next = erase(next);
+            } else {
+                ++first;
+                ++next;
+            }
+        }
+    }
+
+    // 参考这篇博文：https://www.kancloud.cn/digest/stl-sources/177268
+    // 参考 SGI STL 的实现
+    // 由于 STL 本身的排序算法 sort 接受的是随机访问迭代器，但是双向链表 list 的迭代器是双向迭代器，因此，不能使用 STL 本身的排序算法 sort ，必须得自己定义
+    /**
+     * @description: 对链表进行归并排序
+     * @param  {*}
+     * @return {*}
+     */
+    template <class T, class Allocator>
+    template <class Compare>
+    void list<T, Allocator>::sort(iterator f1, iterator f2, Compare compare) {
+        // 以下判断，如果是空链表或者仅仅只有一个链表节点，不需要排序，直接返回
+        if (node_->next == node_ || node_->next->next == node_) {
+            return;
+        }
+
+        list carry;             // carry 链表起到搬运的作用
+        // counter 链表起到中间存储的作用
+        // 对于 counter[i] 里面最多能存储 2 ^ (i + 1) 个节点
+        list counter[64];
+        size_type fill = 0;
+        while (!empty()) {
+            // 第一步：将当前链表的第一个节点放在 carry 链表的表头
+            carry.splice(carry.begin(), *this, begin());
+            size_type i = 0;
+            while(i < fill && !counter[i].empty()) {
+                // 第二步：将链表 carry 合并到 counter[i]
+                counter[i].merge(carry);
+                // 第三步：交换链表 carry 和 counter[i] 的内容
+                carry.swap(counter[i++]);
+            }
+            // 第四步：交换链表 carry 和 counter[i] 的内容
+            carry.swap(counter[i]);
+            // 第五步：
+            if(i == fill) {
+                ++fill;
+            }
+        }
+
+        // 第六步：把低位不满足进位的剩余数据全部有序的合并到上一位
+        for (size_type j = 0; j < fill; ++j) {
+            counter[j].merge(counter[j - 1]);
+        }
+
+        // 第七步：最后将已经排好序的链表内容交换到当前链表
+        swap(counter[fill - 1]);
+    }
+
+
+    /* private helper function */
+
+    /**
+     * @description: 在 position 前插入一个值为 value 的节点
+     * @param  {*}
+     * @return {*}
+     */
+    template <class T, class Allocator>
+    template <class Y>
+    list<T, Allocator>::iterator list<T, Allocator>::insert_aux(const_iterator position, Y&& value) {
+        // C++ Primer P614 : 当用于一个指向模板参数类型的右值引用函数参数（T&&）时，forward 会保持实参类型的所有细节
+        link_type newNode = create_node(MySTL::forward<Y>(value));
+        newNode->previous = position.node_->previous;
+        newNode->next     = position.node_;
+        newNode->previous->next = newNode->next->previous = newNode;
+
+        return static_cast<iterator>(newNode);
     }
 
     template <class T, class Allocator>
     template <class InputIterator>
-    void assign_dispatch(Integer n, Integer value, true_type) {
+    list<T, Allocator>::iterator list<T, Allocator>::insert_range_aux(const_iterator position, InputIterator first, InputIterator last, false_type) {
+        if (first == last) {
+            return position;
+        }
 
+        auto result = insert(position, *first);
+        while (++first != last) {
+            insert(position, *first);
+        }
+
+        return result;
     }
 
+    /**
+     * @description: 将 [first, last) 范围的节点移动到 position 之前。《STL源码剖析》 P139
+     * @param  {*}
+     * @return {*}
+     * @param {iterator} position
+     * @param {iterator} first
+     * @param {iterator} last
+     */
+    template <class T, class Allocator>
+    void list<T, Allocator>::transfer(iterator position, iterator first, iterator last) {
+        auto positionNode = position.node_;
+        auto firstNode = first.node_;
+        auto lastNode = last.node_;
 
+        // 这一段参看 《STL源码剖析》 P139
+        lastNode->pre->next = positionNode;
+        firstNode->per->next = lastNode;
+        positionNode->previous->next = firstNode;
 
+        auto tmp = positionNode->previous;
+        positionNode->previous = lastNode->previous;
+        lastNode->previous = firstNode->previous;
+        firstNode->previous = tmp;
+    }
 
+    // 清空链表
+    template <class T, class Allocator>
+    void list<T, Allocator>::delete_list() {
+        if (node_ == nullptr) {
+            return;
+        }
 
-
+        clear();
+        // node_->data 为 nullptr，所以只需要回收内存空间即可
+        deallocate_node(node_);
+        node_ = nullptr;
+    }
 
     template <class T, class Allocator>
     bool operator==(const list<T, Allocator>& left, const list<T, Allocator>& right) {
