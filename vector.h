@@ -2,7 +2,7 @@
  * @Description: vector
  * @Author: Chen.Yu
  * @Date: 2021-04-03 14:03:48
- * @LastEditTime: 2021-04-14 17:13:11
+ * @LastEditTime: 2021-04-15 14:33:02
  * @LastEditors: Chen.Yu
  */
 #ifndef _VECTOR_H_
@@ -542,7 +542,7 @@ namespace MySTL {
         void copy_initialize(InputIterator first, InputIterator last, input_iterator_tag) {
             while (first != last) {
                 if (capacity() == size()) {
-                    reallocate(empty() ? 1 : vector::grow_factor * size(0));
+                    reallocate(empty() ? 1 : 2 * size());
                 }
                 push_back(*first);
             }
