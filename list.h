@@ -2,11 +2,13 @@
  * @Description: list 容器。从这个容器开始，为了清楚，声明和定义分开。
  * @Author: Chen.Yu
  * @Date: 2021-04-04 14:21:48
- * @LastEditTime: 2021-04-18 22:11:30
+ * @LastEditTime: 2021-04-20 02:24:14
  * @LastEditors: Chen.Yu
  */
 #ifndef _LIST_H_
 #define _LIST_H_
+
+#include <initializer_list>
 
 #include "allocator.h"
 #include "type_traits"
@@ -85,7 +87,8 @@ namespace MySTL
             }
 
             // 前置--
-            self operator--()
+            // fixed : 前置 ++ -- 返回左值
+            self& operator--()
             {
                 node_ = node_->previous;
 
@@ -669,7 +672,7 @@ namespace MySTL
             erase(first1, last1);
         }
         else {
-            insert(l1, f2, l2);
+            insert(last1, first2, last2);
         }
     }
 
