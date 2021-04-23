@@ -2,7 +2,7 @@
  * @Description: 
  * @Author: Chen.Yu
  * @Date: 2021-04-05 14:07:42
- * @LastEditTime: 2021-04-24 02:08:48
+ * @LastEditTime: 2021-04-24 03:56:44
  * @LastEditors: Chen.Yu
  */
 #ifndef _DEQUE_H_
@@ -1035,30 +1035,145 @@ namespace MySTL {
                     MySTL::fill(position - difference_type(n), position, value_copy);
                 }
                 else {
+                    // __uninitialized_copy_fill(_M_start, __pos, __new_start, 
+                    //               _M_start, __x_copy);
+                    iterator mid2 = uninitialized_copy(start_, position, newstart);
+                    uninitialized_fill(mid2, start_, value_copy);
+                    start_ = newstart;
+                    MySTL::fill(oldstart, position, value_copy);
+                }
+            }
+            else {
+                iterator newfinish = reserve_map_at_back();
+                iterator oldfinish = finish_;
+                const difference_type elems_after = difference_type(len) - elems_before;
+                position = finish_ - elems_after;
+
+                if(elems_after > difference_type(n)) {
+                    iterator finish_n = finish_ - difference_type(n);
+                    uninitialized_copy(finish_n, finish_, finish_);
+                    finish_ = newfinish;
+                    MySTL::copy_backward(finish_n, finish_, oldfinish);
+                    MySTL::fill(position, position + difference_type(n), value_copy);
+                }
+                else {
+                    // __uninitialized_fill_copy
+                    uninitialized_fill(finish_, position + difference_type(n), value_copy);
+                    uninitialized_copy(position, finish_, position + difference_type(n));
+                    finish_ = newfinish;
+                    MySTL::fill(position, oldfinish, value_copy);
+                }
+            }
+        }
+
+        void insert_aux(iterator position, const_iterator first, const_iterator last, size_type n) {
+            const difference_type elems_before = position - start_;
+            size_type len = size();
+            if(elems_before < len / 2) {
+                iterator newstart = reserve_elements_at_front(n);
+                iterator oldstart = start_;
+                position = start_ + elems_before;
+                if(elems_before >= difference_type(n)) {
+                    iterator start_n = start_ + difference_type(n);
+                    uninitialized_copy(start_, start_n, newstart);
+                    start_ = newstart;
+                    MySTL::copy(start_n, position, oldstart);
+                    MySTL::copy(first, last, position - difference_type(n));
+                }
+                else {
+                    const_iterator mid = first + (n - elems_before); 
+                    // __uninitialized_copy_copy(_M_start, __pos, __new_start, 
+                    //               _M_start, __x_copy);
+                    iterator mid1 = uninitialized_copy(start_, position, newstart);
+                    uninitialized_copy(first, mid, mid1);
+                    start_ = newstart;
+                    MySTL::copy(mid, last, oldstart);
                     
                 }
             }
             else {
+                iterator newfinish = reserve_map_at_back(n);
+                iterator oldfinish = finish_;
+                const difference_type elems_after = difference_type(len) - elems_before;
+                position = finish_ - elems_after;
 
+                if(elems_after > difference_type(n)) {
+                    iterator finish_n = finish_ - difference_type(n);
+                    uninitialized_copy(finish_n, finish_, finish_);
+                    finish_ = newfinish;
+                    MySTL::copy_backward(position, finish_n, oldfinish);
+                    MySTL::copy(first, last, position);
+                }
+                else {
+                    iterator mid = first;
+                    advance(mid, elems_after);
+                    iterator mid1 = uninitialized_copy(mid, last, finish_);
+                    uninitialized_copy(position, finish_, mid1);
+                    finish_ = newfinish;
+                    MySTL::copy(first, mid, position);
+                }
             }
         }
 
         template <class IIter>
         void insert_dispatch(iterator position, IIter first, IIter last, input_iterator_tag) {
-            std::copy(first, last, std::inserter(*this, position)); // TO DO
+            std::copy(first, last, MySTL::inserter(*this, position)); // TO DO
         }
 
         template <class FIter>
         void insert_dispatch(iterator position, FIter first, FIter last, forward_iterator_tag) {
-            
+            size_type n = static_cast<size_type>(MySTL::distance(first, last));
+            if(position.current_ == start_.current_) {
+                iterator newstart = reserve_elements_at_front(n);
+                uninitialized_copy(first, last, newstart);
+                start_ = newstart;
+            }
+            else if(position.current_ == finish_.current_) {
+                iterator newfinish = reserve_elements_at_back(n);
+                uninitialized_copy(first, last, finish_);
+                finish_ = newfinish;
+            }
+            else {
+                insert_aux(position, first, last, n);
+            }
         }
 
         void new_elements_at_front(size_type new_elems) {
-
+            size_type new_nodes = (new_elems + deque_buf_size() - 1) / deque_buf_size();
+            reserve_map_at_front(new_nodes);
+            size_type i;
+            try
+            {
+                for(i = 1; i <= new_nodes; ++i) {
+                    *(start_.node_ - i) = allocate_node();
+                }
+            }
+            catch (...)
+            {
+                for(size_type j = 1; j < i; ++j) {
+                    deallocate_node(*(start_.node_ - j));
+                    throw;
+                }
+            }
         }
 
         void new_elements_at_back(size_type new_elems) {
-            
+            size_type new_nodes = (new_elems + deque_buf_size() - 1) / deque_buf_size();
+            reserve_map_at_back(new_nodes);
+            size_type i;
+            try
+            {
+                for(i = 1; i <= new_nodes; ++i) {
+                    *(finish_.node_ + i) = allocate_node();
+                }
+            }
+            catch (...)
+            {
+                for(size_type j = 1; j < i; ++j) {
+                    deallocate_node(*(finish_.node_ + j));
+                    throw;
+                }
+            }
         }
 
 
