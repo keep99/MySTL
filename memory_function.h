@@ -2,7 +2,7 @@
  * @Description: 内存的基本处理工具 《STL源码剖析》P70。这些内存处理函数具有 "commit or rollback" 语意。
  * @Author: Chen.Yu
  * @Date: 2021-04-02 23:29:46
- * @LastEditTime: 2021-04-14 02:13:28
+ * @LastEditTime: 2021-04-23 23:51:07
  * @LastEditors: Chen.Yu
  */
 #ifndef _MEMORY_FUNCTION_H
@@ -168,7 +168,7 @@ namespace MySTL {
     }
 
     template <class ForwardIter, class T, class T1>
-    void uninitialized_fill(ForwardIter first, ForwardIter last, const T& value, T1*) {
+    void __uninitialized_fill(ForwardIter first, ForwardIter last, const T& value, T1*) {
         using is_POD = typename __type_traits<T1>::is_POD_type;
         __uninitialized_fill_aux(first, last, value, is_POD());
     }
