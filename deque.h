@@ -2,7 +2,7 @@
  * @Description: 
  * @Author: Chen.Yu
  * @Date: 2021-04-05 14:07:42
- * @LastEditTime: 2021-04-24 01:36:00
+ * @LastEditTime: 2021-04-24 02:08:48
  * @LastEditors: Chen.Yu
  */
 #ifndef _DEQUE_H_
@@ -731,16 +731,6 @@ namespace MySTL {
         // 初始化一个空的 deque
         void empty_initialize() {
             create_map_and_nodes();
-        }
-
-        template <class InputIterator>
-        void initialize_aux(InputIterator first, InputIterator last, true_type) {
-            fill_initialize(first, last); // TO DO, 未实现。fill_initialize 未重载函数是两个迭代器的版本
-        }
-
-        template <class InputIterator>
-        void initialize_aux(InputIterator first, InputIterator last, false_type) {
-            copy_initialize(first, last, iterator_category(first));
         }
 
         void fill_initialize(size_type count, const_reference value) {
