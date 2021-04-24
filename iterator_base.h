@@ -2,13 +2,15 @@
  * @Description: 五种迭代器型别、基础迭代器iterator_base、iterator_traits、advance、distance。
  * @Author: Chen.Yu
  * @Date: 2021-04-02 20:54:47
- * @LastEditTime: 2021-04-10 22:44:15
+ * @LastEditTime: 2021-04-24 17:47:01
  * @LastEditors: Chen.Yu
  */
 #ifndef _ITERATOR_H
 #define _ITERATOR_H
 
 #include <cstddef> // ptrdiff_t
+
+#include "type_traits.h"
 
 namespace MySTL {
     // 五种迭代器型别
@@ -67,7 +69,7 @@ namespace MySTL {
     // STL源码剖析 P100
     template<class Category, 
              class T,
-             class Distance = std::ptrdiff_t,
+             class Distance = ptrdiff_t,
              class Pointer = T*,
              class Reference = T&>
     struct iterator_base {
@@ -118,9 +120,9 @@ namespace MySTL {
         return category();
     }
 
-    // 获取迭代器的 difference type
+    // 获取迭代器的 distance type
     template<class Iterator>
-    inline typename iterator_traits<Iterator>::difference_type* difference_type(const Iterator&) {
+    inline typename iterator_traits<Iterator>::difference_type* distance_type(const Iterator&) {
         return static_cast<typename iterator_traits<Iterator>::difference_type*>(0);
     }
 
@@ -143,7 +145,7 @@ namespace MySTL {
         }
 
         template <class BidirectionalIterator, class Distance>
-        inline void __advance(BidirectionalIterator& it, Distance, bidirectional_iterator_tag) {
+        inline void __advance(BidirectionalIterator& it, Distance n, bidirectional_iterator_tag) {
             if (n > 0) {
                 while(n-- > 0) {
                     ++it;
@@ -175,7 +177,7 @@ namespace MySTL {
         template <class InputIterator>
         typename iterator_traits<InputIterator>::difference_type
         __distance(InputIterator first, InputIterator last, input_iterator_tag) {
-            typename iterator_trait<InputIterator>::difference_type n = 0;
+            typename iterator_traits<InputIterator>::difference_type n = 0;
             // 逐一累计距离
             while (first != last) {
                 ++n; 
