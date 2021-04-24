@@ -2,7 +2,7 @@
  * @Description: 
  * @Author: Chen.Yu
  * @Date: 2021-04-02 15:29:19
- * @LastEditTime: 2021-04-03 15:12:25
+ * @LastEditTime: 2021-04-25 00:44:48
  * @LastEditors: Chen.Yu
  */
 #ifndef _UTILITY_MOVE_FORWARD_H
@@ -57,6 +57,127 @@ namespace MySTL {
     template <class Tp, size_t N>
     void swap(Tp(&a)[N], Tp(&b)[N]) {
         MySTL::swap_range(a, a + N, b);
+    }
+
+    /*****************************************************************************************/
+    // pair
+    /*****************************************************************************************/
+    template <class T1, class T2>
+    struct pair
+    {
+        typedef T1 first_type;
+        typedef T2 second_type;
+
+        T1 first;
+        T2 second;
+
+        // 构造函数
+        pair() : first(), second() {}
+        pair(const T1& a, const T2& b) : first(a), second(b) {}
+        
+        template <class U1, class U2>
+        explicit pair(const pair<U1, U2>& p) : first(p.first), second(p.second) {}
+
+        template <class U1, class U2>
+        pair(U1&& x, U2&& y) : first(MySTL::forward<U1>(x)), second(MySTL::forward<U2>(y)) {}
+
+        template <class U1, class U2>
+        explicit pair(pair<U1, U2>&& P) : first(MySTL::forward<U1>(p.first)), second(MySTL::forward<U2>(p2.second)) {}
+
+        pair(const pair& p) = default;
+        pair(pair&& p) = default;
+
+        template <class U1, class U2>
+        explicit pair(pair&& p) : first(tinySTL::move(p.first)), second(tinySTL::move(p.second)) {}
+
+        // operator=
+        pair& operator=(const pair& rhs) {
+            if(this != rhs) {
+                first = rhs.first;
+                second = rhs.second;
+            }
+
+            return *this;
+        }
+
+        pair& operator=(pair&& rhs) {
+            if(this != rhs) {
+                first = MySTL::move(rhs.first);
+                second = MySTL::move(rhs.second);
+            }
+
+            return *this;
+        }
+
+        template <class Other1, class Other2>
+        pair& operator=(const pair<Other1, Other2>& other) {
+            first = other.first;
+            second = other.second;
+        }
+        
+        template <class Other1, class Other2>
+        pair& operator=(const pair<Other1, Other2>&& other) {
+            first = MySTL::forward<Other1>(other.first);
+            second = MySTL::forward<Other2>(other.second);
+
+            return *this;
+        }
+
+        ~pair() = default;
+
+        void swap(pair& other) {
+            if(this != other) {
+                MySTL::swap(first, other.first);
+                MySTL::swap(second, other.second);
+            }
+        }
+    };
+
+    // 重载比较操作符
+    template <class Ty1, class Ty2>
+    bool operator==(const pair<Ty1, Ty2>& lhs, const pair<Ty1, Ty2>& rhs) {
+        return lhs.first == rhs.first && lhs.second == rhs.second; 
+    }
+
+    template <class Ty1, class Ty2>
+    bool operator<(const pair<Ty1, Ty2>& lhs, const pair<Ty1, Ty2>& rhs) {
+        return lhs.first < rhs.first || (lhs.first == rhs.first && lhs.second < rhs.second);
+    }
+
+    template <class Ty1, class Ty2>
+    bool operator!=(const pair<Ty1, Ty2>& lhs, const pair<Ty1, Ty2>& rhs)
+    {
+    return !(lhs == rhs);
+    }
+
+    template <class Ty1, class Ty2>
+    bool operator>(const pair<Ty1, Ty2>& lhs, const pair<Ty1, Ty2>& rhs)
+    {
+    return rhs < lhs;
+    }
+
+    template <class Ty1, class Ty2>
+    bool operator<=(const pair<Ty1, Ty2>& lhs, const pair<Ty1, Ty2>& rhs)
+    {
+    return !(rhs < lhs);
+    }
+
+    template <class Ty1, class Ty2>
+    bool operator>=(const pair<Ty1, Ty2>& lhs, const pair<Ty1, Ty2>& rhs)
+    {
+    return !(lhs < rhs);
+    }
+
+    // 重载 MySTL 的 swap
+    template <class Ty1, class Ty2>
+    void swap(pair<Ty1, Ty2>& lhs, pair<Ty1, Ty2>& rhs) {
+        lhs.swap(rhs);
+    }
+
+    // 创建一个 pair 对象
+    template<class Ty1, class Ty2>
+    pair<Ty1, Ty2> make_pair(Ty1&& first, Ty2&& second) {
+        return pair<Ty1, Ty2>(MySTL::forward<Ty1>(first), MySTL::forward<Ty2>(second));
     }
 } 
 
