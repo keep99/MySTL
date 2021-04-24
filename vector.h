@@ -2,7 +2,7 @@
  * @Description: vector
  * @Author: Chen.Yu
  * @Date: 2021-04-03 14:03:48
- * @LastEditTime: 2021-04-20 02:29:57
+ * @LastEditTime: 2021-04-24 15:37:11
  * @LastEditors: Chen.Yu
  */
 #ifndef _VECTOR_H_
@@ -459,7 +459,7 @@ namespace MySTL {
         void emplace_back(Args&&... args) {
             if (finish_ < end_of_storage_) {
                 data_allocator::construct(&*finish_, MySTL::forward<Args>(args)...);
-                ++end;
+                ++finish_;
             }
             else {
                 reallocate_emplace(end_, MySTL::forward<Args>(args)...);
