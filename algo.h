@@ -2,7 +2,7 @@
  * @Description: 
  * @Author: Chen.Yu
  * @Date: 2021-04-25 16:24:28
- * @LastEditTime: 2021-04-25 23:44:33
+ * @LastEditTime: 2021-04-26 02:58:35
  * @LastEditors: Chen.Yu
  */
 #ifndef _ALGO_H_
@@ -96,7 +96,7 @@ namespace MySTL {
 
     /*****************************************************************************************/
     // find
-    // 在[first, last)区间内找到等于 value 的元素，返回指向该元素的迭代器
+    // 在[first, last)区间内找到等于第一个 value 的元素，返回指向该元素的迭代器
     /*****************************************************************************************/
     template <class InputIter, class T>
     InputIter
@@ -115,7 +115,7 @@ namespace MySTL {
     /*****************************************************************************************/   
     template <class InputIter, class UnaryPredicate>
     InputIter
-    find(InputIter first, InputIter last, UnaryPredicate unary_pred) {
+    find_if(InputIter first, InputIter last, UnaryPredicate unary_pred) {
         while (first != last && !unary_pred(*first)) {
             first++;
         }
@@ -1132,6 +1132,117 @@ namespace MySTL {
     }
 
 
+    /*****************************************************************************************/
+    // swap_ranges
+    // 将 [first1, last1) 区间内的元素 与 "从 first2 开始，个数相同"的元素 互相交换
+    // 交换的区间长度必须相同，两个序列不能互相重叠，否则执行结果未可预期
+    // 返回一个迭代器，指向序列二最后一个被交换元素的下一位置
+    /*****************************************************************************************/
+    template <class ForwardIter1, class ForwardIter2>
+    ForwardIter2
+    swap_range(ForwardIter1 first1, ForwardIter1 last1,
+              ForwardIter2 first2) 
+    {
+        for(; first1 != last1; first1++, first2++) {
+            MySTL::iter_swap(first1, first2);
+        }
+
+        return first2;
+    }
+
+
+    /*****************************************************************************************/
+    // transform
+    // 第一个版本以函数对象 unary_op 作用于[first, last)中的每个元素并将结果保存至 result 中
+    // 第二个版本以函数对象 binary_op 作用于两个序列[first1, last1)、[first2, last2)的相同位置
+    /*****************************************************************************************/
+    template <class InputIter, class OutputIter, class UnaryOperation>
+    OutputIter
+    transform(InputIter first, InputIter last,
+              OutputIter result, UnaryOperation unary_op)
+    {
+        for(; first != last; ++first) {
+            *result = unary_op(*first);
+        }
+
+        return result;
+    }
+
+    template <class InputIter1, class InputIter2, class OutputIter, class BinaryOperation>
+    OutputIter
+    transform(InputIter1 first1, InputIter1 last,
+              InputIter2 first2, OutputIter result, BinaryOperation binary_op) 
+    {
+        for(; first1 != last1; ++first1, ++first2, ++result) {
+            *result = binary_op(*first1, *first2);
+        }
+
+        return result;
+    }
+
+
+    /*****************************************************************************************/
+    // remove
+    // 移除所有与指定 value 相等的元素
+    // 并不从容器中删除这些元素，所以 remove 和 remove_if 不适用于 array
+    /*****************************************************************************************/    
+    template <class ForwardIter, class T>
+    ForwardIter remove(ForwardIter first, ForwardIter last, const T& value) {
+        first = MySTL::find(first, last, value); // 找出第一个相等的元素
+        auto next = first;
+        return first == last ? first : MySTL::remove_copy(++next, last, first, value);
+    }
+
+
+    /*****************************************************************************************/
+    // remove_copy
+    // 移除区间内与指定 value 相等的元素，并将结果复制到以 result 标示起始位置的容器上。
+    // 并不真正从 容器中删除元素
+    /*****************************************************************************************/
+    template <class InputIter, class OutputIter, class T>
+    OutputIter
+    remove_copy(InputIter first, InputIter last, OutputIter result, const T& value) 
+    {
+        for(; first != last; ++first) {
+            if(*first != value) {
+                *result++ = *first;
+            }
+        }
+
+        return result;
+    }
+
+    /*****************************************************************************************/
+    // remove_copy_if
+    // 移除区间内所有令一元操作 unary_pred 为 true 的元素，并将结果复制到以 result 为起始位置的容器上
+    /*****************************************************************************************/
+    template <class InputIter, class OutputIter, class UnaryPredicate>
+    OutputIter
+    remove_copy_if(InputIter first, InputIter last,
+                   OutputIter result, UnaryPredicate unary_pred)
+    {
+        for(; first != last; ++first) {
+            if(!unary_pred(*first)) {
+                *result = *first;
+                ++result;
+            }
+        }
+
+        return result;
+    }
+
+    /*****************************************************************************************/
+    // remove_if
+    // 移除区间内所有令一元操作 unary_pred 为 true 的元素
+    /*****************************************************************************************/
+    template <class ForwardIter, class UnaryPredicate>
+    ForwardIter
+    remove_if(ForwardIter first, ForwardIter last, UnaryPredicate unary_pred)
+    {
+        first = MySTL::find_if(first, last, unary_pred);
+        auto next = first;
+        return first == last ? first : MySTL::remove_copy_if(++next, last, first, unary_pred);
+    }
     
 
 
