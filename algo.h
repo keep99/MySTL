@@ -2,7 +2,7 @@
  * @Description: 
  * @Author: Chen.Yu
  * @Date: 2021-04-25 16:24:28
- * @LastEditTime: 2021-04-26 02:58:35
+ * @LastEditTime: 2021-04-27 04:19:13
  * @LastEditors: Chen.Yu
  */
 #ifndef _ALGO_H_
@@ -11,6 +11,8 @@
 #include "algobase.h"
 #include "iterator_base.h"
 #include "iterator_reverse_iterator.h"
+#include "functional.h"
+#include "type_traits.h"
 
 namespace MySTL {
     /*****************************************************************************************/
@@ -1140,7 +1142,7 @@ namespace MySTL {
     /*****************************************************************************************/
     template <class ForwardIter1, class ForwardIter2>
     ForwardIter2
-    swap_range(ForwardIter1 first1, ForwardIter1 last1,
+    swap_ranges(ForwardIter1 first1, ForwardIter1 last1,
               ForwardIter2 first2) 
     {
         for(; first1 != last1; first1++, first2++) {
@@ -1244,7 +1246,536 @@ namespace MySTL {
         return first == last ? first : MySTL::remove_copy_if(++next, last, first, unary_pred);
     }
     
+    /*****************************************************************************************/
+    // replace
+    // 将区间内所有的 old_value 都以 new_value 替代
+    /*****************************************************************************************/
+    template <class ForwardIter, class T>
+    void replace(ForwardIter first, ForwardIter last,
+                 const T& old_value, const T& new_value)
+    {
+        for(; first != last; ++first)
+        {
+            if(*first == old_value) {
+                *first = new_value;
+            }
+        }
+    }
 
+    
+    /*****************************************************************************************/
+    // replace_copy
+    // 行为与 replace 类似，不同的是将结果复制到 result 所指的容器中，原序列没有改变
+    /*****************************************************************************************/
+    template <class InputIter, class OutputIter, class T>
+    OutputIter
+    replace_copy(InputIter first, InputIter last,
+                 OutputIter result, const T& old_value, const T& new_value)
+    {
+        for(; first != last; ++first, ++result) {
+            // 如果旧序列上的元素等于 old_value，就放 new_value 到新序列中
+            // 否则就将元素拷贝一份放进新序列中
+            *result = *first == old_value ? new_value : *first;
+        }
+    }
+
+
+    /*****************************************************************************************/
+    // replace_if
+    // 将区间内所有令一元操作 unary_pred 为 true 的元素都用 new_value 替代
+    /*****************************************************************************************/    
+    template <class ForwardIter, class UnaryPredicate, class T>
+    void replace_if(ForwardIter first, ForwardIter last, UnaryPredicate unary_pre, const T& new_value) {
+        for(; first != last; ++first) {
+            if(unary_pre(*first)) {
+                *first = new_value;
+            }
+        }
+    }
+
+
+    /*****************************************************************************************/
+    // replace_copy_if
+    // 行为与 replace_if 类似，不同的是将结果复制到 result 所指的容器中，原序列没有改变
+    /*****************************************************************************************/
+    template <class InputIter, class OutputIter, class UnaryPredicate, class T>
+    OutputIter
+    replace_copy_if(InputIter first, InputIter last, 
+                    OutputIter result, UnaryPredicate unary_pred, const T& new_value)
+    {
+        for(; first != last; ++first, ++result) {
+            *result = unary_pred(*first) ? new_value : *first;
+        }
+
+        return result;
+    }
+
+
+    /*****************************************************************************************/
+    // reverse
+    // 将[first, last)区间内的元素反转
+    /*****************************************************************************************/
+    template <class BidirectionalIter>
+    void reverse_dispatch(BidirectionalIter first, BidirectionalIter last, bidirectional_iterator_tag) {
+        while(true) {
+            if(first == last || first == --last) {
+                return;
+            }
+            MySTL::iter_swap(first++, last);
+        }
+    }
+
+    template <class RandomIter>
+    void reverse_dispatch(RandomIter first, RandomIter last, random_access_iterator_tag) {
+        // 只有 random_access_iterator_tag 才能做到以下的 first < last 判断
+        while(first < last) {
+            MySTL::iter_swap(first++, --last);
+        }
+    }
+
+    template <class BidirectionalIter>
+    void reverse(BidirectionalIter first, BidirectionalIter last) {
+        MySTL::reverse_dispatch(first, last, iterator_category(first));
+    }
+
+
+    /*****************************************************************************************/
+    // reverse_copy
+    // 行为与 reverse 类似，不同的是将结果复制到 result 所指容器中
+    /*****************************************************************************************/
+    template <class BidirectionalIter, class OutputIter>
+    OutputIter
+    reverse_copy(BidirectionalIter first, BidirectionalIter last, OutputIter result)
+    {
+        while(first != last) {
+            --last;
+            *result = *last;
+            ++result;
+        }
+
+        return result;
+    }
+
+
+    /*****************************************************************************************/
+    // random_shuffle
+    // 将[first, last)内的元素次序随机重排
+    // 重载版本使用一个产生随机数的函数对象 rand
+    /*****************************************************************************************/
+    template <class RandomIter>
+    void random_shuffle(RandomIter first, RandomIter last) {
+        if(first == last) {
+            return;
+        }
+
+        for(RandomIter i = first + 1; i != last; ++i) {
+            MySTL::iter_swap(i, first + (rand() % (i - first + 1)));
+        }
+    }
+
+    // 重载版本使用一个产生随机数的函数对象 rand
+    template <class RandomIter, class RandomNumberGenerator>
+    void random_shuffle(RandomIter first, RandomIter last, RandomNumberGenerator rand) {
+        if(first == last) {
+            return;
+        }
+        for(auto i = first + 1; i != last; ++i) {
+            MySTL::iter_swap(i, first + rand((i - first) + 1));
+        }
+    }
+
+
+    /*****************************************************************************************/
+    // rotate
+    // 将[first, middle)内的元素和 [middle, last)内的元素互换，可以交换两个长度不同的区间
+    // 返回 原 first 元素旋转后的迭代器，即 first + (last - n_first)
+    // 画图理解算法
+    /*****************************************************************************************/
+    template <class ForwardIter>
+    ForwardIter
+    rotate_dispatch(ForwardIter first, ForwardIter middle,
+                    ForwardIter last, forward_iterator_tag) 
+    {
+        ForwardIter first2 = middle;
+
+        do {
+            MySTL::swap(*first++, *first2++);
+            if(first == middle) {
+                middle = first2;
+            }
+        } while(first2 != last); // 先将后半段移到后面
+
+        /* 上面和下面的过程是相同的，可以做成一个循环，分开是为了记录下返回值 */
+        ForwardIter new_middle = first; // 迭代器返回的位置，记录下来
+        /* 以下是重复的过程，新的first, 新的middle，重复 */
+        first2 = middle;
+        while(first2 != last) {
+            MySTL::swap(*first++, *first2++);
+            if(first == middle)
+            {
+                middle = first2;
+            }
+            else if(first2 == last) { // 其实结束条件为 middle 到达 last，就是后半段没有了
+                first2 = middle;
+            }
+        }
+
+        return new_middle;
+    }
+
+    // rotate_dispatch 的 bidirectional_iterator_tag 版本
+    // 这里的话 双向迭代器，与 forward_iterator_tag相比，可以使用 reverse 算法。
+    // 但是不能直接三次旋转，因为 C++ 11 的 rotate 需要 返回原 first 元素旋转后的迭代器。
+    // 所以出现了下面的算法
+    template <class BidirectIter>
+    BidirectIter
+    rotate_dispatch(BidirectIter first, BidirectIter middle,
+                    BidirectIter last, bidirectional_iterator_tag) 
+    {
+        if(first == middle) {
+            return last;
+        }
+        if(last == middle) {
+            return first;
+        }
+        
+        // 先分段反转
+        MySTL::reverse_dispatch(first, middle, bidirectional_iterator_tag());
+        MySTL::reverse_dispatch(middle, last, bidirectional_iterator_tag());
+        // 再整体反转
+        while(first != middle && last != middle) {
+            MySTL::swap(*first++, *--last);
+            if(first == middle)
+            {
+                MySTL::reverse_dispatch(middle, last, bidirectional_iterator_tag());
+                return last;
+            }
+            else {
+                MySTL::reverse_dispatch(first, middle, bidirectional_iterator_tag());
+                return first;
+            }
+        }
+    }
+
+    // rotate_dispatch 的 random_access_iterator_tag 版本
+    // TO DO
+    // 具体算法讲解参照这篇博客 https://blog.csdn.net/dongyu_1989/article/details/80090640
+    template <class RandomIter>
+    RandomIter
+    rotate_dispatch(RandomIter first, RandomIter middle,
+                    RandomIter last, random_access_iterator_tag) 
+    {
+        if(first == middle) {
+            return last;
+        }
+        if(middle == last) {
+            return first;
+        }
+
+        auto n = last - first;      // 整体长度
+        auto l = middle - first;    // 左边长度
+        auto r = n - l;             // 右边长度
+        auto result = first + (last - middle); // 返回值，最后 first 指向的元素会被移动到这个位置
+        // 如果左边长度等于右边长度的话，直接调用 swap_ranges (可以交换序列1和序列2长度相等的序列)。
+        if(l == r) {
+            MySTL::swap_ranges(first, middle, middle);
+            return result;
+        }
+        auto cycle_times = gcd(n, l); // 循环位移的遍数，比如 10 , 2。只需要循环遍历 2 次。【1,2,3,4,5,6,7,8,9,10】第一次将 2，4，6，8，10 进行 循环移动，第二次将 1，3，5，7，9 循环移动
+        for(auto i = 0; i < cycle_times; ++i) { // 循环 cycle_times 次
+            auto tmp = *first; // 先记录下头位置
+            auto p = first;
+            if(l < r) { // 左边长度小于右边长度
+                for(auto j = 0; j < l / cycle_times - 1; ++j) { // 一次循环需要移动几个元素。比如，10，2。j 从 0 到 4，需要移动四个元素
+                    if(p > first + r) { 
+                        *p = *(p - r);  // 最后把前面的元素放到最后，相当于是一个循环
+                        p -= r;
+                    }
+                    *p = *(p + l); // 把后面的元素往前面移动
+                    p += l;
+                }
+            }
+            else {
+                for(auto j = 0; j < l / cycle_times - 1; ++j) {
+                    if(p < last - l) {
+                        *p = *(p + l);
+                        p += l;
+                    }
+                    *p = *(p - r);
+                    p -= r;
+                }
+            }
+            *p = tmp;
+            ++first;
+        }
+
+        return result;
+    }
+
+    // 求最大公因子(公约数)，辗转相除法
+    template <class EuclideanRingElement>
+    EuclideanRingElement gcd(EuclideanRingElement m, EuclideanRingElement n)
+    {
+        while(n != 0) {
+            EuclideanRingElement t = m % n;
+            m = n;
+            n = t;
+        }
+
+        return m;
+    }
+
+    // // 辗转相除法一行代码
+    // int gcd(int m, int n) {
+    //     return n == 0 ? m : gcd(n, m % n);
+    // }
+
+    template <class ForwardIter>
+    ForwardIter
+    rotate(ForwardIter first, ForwardIter middle, ForwardIter last) {
+        if(first == middle) {
+            return last;
+        }
+        if(middle == last) {
+            return first;
+        }
+
+        return MySTL::rotate_dispatch(first, middle, last, iterator_category(first));
+    }
+
+
+    /*****************************************************************************************/
+    // rotate_copy
+    // 行为与 rotate 类似，不同的是将结果复制到 result 所指的容器中
+    // 由于不需要原地在原容器中调整，实现也就简单了许多，只要先把后端内容复制到新容器的前端，再
+    // 把前段接续复制到新容器即可
+    /*****************************************************************************************/
+    template <class ForwardIter, class OutputIter>
+    ForwardIter
+    rotate_copy(ForwardIter first, ForwardIter middle,
+                ForwardIter last, OutputIter result)
+    {
+        return MySTL::copy(first, middle, MySTL::copy(middle, last, result));
+    }
+    
+
+    // TO DO
+    /*****************************************************************************************/
+    // is_permutation 
+    // 判断[first1,last1)是否为[first2, last2)的排列组合
+    /*****************************************************************************************/
+    template <class ForwardIter1, class ForwardIter2, class BinaryPred>
+    bool is_permutation_aux(ForwardIter1 first1, ForwardIter1 last1,
+                        ForwardIter2 first2, ForwardIter2 last2, BinaryPred pred)
+    {
+        if(MySTL::distance(first1, last1) != MySTL::distance(first2, last2)) {
+            return false;
+        }
+
+        for(auto it = first1; it != last1; ++it) {
+            if(MySTL::find(first1, it, [it ,pred](typename iterator_traits<ForwardIter1>::value_type x) { return pred(*it, x); }) != it)
+                continue;
+            // 统计元素个数
+            auto count1 = MySTL::count_if(it, last1, [it,pred](typename iterator_traits<ForwardIter1>::value_type x) { return pred(*it, x); });
+            auto count2 = MySTL::count_if(first2, last2, [it,pred](typename iterator_traits<ForwardIter1>::value_type x) { return pred(*it, x); });
+            if(count1 != count2) {
+                return false;
+            }
+        }
+ 
+        return true;
+    }
+
+    template <class ForwardIter1, class ForwardIter2, class BinaryPred>
+    bool is_permutation(ForwardIter1 first1, ForwardIter1 last1,
+                        ForwardIter2 first2, ForwardIter2 last2, BinaryPred pred)
+    {
+        return is_permutation_aux(first1, last1, first2, last2, pred);
+    }
+
+
+    template <class ForwardIter1, class ForwardIter2>
+    bool is_permutation(ForwardIter1 first1, ForwardIter1 last1,
+                        ForwardIter2 first2, ForwardIter2 last2)
+    {   
+        using v1 = iterator_traits<ForwardIter1>::value_type;
+        using v2 = iterator_traits<ForwardIter2>::value_type;
+        static_assert(MySTL::is_same<v1, v2>::value, "the type should be same in MySTL::is_permutation");
+
+        return is_permutation_aux(first1, last1, first2, last2, MySTL::equal_to<v1>()); // TO DO
+    }
+
+
+
+    /*****************************************************************************************/
+    // next_permutation
+    // 取得[first, last)所标示序列的下一个排列组合，如果没有下一个排序组合，返回 false，否则返回 true
+    /*****************************************************************************************/
+    // 思想：
+    // 1、找下一个排列，也就是希望一个数更大
+    // 2、这样就需要将后面的大数和前面的小数进行交换，就能得到一个更大的数
+    // 3、我们还希望下一个数增加的幅度尽可能小，因此，在尽可能靠右的低位查找，也就是从后往前查找。找到后将 尽可能小的大数和前面的小数进行交换
+    // 4、将大数换到前面之后，需要将大数后面的所有数重置为升序，升序排列就是最小的排列
+    template <class BidirectionalIter>
+    bool next_permutation(BidirectionalIter first, BidirectionalIter last)
+    {
+        // 空或者只有一个元素，没有下一个排列
+        BidirectionalIter i = last;
+        if(first == last || first == --i) {
+            return false;
+        }
+
+        for(;;) {
+            BidirectionalIter ii = i;
+            --i;
+            // 锁定两个两个相邻元素 ii 和 i
+            if(*i < *ii) { // 如果前一个元素小于后一个元素
+                BidirectionalIter j = last; // 令 j 指向尾端
+                while(!(*i < *--j)) {}
+                MySTL::iter_swap(i， j); // 交换 i,j 所指元素 
+                MySTL::reverse(ii, last); // 将 ii 之后（包括 ii）所有元素反转
+                return true;
+            }
+
+            if(i == first) { // 进行到最前面了
+                MySTL::reverse(first, last);
+                return false;
+            }
+        }
+    }
+
+    // 重载版本使用函数对象 comp 代替比较操作
+    template <class BidirectionalIter, class Compare>
+    bool next_permutation(BidirectionalIter first, BidirectionalIter last, Compare comp)
+    {
+        // 空或者只有一个元素，没有下一个排列
+        BidirectionalIter i = last;
+        if(first == last || first == --i) {
+            return false;
+        }
+
+        for(;;) {
+            BidirectionalIter ii = i;
+            --i;
+            // 锁定两个两个相邻元素 ii 和 i
+            if(comp(*i, *ii)) { // 如果前一个元素小于后一个元素
+                BidirectionalIter j = last; // 令 j 指向尾端
+                while(!comp(*i, *--j)) {}
+                MySTL::iter_swap(i， j); // 交换 i,j 所指元素 
+                MySTL::reverse(ii, last); // 将 ii 之后（包括 ii）所有元素反转
+                return true;
+            }
+
+            if(i == first) { // 进行到最前面了
+                MySTL::reverse(first, last);
+                return false;
+            }
+        }
+    }
+
+
+    /*****************************************************************************************/
+    // prev_permutation
+    // 取得[first, last)所标示序列的上一个排列组合，如果没有上一个排序组合，返回 false，否则返回 true
+    /*****************************************************************************************/
+    template <class BidirectionalIter>
+    bool pre_premutation(BidirectionalIter first, BidirectionalIter last) {
+        BidirectionalIter i = last;
+        i--;
+        if(first == last || first == i) {
+            return false;
+        }
+        for(;;) {
+            BidirectionalIter ii = i;
+            --i;
+            if(*ii < *i) {
+                BidirectionalIter j = last;
+                while(!(*--j < *i)) {}
+                MySTL::iter_swap(i, j);
+                MySTL::reverse(ii, last);
+                return true;
+            }
+            if(i == last) {
+                MySTL::reverse(first, last);
+                return false;
+            }
+        }
+    }
+
+    template <class BidirectionalIter, class Compare>
+    bool pre_premutation(BidirectionalIter first, BidirectionalIter last, Compare comp) {
+        BidirectionalIter i = last;
+        i--;
+        if(first == last || first == i) {
+            return false;
+        }
+        for(;;) {
+            BidirectionalIter ii = i;
+            --i;
+            if(comp(*ii, *i)) {
+                BidirectionalIter j = last;
+                while(!(comp(*--j, *i))) {}
+                MySTL::iter_swap(i, j);
+                MySTL::reverse(ii, last);
+                return true;
+            }
+            if(i == last) {
+                MySTL::reverse(first, last);
+                return false;
+            }
+        }
+    }
+
+    /*****************************************************************************************/
+    // merge
+    // 将两个经过排序的集合 S1 和 S2 合并起来置于另一段空间，返回一个迭代器指向最后一个元素的下一位置
+    /*****************************************************************************************/
+    template <class InputIter1, class InputIter2, class OutputIter>
+    OutputIter
+    merge(InputIter1 first1, InputIter1 last1,
+          InputIter2 first2, InputIter2 last2, OutputIter result)
+    {
+        while(first1 != last1 && first2 != last2) {
+            if(*first2 < *first1) {
+                *result = *first2;
+                ++first2;
+            }
+            else {
+                *result = first1;
+                ++first1;
+            }
+            ++result;
+        }
+
+        return MySTL::copy(first2, last2, MySTL::copy(first1, last1, result));
+    }
+
+    // 重载版本使用函数对象 comp 代替比较操作
+    template <class InputIter1, class InputIter2, class OutputIter, class Compare>
+    OutputIter
+    merge(InputIter1 first1, InputIter1 last1,
+          InputIter2 first2, InputIter2 last2, OutputIter result, Compare comp)
+    {
+        while(first1 != last1 && first2 != last2) {
+            if(comp(*first2, *first1)) {
+                *result = *first2;
+                ++first2;
+            }
+            else {
+                *result = first1;
+                ++first1;
+            }
+            ++result;
+        }
+
+        return MySTL::copy(first2, last2, MySTL::copy(first1, last1, result));
+    }
+
+
+    /*****************************************************************************************/
+    // inplace_merge
+    // 把连接在一起的两个有序序列结合成单一序列并保持有序
+    /*****************************************************************************************/
 
 }
 
