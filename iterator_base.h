@@ -2,7 +2,7 @@
  * @Description: 五种迭代器型别、基础迭代器iterator_base、iterator_traits、advance、distance。
  * @Author: Chen.Yu
  * @Date: 2021-04-02 20:54:47
- * @LastEditTime: 2021-04-24 17:47:01
+ * @LastEditTime: 2021-04-27 00:24:59
  * @LastEditors: Chen.Yu
  */
 #ifndef _ITERATOR_H
@@ -81,7 +81,7 @@ namespace MySTL {
     };
 
 
-    // 榨汁机 traits，榨取迭代器的相应型别
+    // iterator_traits，榨取迭代器的相应型别
     template<class Iterator>
     struct iterator_traits {
         using iterator_category     = typename Iterator::iterator_category;
