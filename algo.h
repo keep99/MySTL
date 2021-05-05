@@ -2,7 +2,7 @@
  * @Description: 
  * @Author: Chen.Yu
  * @Date: 2021-04-25 16:24:28
- * @LastEditTime: 2021-04-30 00:25:01
+ * @LastEditTime: 2021-05-06 03:08:49
  * @LastEditors: Chen.Yu
  */
 #ifndef _ALGO_H_
@@ -2233,12 +2233,468 @@ namespace MySTL {
     // partition
     // 对区间内的元素重排，被一元条件运算判定为 true 的元素会放到区间的前段
     // 该函数不保证元素的原始相对位置
+    // 返回值为后半段的首元素
     /*****************************************************************************************/    
+    template <class ForwardIter, class UnaryPredicate>
+    ForwardIter
+    partition(ForwardIter first, ForwardIter last,
+            UnaryPredicate unary_pred)
+    {
+        if(first == last) {
+            return first;
+        }
+
+        // 先找到第一个不满足条件的位置
+        while(unary_pred(*first)) {
+            if(++first == last) {
+                return first;
+            }
+        }
+
+        ForwardIter next = first;
+
+        while(++next != last) {
+            if(unary_pred(*next)) {
+                MySTL::iter_swap(first, next);
+                ++first;
+            }
+        }
+
+        return first;
+    }
+
+    template <class BidirectionalIter, class UnaryPredicate>
+    BidirectionalIter
+    partition(BidirectionalIter first, BidirectionalIter last,
+            UnaryPredicate unary_pred)
+    {
+        while(true) {
+            while(first != last && unary_pred(*first)) { // 找到第一个不满足 条件 的 first位置
+                ++first;
+            }
+            if(first == last) {
+                break;
+            }
+            --last;
+            while(first != last && !unary_pred(*last)) { //找到最后一个满足 条件的 last 位置
+                --last;
+            }
+            if(first == last) {
+                break;
+            }
+            MySTL::iter_swap(first, last); // 交换
+            ++first;
+        }
+
+        return first;
+    }
+
+    template <class ForwardIter, class UnaryPredicate>
+    ForwardIter partition(ForwardIter first, ForwardIter last, UnaryPredicate unary_pre)
+    {
+        return partition_aux(first, last, unary_pre, iterator_category(first));
+    }
 
     
-}
+    /*****************************************************************************************/
+    // sort
+    // 将[first, last)内的元素以递增的方式排序
+    /*****************************************************************************************/
+    // 在小数据量的情况下，简单的插入排序要比 快速排序要快 ———— 快速排序需要函数递归调用
+    enum { threshold_ = 16 }; 
+
+    //-------------------------------------------------- 默认
+    // 找出 2 ^ k <= n 的最大值 k。；例如：n = 7, k = 2; n = 20, k = 4; n = 8; k = 3;
+    // 用来控制分割恶化的情况
+    template <class Size>
+    Size lg2(Size n) 
+    {
+        Size k = 0;
+        for(; n > 1; n >>= 1) {
+            ++k;
+        }
+
+        return k;
+    }
+
+    // 达到的效果是：以此时的 first 为轴，将序列分为左右两半，左半部分的所有元素值都小于等于中枢值，右半部分的所有元素值都大于等于中枢值
+    template <class RandomIter, class T>
+    RandomIter
+    unchecked_partition(RandomIter first, RandomIter last, const T& pivot)
+    {
+        while(true) {
+            while(*first < pivot) { // first 找到 >= pivot 就停下来
+                ++first;
+            }
+            --last; //调整
+            while(pivot < *last) {  // last 找到 <= pivot 就停下来
+                --last;
+            }
+            if(!(first < last)) {
+                return first;
+            }
+            MySTL::iter_swap(first, last);
+            ++first;
+        }
+    }
+
+    template <class RandomIter, class Size>
+    void intro_sort(RandomIter first, RandomIter last, Size depth_limit) 
+    {
+        while(last - first > static_cast<int>(threshold_))
+        {
+            if(depth_limit == 0)    // 至此，递归层次过深
+            {
+                MySTL::partial_sort(first, last, last); // 改为用 heap_sort
+                return;
+            }
+
+            --depth_limit;
+            auto mid = MySTL::median(*(first), *(first + (last - first) / 2), *(last - 1)); // 三点中值（头、尾、中央），作为中枢轴
+            auto cut = MySTL::unchecked_partition(first, last, mid);
+            MySTL::intro_sort(cut, last, depth_limit); // 对右半段递归执行 sort
+            last = cut; // 现在回到 while 函数，准备对左半段递归进行 sort
+        }
+    }
+
+    template <class RandomIter, class T>
+    void unchecked_linear_insert(RandomIter last, const T& value) 
+    {
+        RandomIter next = last;
+        --next;
+        while(value < *next) {
+            *last = *next;
+            last = next;
+            --next;
+        }
+        *last = value;
+    }
+
+    template <class RandomIter>
+    void unchecked_insertion_sort(RandomIter first, RandomIter last)
+    {
+        for (auto i = first; i != last; ++i)
+        {
+            MySTL::unchecked_linear_insert(i, *i);
+        }
+    }
 
 
+    // 插入排序的改进版
+    // 先和头进行比较，如果大于头，就不直接一个一个比较了，直接将前面的元素往后拷贝，然后将头置为 value
+    template <class RandomIter>
+    void insertion_sort(RandomIter first, RandomIter last)
+    {
+        if(first == last)
+            return;
+        for(auto i = first + 1; i != last; ++i) {
+            auto value = *i;
+            if(value < *first) { 
+                MySTL::copy_backward(first, i, i + 1);
+                *first = value;
+            }
+            else { // 尾不小于头
+                MySTL::unchecked_linear_insert(i, value);
+            }
+        }
+    }
 
+    template <class RandomIter>
+    void final_insertion_sort(RandomIter first, RandomIter last)
+    {
+        if(last - first > static_cast<int>(threshold_))
+        {
+            MySTL::insertion_sort(first, first + threshold_);
+            MySTL::unchecked_insertion_sort(first + threshold_, last);
+        }
+        else {
+            MySTL::insertion_sort(first, last);
+        }
+    }
+
+
+    template <class RandomIter>
+    void sort(RandomIter first, RandomIter last)
+    {
+        if(first != last) {
+            MySTL::intro_sort(first, last, lg2(last - first) * 2);
+            MySTL::final_insertion_sort(first, last);
+        }
+    }
+    //-------------------------------------------------- 默认
+
+
+    //-------------------------------------------------- 重载版本使用函数对象 comp 代替比较操作
+    // 分割函数 unchecked_partition
+    template <class RandomIter, class T, class Compared>
+    RandomIter
+    unchecked_partition(RandomIter first, RandomIter last,
+                        const T& pivot, Compared comp)
+    {
+        while (true)
+        {
+            while (comp(*first, pivot))
+                ++first;
+            --last;
+            while (comp(pivot, *last))
+                --last;
+            if (!(first < last))
+                return first;
+            MySTL::iter_swap(first, last);
+            ++first;
+        }
+    }
+
+    // 内省式排序，先进行 quick sort，当分割行为有恶化倾向时，改用 heap sort
+    template <class RandomIter, class Size, class Compared>
+    void intro_sort(RandomIter first, RandomIter last,
+                    Size depth_limit, Compared comp)
+    {
+        while (last - first > static_cast<int>(threshold_))
+        {
+            if (depth_limit == 0)
+            {                            // 到达最大分割深度限制
+                MySTL::partial_sort(first, last, last, comp);  // 改用 heap_sort
+                return;
+            }
+            --depth_limit;
+            auto mid = MySTL::median(*(first), *(first + (last - first) / 2), *(last - 1));
+            auto cut = MySTL::unchecked_partition(first, last, mid, comp);
+            MySTL::intro_sort(cut, last, depth_limit, comp);
+            last = cut;
+        }
+    }
+
+    // 插入排序辅助函数 unchecked_linear_insert
+    template <class RandomIter, class T, class Compared>
+    void unchecked_linear_insert(RandomIter last, const T& value, Compared comp)
+    {
+        auto next = last;
+        --next;
+        while (comp(value, *next))
+        {  // 从尾部开始寻找第一个可插入位置
+            *last = *next;
+            last = next;
+            --next;
+        }
+        *last = value;
+    }
+
+    // 插入排序函数 unchecked_insertion_sort
+    template <class RandomIter, class Compared>
+    void unchecked_insertion_sort(RandomIter first, RandomIter last,
+                                Compared comp)
+    {
+        for (auto i = first; i != last; ++i)
+        {
+            MySTL::unchecked_linear_insert(i, *i, comp);
+        }
+    }
+
+    // 插入排序函数 insertion_sort
+    template <class RandomIter, class Compared>
+    void insertion_sort(RandomIter first, RandomIter last, Compared comp)
+    {
+        if (first == last)
+            return;
+        for (auto i = first + 1; i != last; ++i)
+        {
+            auto value = *i;
+            if (comp(value, *first))
+            {
+                MySTL::copy_backward(first, i, i + 1);
+                *first = value;
+            }
+            else
+            {
+                MySTL::unchecked_linear_insert(i, value, comp);
+            }
+        }
+    }
+
+    // 最终插入排序函数 final_insertion_sort
+    template <class RandomIter, class Compared>
+    void final_insertion_sort(RandomIter first, RandomIter last, Compared comp)
+    {
+        if (last - first > static_cast<int>(threshold_))
+        {
+            MySTL::insertion_sort(first, first + threshold_, comp);
+            MySTL::unchecked_insertion_sort(first + threshold_, last, comp);
+        }
+        else
+        {
+            MySTL::insertion_sort(first, last, comp);
+        }
+    }
+    
+    template <class RandomIter, class Compare>
+    void sort(RandomIter first, RandomIter last, Compare comp)
+    {
+        if(first != last) {
+            MySTL::intro_sort(first, last, lg2(last - first) * 2, comp);
+            MySTL::final_insertion_sort(first, last, comp);
+        }
+    }
+    //--------------------------------------------------
+
+
+    /*****************************************************************************************/
+    // nth_element
+    // 对序列重排，使得所有小于第 n 个元素的元素出现在它的前面，大于它的出现在它的后面
+    /*****************************************************************************************/
+    template <class RandomIter>
+    void nth_element(RandomIter first, RandomIter nth, RandomIter last) 
+    {
+        if(nth == last) {
+            return;
+        }
+
+        while(last - first > 3) {
+            auto cut = MySTL::unchecked_partition(first, last, MySTL::median(*first,
+                                *(first + (last - first) / 2),
+                                *(last - 1)));
+            if(cut <= nth) {
+                first = cut;
+            }
+            else {
+                last = cut;
+            }
+        }
+        MySTL::insertion_sort(first, last);
+    }
+
+    template <class RandomIter, class Compare>
+    void nth_element(RandomIter first, RandomIter nth, RandomIter last, Compare comp) 
+    {
+        if(nth == last) {
+            return;
+        }
+
+        while(last - first > 3) {
+            auto cut = MySTL::unchecked_partition(first, last, MySTL::median(*first,
+                                *(first + (last - first) / 2),
+                                *(last - 1)), comp);
+            if(cut <= nth) {
+                first = cut;
+            }
+            else {
+                last = cut;
+            }
+        }
+        MySTL::insertion_sort(first, last, comp);
+    }
+
+
+    /*****************************************************************************************/
+    // unique_copy
+    // 从[first, last)中将元素复制到 result 上，序列必须有序，如果有重复的元素，只会复制一次
+    /*****************************************************************************************/
+    // unique_copy_dispatch 的 forward_iterator_tag 版本
+    template <class InputIter, class ForwardIter>
+    ForwardIter 
+    unique_copy_dispatch(InputIter first, InputIter last, ForwardIter result, forward_iterator_tag)
+    {
+        *result = *first;
+        while(++first != last) {
+            if(*result != *first) {
+                *++result = *first;
+            }
+        }
+
+        return ++result;
+    }
+
+    // unique_copy_dispatch 的 output_iterator_tag 版本
+    // output_iterator_tag 是 唯写，不能进行读操作 *result != *first
+    template <class InputIter, class ForwardIter>
+    ForwardIter 
+    unique_copy_dispatch(InputIter first, InputIter last, ForwardIter result, forward_iterator_tag)
+    {
+        auto value = *first;
+        *result = value;
+        while(++first != last) {
+            if(value != *first) {
+                value = *first;
+                *++result = value;
+            }
+        }
+    }
+
+
+    template <class InputIter, class OutputIter>
+    OutputIter
+    unique_copy(InputIter first, InputIter last, OutputIter result) 
+    {
+        if(first == last) {
+            return result;
+        }
+
+        return MySTL::unique_copy_dispatch(first, last, result, iterator_category(result));
+    }
+
+    // unique_copy_dispatch 的 output_iterator_tag 版本
+    // output_iterator_tag 是 唯写，不能进行读操作 *result != *first
+    template <class InputIter, class ForwardIter, class Compare>
+    ForwardIter 
+    unique_copy_dispatch(InputIter first, InputIter last, ForwardIter result, forward_iterator_tag, Compare comp)
+    {
+        auto value = *first;
+        *result = value;
+        while(++first != last) {
+            if(!comp(value, *first)) {
+                value = *first;
+                *++result = value;
+            }
+        }
+    }
+
+    // unique_copy_dispatch 的 forward_iterator_tag 版本
+    template <class InputIter, class ForwardIter, class Compare>
+    ForwardIter 
+    unique_copy_dispatch(InputIter first, InputIter last, ForwardIter result, forward_iterator_tag, Compare comp)
+    {
+        *result = *first;
+        while(++first != last) {
+            if(!comp(*result, *first)) {
+                *++result = *first;
+            }
+        }
+
+        return ++result;
+    }
+
+    // 重载版本使用函数对象 comp 代替比较操作
+    template <class InputIter, class OutputIter, class Compare>
+    OutputIter
+    unique_copy(InputIter first, InputIter last, OutputIter result, Compare comp) 
+    {
+        if(first == last) {
+            return result;
+        }
+
+        return MySTL::unique_copy_dispatch(first, last, result, iterator_category(result), comp);
+    }
+
+
+    /*****************************************************************************************/
+    // unique
+    // 移除[first, last)内重复的元素，序列必须有序，和 remove 类似，它也不能真正的删除重复元素
+    /*****************************************************************************************/
+    template <class ForwardIter>
+    ForwardIter unique(ForwardIter first, ForwardIter last)
+    {
+        first = MySTL::adjacent_find(first, last);
+        return MySTL::unique_copy(first, last, first);
+    }
+
+    // 重载版本
+    template <class ForwardIter, class Compare>
+    ForwardIter unique(ForwardIter first, ForwardIter last, Compare comp)
+    {
+        first = MySTL::adjacent_find(first, last, comp);
+        return MySTL::unique_copy(first, last, first, comp);
+    }
+
+} // namespace MySTL
 
 #endif
