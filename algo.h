@@ -2,7 +2,7 @@
  * @Description: 
  * @Author: Chen.Yu
  * @Date: 2021-04-25 16:24:28
- * @LastEditTime: 2021-05-06 03:08:49
+ * @LastEditTime: 2021-05-06 17:32:26
  * @LastEditors: Chen.Yu
  */
 #ifndef _ALGO_H_
@@ -14,6 +14,7 @@
 #include "functional.h"
 #include "type_traits.h"
 #include "tempbuf.h"
+#include "heap.h"
 
 namespace MySTL {
     /*****************************************************************************************/
