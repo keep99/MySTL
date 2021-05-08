@@ -2,7 +2,7 @@
  * @Description: list 容器。从这个容器开始，为了清楚，声明和定义分开。
  * @Author: Chen.Yu
  * @Date: 2021-04-04 14:21:48
- * @LastEditTime: 2021-04-20 02:24:14
+ * @LastEditTime: 2021-05-09 03:15:51
  * @LastEditors: Chen.Yu
  */
 #ifndef _LIST_H_
@@ -14,8 +14,8 @@
 #include "type_traits"
 #include "iterator_base.h"
 #include "iterator_reverse_iterator.h"
-#include "functional_base.h"  // TO DO
-#include "algorithm_base.h" // TO DO
+#include "functional.h"
+#include "algobase.h"
 #include "utility.h"
 
 namespace MySTL
@@ -930,6 +930,7 @@ namespace MySTL
         return MySTL::lexicographical_compare(left.cbegin(), left.end(), right.cbegin(), right.cend());
     }
 
+    template <class T, class Allocator>
     bool operator<=(const list<T, Allocator>& left, const list<T, Allocator>& right) {
         return !(left > right);
     }
