@@ -2,7 +2,7 @@
  * @Description: vector
  * @Author: Chen.Yu
  * @Date: 2021-04-03 14:03:48
- * @LastEditTime: 2021-05-09 03:13:08
+ * @LastEditTime: 2021-05-10 00:32:27
  * @LastEditors: Chen.Yu
  */
 #ifndef _VECTOR_H_
@@ -90,8 +90,18 @@ namespace MySTL {
 
         // 移动构造函数, vector列表初始化，已经把 start finish end 初始化为 nullptr 了 
         // 所以这里的效果就是 将这个对象的 end finish end 赋值为 other 的，然后将 other 的 三个成员 置为 nullptr。
-        vector(const vector&& other) noexcept: vector() {
-            swap(other);
+        // vector(const vector&& other) noexcept: vector() {
+        //     swap(other);
+        // }
+        // 以上的实现不好，改为下面的实现
+        vector(const vector&& other) noexcept : 
+                start_(other.start_),
+                finish_(other.finish_),
+                end_of_storage_(other.end_of_storage_)
+        {
+            other.start_ = nullptr;
+            other.finish_ = nullptr;
+            other.end_of_storage_ = nullptr;
         }
 
         // TO DO : 这里的做法不直观
