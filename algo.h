@@ -2,7 +2,7 @@
  * @Description: 
  * @Author: Chen.Yu
  * @Date: 2021-04-25 16:24:28
- * @LastEditTime: 2021-05-06 17:32:26
+ * @LastEditTime: 2021-05-10 18:40:20
  * @LastEditors: Chen.Yu
  */
 #ifndef _ALGO_H_
@@ -1363,6 +1363,7 @@ namespace MySTL {
     // random_shuffle
     // 将[first, last)内的元素次序随机重排
     // 重载版本使用一个产生随机数的函数对象 rand
+    // 参考 gcc 的实现
     /*****************************************************************************************/
     template <class RandomIter>
     void random_shuffle(RandomIter first, RandomIter last) {
@@ -1371,13 +1372,13 @@ namespace MySTL {
         }
 
         for(RandomIter i = first + 1; i != last; ++i) {
-            MySTL::iter_swap(i, first + (rand() % (i - first + 1)));
+            MySTL::iter_swap(i, first + (rand() % ((i - first) + 1)));
         }
     }
 
     // 重载版本使用一个产生随机数的函数对象 rand
     template <class RandomIter, class RandomNumberGenerator>
-    void random_shuffle(RandomIter first, RandomIter last, RandomNumberGenerator rand) {
+    void random_shuffle(RandomIter first, RandomIter last, RandomNumberGenerator& rand) {
         if(first == last) {
             return;
         }
