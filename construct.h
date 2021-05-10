@@ -2,7 +2,7 @@
  * @Description: 
  * @Author: Chen.Yu
  * @Date: 2021-04-02 21:56:56
- * @LastEditTime: 2021-04-09 21:21:16
+ * @LastEditTime: 2021-05-11 01:25:58
  * @LastEditors: Chen.Yu
  */
 #ifndef _CONSTRUCT_H
@@ -14,7 +14,7 @@
 
 namespace MySTL {
     template <class T1, class T2>
-    inline void construct(T1* ptr1, const T2& ptr2) {
+    inline void construct(T1* ptr1, const T2& value) {
         //placement new
         new(ptr1) T1(value);
     }
