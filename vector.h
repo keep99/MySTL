@@ -2,7 +2,7 @@
  * @Description: vector
  * @Author: Chen.Yu
  * @Date: 2021-04-03 14:03:48
- * @LastEditTime: 2021-05-10 00:32:27
+ * @LastEditTime: 2021-05-10 23:37:38
  * @LastEditors: Chen.Yu
  */
 #ifndef _VECTOR_H_
@@ -472,7 +472,7 @@ namespace MySTL {
                 ++finish_;
             }
             else {
-                reallocate_emplace(end_, MySTL::forward<Args>(args)...);
+                reallocate_emplace(finish_, MySTL::forward<Args>(args)...);
             } 
         }
 
