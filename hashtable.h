@@ -2,7 +2,7 @@
  * @Description: 
  * @Author: Chen.Yu
  * @Date: 2021-05-07 16:50:59
- * @LastEditTime: 2021-05-10 18:36:58
+ * @LastEditTime: 2021-05-11 15:08:06
  * @LastEditors: Chen.Yu
  */
 #ifndef _HASHTABLE_H
@@ -12,9 +12,10 @@
 #include "iterator_base.h"
 #include "algo.h"
 #include "vector.h"
-#include "allocator.h"
+#include "allocator.h" 
 #include "construct.h"
 #include "utility.h"
+#include "hash_fun.h"
 
 
 namespace MySTL {
@@ -210,17 +211,17 @@ namespace MySTL {
         friend struct hashtable_const_iterator<Key, Value, HashFcn, ExtractKey, EqualKey, Allocator>;
 
     public:
+        using key_type              = Key;
+        using value_type            = Value; 
+        using hasher                = HashFcn;              // 哈希函数
+        using key_equal             = EqualKey;             // 判断 key 是否相等的函数
+
         using size_type             = std::size_t;
         using difference_type       = std::ptrdiff_t;
         using reference             = value_type&;
         using const_reference       = const value_type&;
         using pointer               = value_type*;
         using const_pointer         = const value_type*;
-
-        using key_type              = Key;
-        using value_type            = Value; 
-        using hasher                = HashFcn;              // 哈希函数
-        using key_equal             = EqualKey;             // 判断 key 是否相等的函数
 
         using iterator              = hashtable_iterator<Key, Value, HashFcn, ExtractKey, EqualKey, Allocator>;
         using const_iterator        = hashtable_const_iterator<Key, Value, HashFcn, ExtractKey, EqualKey, Allocator>;
@@ -261,6 +262,17 @@ namespace MySTL {
             initialize_buckets(n);
         }
 
+        hashtable(size_type n,
+                  const HashFcn& hash,
+                  const EqualKey& equals)
+            : hash_(hash),
+              equals_(equal),
+              getkey_(ExtractKey()),
+              numElements_(0)
+        {
+            initialize_buckets(n);
+        }
+
         hashtable(const hashtable& other)
             : hash_(other.hash_),
               equals_(other.equals_),
@@ -269,10 +281,6 @@ namespace MySTL {
         {
             copy_init(other);
         }
-
-        // 删除
-        // hashtable(hashtable&& other);
-        // hashtable& operator=(hashtable&& other);
 
         hashtable& operator=(const hashtable& other)
         {
@@ -283,6 +291,23 @@ namespace MySTL {
                 getkey_ = other.getkey_;
                 copy_init(other);
             }
+
+            return *this;
+        }
+
+        hashtable(hashtable&& other) noexcept
+            : hash_(other.hash_),
+              equals_(other.equals_),
+              getkey_(other.getkey_),
+              numElements_(other.numElements_)
+        {
+            buckets_ = MySTL::move(other.buckets_);
+        }
+
+        hashtable& operator=(hashtable&& other) noexcept
+        {
+            hashtable tmp(MySTL::move(other));
+            swap(tmp);
 
             return *this;
         }
