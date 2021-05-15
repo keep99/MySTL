@@ -2,7 +2,7 @@
  * @Description: 
  * @Author: Chen.Yu
  * @Date: 2021-04-02 15:29:19
- * @LastEditTime: 2021-04-25 00:44:48
+ * @LastEditTime: 2021-05-16 03:17:13
  * @LastEditors: Chen.Yu
  */
 #ifndef _UTILITY_MOVE_FORWARD_H
@@ -82,13 +82,13 @@ namespace MySTL {
         pair(U1&& x, U2&& y) : first(MySTL::forward<U1>(x)), second(MySTL::forward<U2>(y)) {}
 
         template <class U1, class U2>
-        explicit pair(pair<U1, U2>&& P) : first(MySTL::forward<U1>(p.first)), second(MySTL::forward<U2>(p2.second)) {}
+        explicit pair(pair<U1, U2>&& p) : first(MySTL::forward<U1>(p.first)), second(MySTL::forward<U2>(p.second)) {}
 
         pair(const pair& p) = default;
         pair(pair&& p) = default;
 
         template <class U1, class U2>
-        explicit pair(pair&& p) : first(tinySTL::move(p.first)), second(tinySTL::move(p.second)) {}
+        explicit pair(pair&& p) : first(MySTL::move(p.first)), second(MySTL::move(p.second)) {}
 
         // operator=
         pair& operator=(const pair& rhs) {
