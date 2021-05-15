@@ -2,11 +2,11 @@
  * @Description: 
  * @Author: Chen.Yu
  * @Date: 2021-04-02 23:56:23
- * @LastEditTime: 2021-04-09 18:10:14
+ * @LastEditTime: 2021-05-16 04:58:13
  * @LastEditors: Chen.Yu
  */
-#ifndef _ALLOCATOR_H
-#define _ALLOCATIR_H
+#ifndef _ALLOCATOR_H_
+#define _ALLOCATOR_H_
 
 // 为 alloc 类封装接口
 #include "alloc.h"
