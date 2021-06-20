@@ -1,10 +1,3 @@
-/*
- * @Description: 
- * @Author: Chen.Yu
- * @Date: 2021-05-16 04:25:10
- * @LastEditTime: 2021-05-16 04:34:28
- * @LastEditors: Chen.Yu
- */
 #ifndef _TEMPBUF_H_
 #define _TEMPBUF_H_
 
@@ -13,7 +6,6 @@
 #include <climits>
 
 #include "iterator_base.h"
-#include "iterator.h"
 #include "memory_function.h"
 #include "construct.h"
 

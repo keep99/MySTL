@@ -1,10 +1,3 @@
-/*
- * @Description: 
- * @Author: Chen.Yu
- * @Date: 2021-05-14 19:21:28
- * @LastEditTime: 2021-05-15 03:45:25
- * @LastEditors: Chen.Yu
- */
 #ifndef _SET_H_
 #define _SET_H_
 #include "rb_tree.h"
@@ -80,8 +73,6 @@ namespace MySTL {
         { return rend(); }
 
 
-
-
 	  	bool empty()const {return tree_.empty();}
 	  	size_type size()const {return tree_.size();}
 	  	void swap(set& x) {tree_.swap(x.tree_);}
@@ -122,24 +113,26 @@ namespace MySTL {
 
         void clear() {tree_.clear();}
 
-        iterator find(const key_type& x) const { return tree_.find(x);}
-        size_type count(const key_type& x) const { return tree_.count(x);}
-        iterator lower_bound(const key_type& x) const {return tree_.lower_bound(x);}
-        iterator upper_bound(const key_type& x) const {return tree_.upper_bound(x);}
-        pair<iterator,iterator> equal_range(const key_type& x) const {return tree_.equal_range(x);}
-
+        iterator find(const key_type& x) const { return tree_.find(x); }
+        size_type count(const key_type& x) const { return tree_.count(x); }
+        iterator lower_bound(const key_type& x) const { return tree_.lower_bound(x); }
+        iterator upper_bound(const key_type& x) const { return tree_.upper_bound(x); }
+        pair<iterator,iterator> equal_range(const key_type& x) const { return tree_.equal_range(x); }
+        
+        template <class K1, class C1, class A1>
         friend bool operator==(const set&, const set&);
+        template <class K1, class C1, class A1>
         friend bool operator<(const set&, const set&);
     };
 
-    template <class Key, class Compare, class Allocator>
-    bool operator== (const set<Key, Compare, Allocator>& lhs, const set<Key, Compare, Allocator>& rhs)
+    template <class K1, class C1, class A1>
+    bool operator== (const set<K1, C1, A1>& lhs, const set<K1, C1, A1>& rhs)
     {
         return lhs.size() == rhs.size() && MySTL::equal(lhs.cbegin(), lhs.cend(), rhs.cbegin());
     }
 
-    template <class Key, class Compare, class Allocator>
-    bool operator< (const set<Key, Compare, Allocator>& lhs, const set<Key, Compare, Allocator>& rhs)
+    template <class K1, class C1, class A1>
+    bool operator< (const set<K1, C1, A1>& lhs, const set<K1, C1, A1>& rhs)
     {
         return MySTL::lexicographical_compare(lhs.cbegin(), lhs.cend(), rhs.cbegin(), rhs.cend());
     }
@@ -216,10 +209,9 @@ namespace MySTL {
 	  	size_type size()const {return tree_.size();}
 	  	void swap(multiset& x) {tree_.swap(x.tree_);}
 
-	  	pair<iterator,bool> insert(const value_type& x)
+	  	iterator insert(const value_type& x)
 	  	{
-	  		MySTL::pair<typename rb_tree_type::iterator, bool> p = tree_.insert_equal(x);
-	  		return MySTL::pair<iterator, bool>(p.first, p.second);
+	  		return tree_.insert_equal(x);
 	  	}
         
         iterator insert(iterator position, const value_type& x) {
@@ -258,18 +250,20 @@ namespace MySTL {
         iterator upper_bound(const key_type& x) const {return tree_.upper_bound(x);}
         pair<iterator,iterator> equal_range(const key_type& x) const {return tree_.equal_range(x);}
 
+        template <class K1, class C1, class A1>
         friend bool operator==(const multiset&, const multiset&);
+        template <class K1, class C1, class A1>
         friend bool operator<(const multiset&, const multiset&);
     };
 
-    template <class Key, class Compare, class Allocator>
-    bool operator== (const multiset<Key, Compare, Allocator>& lhs, const multiset<Key, Compare, Allocator>& rhs)
+    template <class K1, class C1, class A1>
+    bool operator== (const multiset<K1, C1, A1>& lhs, const multiset<K1, C1, A1>& rhs)
     {
         return lhs.size() == rhs.size() && MySTL::equal(lhs.cbegin(), lhs.cend(), rhs.cbegin());
     }
 
-    template <class Key, class Compare, class Allocator>
-    bool operator< (const multiset<Key, Compare, Allocator>& lhs, const multiset<Key, Compare, Allocator>& rhs)
+    template <class K1, class C1, class A1>
+    bool operator< (const multiset<K1, C1, A1>& lhs, const multiset<K1, C1, A1>& rhs)
     {
         return MySTL::lexicographical_compare(lhs.cbegin(), lhs.cend(), rhs.cbegin(), rhs.cend());
     }

@@ -1,11 +1,3 @@
-/*
- * @Description: 
- * @Author: Chen.Yu
- * @Date: 2021-05-11 16:05:15
- * @LastEditTime: 2021-05-15 02:00:01
- * @LastEditors: Chen.Yu
- */
-
 #ifndef _RB_TREE_H
 #define _RB_TREE_H
 
@@ -26,10 +18,10 @@ namespace MySTL {
         using color_type = rb_tree_color_type;
         using base_ptr   = rb_tree_node_base*;
         
-        color_type color;
-        base_ptr parent;
-        base_ptr left;
-        base_ptr right;
+        color_type color;  // 节点颜色
+        base_ptr parent;   // 节点的父节点
+        base_ptr left;     // 节点的左子节点
+        base_ptr right;    // 节点的右子节点
 
         static base_ptr s_minimum(base_ptr x) {
             while(x->left != nullptr) {
@@ -48,17 +40,59 @@ namespace MySTL {
         }
     };
 
+    // // 红黑树的 header 节点
+    // struct rb_tree_header 
+    // {
+    //     rb_tree_node_base header;
+    //     size_t node_count;
+
+    //     rb_tree_header()
+    //     {
+    //         header.color = rb_tree_red;
+    //         reset();
+    //     }
+
+    //     rb_tree_header(rb_tree_header&& x) noexcept
+    //     {
+    //         if(header.parent != nullptr) {
+    //             move_data(x);
+    //         }
+    //         else {
+    //             header.color = rb_tree_red;
+    //             reset();
+    //         }
+    //     }
+
+    //     void move_data(rb_tree_header& from)
+    //     {
+    //         header.color = from.header.color;
+    //         header.parent = from.header.parent;
+    //         header.left = from.header.left;
+    //         header.right = from.header.right;
+    //         header.parent->parent = & header;
+    //         node_count = from.node_count;
+    //     }
+
+    //     void reset()
+    //     {
+    //         header.parent = 0;
+    //         header.left = &header;
+    //         header.right = &header;
+    //         node_count = 0;
+    //     }
+    // };
+
     template <class Value>
     struct rb_tree_node : public rb_tree_node_base
     {
-        using link_type = rb_tree_node<Value>* link_type;
+        using link_type = rb_tree_node<Value>*;
         Value value_field;
     };
 
     // 基层迭代器
     struct rb_tree_base_iterator
     {
-        using base_ptr              = rb_tree_node_base::base_ptr;
+        using base_ptr              = typename rb_tree_node_base::base_ptr;
         using iterator_category     = bidirectional_iterator_tag;
         using difference_type       = ptrdiff_t;
         
@@ -77,7 +111,7 @@ namespace MySTL {
                 base_ptr y = node->parent;      // 找出 父节点
                 while(node == y->right) {       // 如果现行节点本身是一个右子节点
                     node = y;                   // 就一直上溯，直到 "不为右子节点"为止
-                    y = y ->parent;
+                    y = y->parent;
                 }
 
                 if(node->right != y) {          // 若此时的右子节点不等于此时的父节点
@@ -123,7 +157,7 @@ namespace MySTL {
         using iterator        = rb_tree_iterator<Value, Value&, Value*>;
         using const_iterator  = rb_tree_iterator<Value, const Value&, const Value*>;
         using self            = rb_tree_iterator<Value, Ref, Ptr>;
-        using Link_type       = rb_tree_node<Value*>;
+        using Link_type       = rb_tree_node<Value>*;
 
         rb_tree_iterator() {}
         rb_tree_iterator(Link_type x) { node = x; }
@@ -213,7 +247,7 @@ namespace MySTL {
         y->parent = x->parent;
 
         if(x == root) {                   // x 为根节点，让 y 顶替 x 成为根节点
-            y = root;
+            root = y;
         }
         else if(x->parent->right == x) {  // x 为右子节点
             x->parent->right = y;
@@ -259,6 +293,7 @@ namespace MySTL {
                     x->parent->color = rb_tree_black;
                     x->parent->parent->color = rb_tree_red;
                     rb_tree_rotate_right(x->parent->parent, root);
+                    break;
                 }
             }
             else {                                                // 如果父节点为右子节点，对称处理
@@ -273,13 +308,14 @@ namespace MySTL {
                 else {                                            // 无叔叔节点或者叔叔节点为黑
                     if(x->parent->left == x) {                    // 如果当前节点为左子节点
                     // case4：父节点为红，叔叔节点为 NIL 或黑色，父节点为右子节点，当前节点为左子节点
-                    x = x->parent;
-                    rb_tree_rotate_right(x, root);
+                        x = x->parent;
+                        rb_tree_rotate_right(x, root);   
+                    }
                     // 都转换成了 case5：当前节点为右子节点
                     x->parent->color = rb_tree_black;
                     x->parent->parent->color = rb_tree_red;
                     rb_tree_rotate_left(x->parent->parent, root);
-                    }
+                    break;
                 }
             }
         } // while
@@ -341,7 +377,7 @@ namespace MySTL {
             if(root == z) {
                 root = y;
             }
-            else if(z->parent->left = z) {
+            else if(z->parent->left == z) {
                 z->parent->left = y;
             }
             else {
@@ -404,11 +440,11 @@ namespace MySTL {
                         x_brother = x_parent->right;
                     }
                     // case1 转换成了 case2\3\4 中的一种
-                    if(x_brother->left == nullptr || x_brother->left->color == rb_tree_black && 
+                    if((x_brother->left == nullptr || x_brother->left->color == rb_tree_black) && 
                       (x_brother->right == nullptr || x_brother->right->color == rb_tree_black))
                     {   
                         // case2：兄弟节点为黑，且两个子节点都为黑或者 NIL
-                        x_brother->color == rb_tree_red;
+                        x_brother->color = rb_tree_red;
                         x = x_parent;
                         x_parent = x_parent->parent;
                     } else {
@@ -441,11 +477,11 @@ namespace MySTL {
                         x_brother = x_parent->left;
                     }
                     // case1 转换成了 case2\3\4 中的一种
-                    if(x_brother->right == nullptr || x_brother->right->color == rb_tree_black && 
+                    if((x_brother->right == nullptr || x_brother->right->color == rb_tree_black) && 
                       (x_brother->left == nullptr || x_brother->left->color == rb_tree_black))
                     {   
                         // case2：兄弟节点为黑，且两个子节点都为黑或者 NIL
-                        x_brother->color == rb_tree_red;
+                        x_brother->color = rb_tree_red;
                         x = x_parent;
                         x_parent = x_parent->parent;
                     } else {
@@ -489,7 +525,7 @@ namespace MySTL {
     protected:
         using base_ptr          = rb_tree_node_base*;
         using Node              = rb_tree_node<Value>;
-        using nodeAllocator     = typename Allocator::template rebind<rb_tree_node<Value>>::other;
+        using nodeAllocator     = typename Allocator::template rebind<Node>::other;
         using dataAllocator     = Allocator;
 
     public:
@@ -510,13 +546,13 @@ namespace MySTL {
 
     protected:
         link_type get_node() { return nodeAllocator::allocate(1); }
-        void put_node(link_type p) { nodeAllocator::deallocate(p, 1);}
+        void put_node(link_type p) { nodeAllocator::deallocate(p);}
 
         link_type create_node(const value_type& x) {
             link_type tmp = get_node();
             try
             {
-                Allocator::construct(&tmp->value_field, x);
+                construct(&tmp->value_field, x);
                 
             }
             catch(...)
@@ -524,11 +560,13 @@ namespace MySTL {
                 put_node(tmp);
                 throw;
             }
+
+            return tmp;
         }
 
         link_type clone_node(link_type x) {
-            tmp->color = x->color;
             link_type tmp = create_node(x->value_field);
+            tmp->color = x->color;
             tmp->left = x->left;
             tmp->right = x->right;
             
@@ -536,7 +574,7 @@ namespace MySTL {
         }
 
         void destroy_node(link_type p) {
-            Allocator::destroy(&p->value_field);
+            destroy(&p->value_field);
             put_node(p);
         }
 
@@ -571,7 +609,7 @@ namespace MySTL {
         static link_type& parent(base_ptr x)
         { return (link_type&)(x->parent); }
         static reference value(base_ptr x)
-        { return ((link_type&)x)->value_field; }
+        { return ((link_type)x)->value_field; }
         static const Key& getKey(base_ptr x)
         { return KeyOfValue()(value(x)); }
         static rb_tree_color_type& color(base_ptr x) 
@@ -582,7 +620,7 @@ namespace MySTL {
         link_type maximum(link_type x) 
         { return (link_type) rb_tree_node_base::s_maximum(x); }
 
-    private:
+    public:
         iterator insert(base_ptr x, base_ptr y, const value_type& v);
         link_type copy(link_type x, link_type y);
         void erase(link_type x);
@@ -645,10 +683,10 @@ namespace MySTL {
     
     public:
         Compare key_comp() const { return key_compare; }
-        iterator begin() const { return leftmost(); }
-        const_iterator begin() const { return leftmost(); }
-        iterator end() const { return rightmost(); }
-        const_iterator end() const { return rightmost(); }
+        iterator begin() { return (iterator)leftmost(); }
+        const_iterator begin() const { return (iterator)leftmost(); }
+        iterator end() { return header; }
+        const_iterator end() const { return header; }
 
         reverse_iterator rbegin() { return reverse_iterator(end()); }
         const_reverse_iterator rebegin() const { return const_reverse_iterator(end()); }
@@ -657,8 +695,8 @@ namespace MySTL {
 
         const_iterator cbegin() const { return begin(); }
         const_iterator cend() const { return end(); }
-        const_reverse_iterator cbegin() const { return rbegin(); }
-        const_reverse_iterator cend() const { return rend(); }
+        const_reverse_iterator crbegin() const { return rbegin(); }
+        const_reverse_iterator crend() const { return rend(); }
 
         // 容量相关操作
         bool empty() const { return node_count == 0; }
@@ -692,6 +730,11 @@ namespace MySTL {
         size_type erase(const key_type& x);
 		void erase(iterator first, iterator last);
 		void erase(const Key* first,const Key* last);
+
+        // 查找
+        iterator find(const key_type& k);
+        const_iterator find(const key_type& k) const;
+        size_type count(const key_type& x) const;
         
         //边界
         // 返回键值不小于 k 的第一个节点的迭代器
@@ -710,9 +753,9 @@ namespace MySTL {
     {
         if(node_count != 0) {
             erase(root());
-            leftmost = header;
+            leftmost() = header;
             root() = 0;
-            rightmost = header;
+            rightmost() = header;
             node_count = 0;
         }
     }
@@ -914,7 +957,7 @@ namespace MySTL {
         erase(iterator position)
     {
         link_type y = static_cast<link_type>(rb_tree_rebalance_for_erase(position.node,
-                                                                         header.parent,
+                                                                         header->parent,
                                                                          header->left,
                                                                          header->right));
         destroy_node(y);
@@ -958,6 +1001,62 @@ namespace MySTL {
     template <class Key, class Value, class KeyOfValue, class Compare, class Allocator>
     typename rb_tree<Key,Value, KeyOfValue, Compare, Allocator>::iterator 
     rb_tree<Key,Value, KeyOfValue, Compare, Allocator>::
+        find(const key_type& k)
+    {
+        link_type y = header;
+        link_type x = root();
+
+        while(x != nullptr) {
+            if(!key_compare(getKey(x), k)) {
+                y = x;
+                x = left(x);
+            }
+            else {
+                x = right(x);
+            }
+        }
+
+        iterator j = iterator(y);
+        return (j == end() || key_compare(k, getKey(j.node))) ? end() : j;
+    }
+
+    template <class Key, class Value, class KeyOfValue, class Compare, class Allocator>
+    typename rb_tree<Key,Value, KeyOfValue, Compare, Allocator>::const_iterator
+    rb_tree<Key,Value, KeyOfValue, Compare, Allocator>::
+        find(const key_type& k) const
+    {
+        link_type y = header;
+        link_type x = root();
+
+        while(x != nullptr) {
+            if(!key_compare(getKey(x), k)) {
+                y = x;
+                x = left(x);
+            }
+            else {
+                x = right(x);
+            }
+
+            const_iterator j = const_iterator(y);
+            return (j == end() || key_compare(k, getKey(j.node))) ? end() : j;
+        }
+    }
+    
+    template <class Key, class Value, class KeyOfValue, class Compare, class Allocator>
+    typename rb_tree<Key,Value, KeyOfValue, Compare, Allocator>::size_type
+    rb_tree<Key,Value, KeyOfValue, Compare, Allocator>::
+        count(const key_type& k) const
+    {
+        pair<const_iterator, const_iterator> p = equal_range(k);
+        size_type n = 0;
+        n = distance(p.first, p.second);
+
+        return n;
+    }
+
+    template <class Key, class Value, class KeyOfValue, class Compare, class Allocator>
+    typename rb_tree<Key,Value, KeyOfValue, Compare, Allocator>::iterator 
+    rb_tree<Key,Value, KeyOfValue, Compare, Allocator>::
         lower_bound(const Key& k)
     {
         link_type y = header;
@@ -980,7 +1079,7 @@ namespace MySTL {
 
 
     template <class Key, class Value, class KeyOfValue, class Compare, class Allocator>
-	rb_tree<Key,Value, KeyOfValue, Compare, Allocator>::const_iterator 
+	typename rb_tree<Key,Value, KeyOfValue, Compare, Allocator>::const_iterator 
     rb_tree<Key,Value, KeyOfValue, Compare, Allocator>::
         lower_bound(const Key& k) const 
     {
@@ -1003,7 +1102,7 @@ namespace MySTL {
     }
 
     template <class Key, class Value, class KeyOfValue, class Compare, class Allocator>
-    rb_tree<Key,Value, KeyOfValue, Compare, Allocator>::iterator 
+    typename rb_tree<Key,Value, KeyOfValue, Compare, Allocator>::iterator 
     rb_tree<Key,Value, KeyOfValue, Compare, Allocator>::
         upper_bound(const Key& k)
     {
@@ -1026,7 +1125,7 @@ namespace MySTL {
     }
 
     template <class Key, class Value, class KeyOfValue, class Compare, class Allocator>
-    rb_tree<Key,Value, KeyOfValue, Compare, Allocator>::const_iterator 
+    typename rb_tree<Key,Value, KeyOfValue, Compare, Allocator>::const_iterator 
     rb_tree<Key,Value, KeyOfValue, Compare, Allocator>::
         upper_bound(const Key& k) const 
     {

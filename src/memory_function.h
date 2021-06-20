@@ -1,16 +1,12 @@
-/*
- * @Description: 内存的基本处理工具 《STL源码剖析》P70。这些内存处理函数具有 "commit or rollback" 语意。
- * @Author: Chen.Yu
- * @Date: 2021-04-02 23:29:46
- * @LastEditTime: 2021-04-23 23:51:07
- * @LastEditors: Chen.Yu
- */
 #ifndef _MEMORY_FUNCTION_H
 #define _MEMORY_FUNCTION_H
 
-#include "iterator_base.h" 
-#include "construct.h"
+#include "algobase.h"
+// #include "algo.h"
 #include "type_traits.h"
+#include "construct.h"
+#include "iterator_base.h" 
+
 
 #include <string.h>
 #include <new>
@@ -43,7 +39,7 @@ namespace MySTL {
     // 如果是 POD 型别，执行流程会转入以下函数，这是通过 函数模板的参数推导机制而得的。
     template <class InputIterator, class ForwardIterator>
     ForwardIterator __uninitialized_copy_aux(InputIterator first, InputIterator last, ForwardIterator result, true_type) {
-        return MySTL::copy(first, last, result);
+        return copy(first, last, result);
     }
 
     // 非POD版本
@@ -69,9 +65,9 @@ namespace MySTL {
         return cur;
     }
 
-    template <class InputIterator, class ForwardIterator, class T, class T1>
-    ForwardIterator __uninitialized_copy(InputIterator first, InputIterator last, ForwardIterator result, T1*) {
-        using isPOD = typename __type_traits<T1>::is_POD_type;
+    template <class InputIterator, class ForwardIterator, class T>
+    ForwardIterator __uninitialized_copy(InputIterator first, InputIterator last, ForwardIterator result, T*) {
+        using isPOD = typename __type_traits<T>::is_POD_type;
         return __uninitialized_copy_aux(first, last, result, isPOD());
     }
 
@@ -108,7 +104,7 @@ namespace MySTL {
         try
         {
             for(; n > 0; --n, ++first, ++cur) {
-                MySTL::construct(&*cur, &*first);
+                MySTL::construct(&*cur, *first);
                 return cur;
             }
         }
@@ -122,7 +118,7 @@ namespace MySTL {
     }
 
     template <class ForwardIterator, class Size, class T>
-    void uninitialized_fill_n(ForwardIterator first, Size count, const T& value) {
+    void uninitialized_copy_n(ForwardIterator first, Size count, const T& value) {
         using Value = typename MySTL::iterator_traits<ForwardIterator>::value_type;
         ForwardIterator current = first;
         try {
@@ -146,7 +142,7 @@ namespace MySTL {
     /***********************************************************************************/
     template <class ForwardIter, class T>
     void __uninitialized_fill_aux(ForwardIter first, ForwardIter last, const T& value, true_type) {
-        MySTL::fill(first, last, value);
+        fill(first, last, value);
     }
 
     template <class ForwardIter, class T>
@@ -155,7 +151,7 @@ namespace MySTL {
         try
         {
             for(; cur != last; ++cur) {
-                MySTL::construct(&*cur, &*first);
+                MySTL::construct(&*cur, value);
             }
         }
         catch(...)
@@ -185,7 +181,7 @@ namespace MySTL {
     /***********************************************************************************/
     template <class ForwardIter, class Size, class T>
     ForwardIter __uninitialized_fill_n_aux(ForwardIter first, Size n, const T& value, true_type) {
-        return MySTL::fill_n(first, n, value);
+        return fill_n(first, n, value);
     }
 
     template <class ForwardIter, class Size, class T>
@@ -212,7 +208,7 @@ namespace MySTL {
     template <class ForwardIter, class Size, class T, class T1>
     ForwardIter __uninitialized_fill_n(ForwardIter first, Size n, const T& value, T1*) {
         using is_POD = typename __type_traits<T1>::is_POD_type;
-        __uninitialized_fill_n_aux(first, n, value, is_POD());
+        return __uninitialized_fill_n_aux(first, n, value, is_POD());
     }
     
 
@@ -223,5 +219,5 @@ namespace MySTL {
     ForwardIter uninitialized_fill_n(ForwardIter first, Size n, const T& value) {
         return __uninitialized_fill_n(first, n, value, value_type(first));
     }
-} 
+}
 #endif

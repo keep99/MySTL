@@ -1,10 +1,3 @@
-/*
- * @Description: 
- * @Author: Chen.Yu
- * @Date: 2021-05-14 19:21:55
- * @LastEditTime: 2021-05-15 04:08:54
- * @LastEditors: Chen.Yu
- */
 #ifndef _STACK_H_
 #define _STACK_H_
 #include "deque.h"

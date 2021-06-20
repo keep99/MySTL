@@ -1,10 +1,3 @@
-/*
- * @Description: 
- * @Author: Chen.Yu
- * @Date: 2021-04-02 15:29:19
- * @LastEditTime: 2021-05-16 03:17:13
- * @LastEditors: Chen.Yu
- */
 #ifndef _UTILITY_MOVE_FORWARD_H
 #define _UTILITY_MOVE_FORWARD_H
 

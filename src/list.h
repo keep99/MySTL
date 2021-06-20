@@ -1,10 +1,3 @@
-/*
- * @Description: list 容器。从这个容器开始，为了清楚，声明和定义分开。
- * @Author: Chen.Yu
- * @Date: 2021-04-04 14:21:48
- * @LastEditTime: 2021-05-09 03:15:51
- * @LastEditors: Chen.Yu
- */
 #ifndef _LIST_H_
 #define _LIST_H_
 
@@ -53,9 +46,9 @@ namespace MySTL
             // 构造函数
             list_iterator() = default;
 
-            explicit list_iterator(link_type x) : node_(x){};
+            list_iterator(link_type x) : node_(x){};
 
-            explicit list_iterator(const iterator &x) : node_(x.node_) {}
+            list_iterator(const iterator &x) : node_(x.node_) {}
 
             // 重载操作符
 
@@ -109,7 +102,7 @@ namespace MySTL
                 return node_ == other.node_;
             }
 
-            bool operator!=(const slef &other) const
+            bool operator!=(const self &other) const
             {
                 return node_ != other.node_;
             }
@@ -121,15 +114,15 @@ namespace MySTL
     class list
     {
     public:
-        using value_type                = T;
         using pointer                   = T*;
+        using value_type                = T;
         using const_pointer             = const T*;
         using reference                 = T&;
         using const_reference           = const T&;
         using size_type                 = std::size_t;
         using difference_type           = std::ptrdiff_t;
 
-        using iterator                  = detail::list_iterator<T, T&, T *>;
+        using iterator                  = detail::list_iterator<T, T&, T*>;
         using const_iterator            = detail::list_iterator<T, const T&, const T*>;
         using reverse_iterator          = MySTL::reverse_iterator<iterator>;
         using const_reverse_iterator    = MySTL::reverse_iterator<const_iterator>;
@@ -143,7 +136,7 @@ namespace MySTL
         // allocator 的 rebind。list 希望能按照 T 一样的策略 来分配 list_node<T> 类型的对象。
         // rebind实现了对不同类型使用同一种内存分配策略的要求。具体参考https://bbs.csdn.net/topics/200079053
         using list_node_allocator = typename Allocator::template rebind<detail::list_node<T>>::other; // 这里的 template 是为了说明后面跟的是个模板，用法同 typename
-        
+
         // 上面也可以写成,参考https://bbs.csdn.net/topics/110079160
         // using list_node_allocator = typename Allocator::rebind<detail::list_node<T>>::other;
 
@@ -161,24 +154,46 @@ namespace MySTL
         list()
         {
             node_ = allocate_node();
-            node_->previous = node->next = node_;
+            node_->previous = node_->next = node_;
         }
 
         list(size_type count, const_reference value)
-        { insert(begin(), count, value); }
+        { 
+            node_ = allocate_node();
+            node_->previous = node_->next = node_;
+            insert(begin(), count, value); 
+        }
 
         explicit list(size_type count)
-        { insert(begin(), count, value_type()); }
+        { 
+            node_ = allocate_node();
+            node_->previous = node_->next = node_;
+            insert(begin(), count, value_type()); 
+        }
 
-        template <class InputIterator>
+        // 这边只接受传入迭代器
+        template <class InputIterator, typename std::enable_if<
+            MySTL::is_input_iterator<InputIterator>::value, int>::type = 0>
         list(InputIterator first, InputIterator last)
-        { insert(begin(), first, last); }
+        { 
+            node_ = allocate_node();
+            node_->previous = node_->next = node_;
+            insert(begin(), first, last);
+        }
 
         list(const list &other) : list(other.begin(), other.end()) 
-        { insert(begin(), other.cbegin(), other.cend()); }
+        { 
+            node_ = allocate_node();
+            node_->previous = node_->next = node_;
+            insert(begin(), other.cbegin(), other.cend());
+        }
 
         list(std::initializer_list<T> ilist)
-        { insert(begin(), ilist.cbegin(), ilist.cend()); }
+        { 
+            node_ = allocate_node();
+            node_->previous = node_->next = node_;
+            insert(begin(), ilist.begin(), ilist.end());
+        }
 
         list(list &&other) noexcept : node_(other.node_) {
             // 其实不用，一开始就是空链表
@@ -192,8 +207,8 @@ namespace MySTL
             {
                 iterator first1 = begin();
                 iterator last1 = end();
-                iterator first2 = const_cast<iterator>(other.begin());
-                iterator last2 = const_cast<iterator>(other.end());
+                const_iterator first2 = other.begin();
+                const_iterator last2 = other.end();
                 while (first1 != last1 && first2 != last2) {
                     *first1++ = *first2++;
                 }
@@ -234,10 +249,10 @@ namespace MySTL
         }
 
         // assin 的相关代码需要修改
-        template <calss InputIterator>
+        template <class InputIterator>
         void assign(InputIterator first, InputIterator last)
         {
-            using is_Integral = typename is_integral<InputIterator>;
+            using is_Integral = typename MySTL::is_integral<InputIterator>;
             assign_dispatch(first, last, is_Integral());
         }
             
@@ -248,7 +263,7 @@ namespace MySTL
 
         void assign(std::initializer_list<T> ilist)
         {
-            assign_dispatch(ilist.begin(), ilist.end(), false_type);
+            assign_dispatch(ilist.begin(), ilist.end(), false_type());
         }
 
         allocator_type get_allocator() const
@@ -339,7 +354,7 @@ namespace MySTL
         /* 容量相关操作 */
 
         bool empty() const {
-            return node_->next = node_;
+            return node_->next == node_;
         }
 
         // fixed。list 无大小
@@ -368,7 +383,7 @@ namespace MySTL
             return insert_aux(position, MySTL::move(value));
         }
 
-        iterator insert(const_iterator position, size_type count, const_reference) {
+        iterator insert(const_iterator position, size_type count, const_reference value) {
             while (count--) {
                 position = insert(position, value);
             }
@@ -392,6 +407,8 @@ namespace MySTL
         }
 
         // erase clear
+        iterator erase(iterator position);
+        iterator erase(iterator first, iterator last);
         iterator erase(const_iterator position);
         iterator erase(const_iterator first, const_iterator last);
         void clear() 
@@ -424,7 +441,7 @@ namespace MySTL
         }
 
         template <class... Args>
-        void emplace_front(Args&&.. args) {
+        void emplace_front(Args&&... args) {
             emplace(begin(), MySTL::forward<Args>(args)...);
         }
 
@@ -471,15 +488,12 @@ namespace MySTL
          * @return {*}
          * @param {const_iterator} position
          */
-        void splice(const_iterator position, list& other) {
+        void splice(iterator position, list& other) {
             if (!other.empty()) {
-                transfer(position, other.begin(), other.end())p;
+                transfer(position, other.begin(), other.end());
             }
         }
 
-        // void splice(const_iterator position, list&& other) {
-        //     splice(position, other);
-        // }
 
         // 将 i 所指的元素接合于 position 所指位置之前。
         void splice(iterator position, list&, iterator it) {
@@ -491,10 +505,6 @@ namespace MySTL
             transfer(position, it, it + 1);
         }
 
-        // 直接调用左值版本
-        // void splice(iterator position, list&& other, iterator it) {
-        //     splice(position, other, it);
-        // }
 
         // 将 [first, last) 内的所有元素接合于 position 所指位置之前
         // position 和 [first, last) 可指向同一个 list
@@ -504,10 +514,6 @@ namespace MySTL
                 transfer(position, first, last);
             }
         }
-
-        // void splice(iterator position, list&& other, iterator first, iterator last) {
-        //     splice(position, other, first, last);
-        // }
 
         /**
          * @description: 如果链表中有元素符合一元判断式，那么就把这个元素给删除
@@ -562,13 +568,15 @@ namespace MySTL
         /* 用 n 个元素为容器赋值 */
         void fill_assign(size_type n, const_reference value);
 
+        
+
         template <class Integer>
         void assign_dispatch(Integer n, Integer value, true_type) {
             fill_assign(static_cast<size_type>(n), static_cast<T>(value));
         }
 
         template <class InputIterator>
-        void assign_dispatch(InputIterator n, InputIterator value, false_type);
+        void assign_dispatch(InputIterator first2, InputIterator last2, false_type);
 
         link_type allocate_node() {
             return list_node_allocator::allocate(1);
@@ -579,12 +587,14 @@ namespace MySTL
         }
 
         template <class ...Args>
-        link_type create_node(Arg&&... args) {
+        link_type create_node(Args&&... args) {
             auto newNode = allocate_node();
-            return list_node_allocator::construct(newNode, MySTL::forward<Args>(args)...);
+            data_allocator::construct(&(newNode->data), MySTL::forward<Args>(args)...);
+
+            return newNode;
         }
 
-        link_type destroy_node(link_type node) {
+        void destroy_node(link_type node) {
             list_node_allocator::destroy(node);
             deallocate_node(node);
         }
@@ -598,7 +608,7 @@ namespace MySTL
         iterator insert_aux(const_iterator position, Y&& value);
 
         template <class InputIterator>
-        iterator insert_range_aux(const_iterator position, Integer first, Integer last, true_type) {
+        iterator insert_range_aux(const_iterator position, InputIterator first, InputIterator last, true_type) {
             insert(position, first, last);
         }
 
@@ -621,7 +631,7 @@ namespace MySTL
     }; // class list
 
     template <class T, class Allocator>
-    list<T, Allocator>::iterator list<T, Allocator>::erase(const_iterator position) {
+    typename list<T, Allocator>::iterator list<T, Allocator>::erase(iterator position) {
         link_type currentNode = position.node_;
         link_type previousNode = currentNode->previous;
         link_type nextNode = currentNode->next;
@@ -637,7 +647,32 @@ namespace MySTL
     }
 
     template <class T, class Allocator>
-    list<T, Allocator>::iterator list<T, Allocator>::erase(const_iterator first, const_iterator last) {
+    typename list<T, Allocator>::iterator list<T, Allocator>::erase(iterator first, iterator last) {
+        while (first != last) {
+            first = erase(first);
+        }
+
+        return static_cast<iterator>(last.node_);
+    }
+
+    template <class T, class Allocator>
+    typename list<T, Allocator>::iterator list<T, Allocator>::erase(const_iterator position) {
+        link_type currentNode = position.node_;
+        link_type previousNode = currentNode->previous;
+        link_type nextNode = currentNode->next;
+
+        // 在链表中断开节点
+        previousNode->next = nextNode;
+        nextNode->previous = previousNode;
+
+        //销毁节点
+        destroy_node(currentNode);
+
+        return static_cast<iterator>(nextNode);
+    }
+
+    template <class T, class Allocator>
+    typename list<T, Allocator>::iterator list<T, Allocator>::erase(const_iterator first, const_iterator last) {
         while (first != last) {
             first = erase(first);
         }
@@ -693,7 +728,7 @@ namespace MySTL
     template <class T, class Allocator>
     template <class Compare>
     void list<T, Allocator>::merge(list& other, Compare compare) {
-        if (this == other) {
+        if (this == &other) {
             return;
         }
 
@@ -710,10 +745,10 @@ namespace MySTL
             } else {
                 ++first1;
             }
+        }
 
-            if (first2 != last2) {
-                transfer(last1, first2, last2);
-            }
+        if (first2 != last2) {
+            transfer(last1, first2, last2);
         }
     }
 
@@ -839,7 +874,7 @@ namespace MySTL
      */
     template <class T, class Allocator>
     template <class Y>
-    list<T, Allocator>::iterator list<T, Allocator>::insert_aux(const_iterator position, Y&& value) {
+    typename list<T, Allocator>::iterator list<T, Allocator>::insert_aux(const_iterator position, Y&& value) {
         // C++ Primer P614 : 当用于一个指向模板参数类型的右值引用函数参数（T&&）时，forward 会保持实参类型的所有细节
         link_type newNode = create_node(MySTL::forward<Y>(value));
         newNode->previous = position.node_->previous;
@@ -851,9 +886,11 @@ namespace MySTL
 
     template <class T, class Allocator>
     template <class InputIterator>
-    list<T, Allocator>::iterator list<T, Allocator>::insert_range_aux(const_iterator position, InputIterator first, InputIterator last, false_type) {
+    typename list<T, Allocator>::iterator list<T, Allocator>::insert_range_aux(const_iterator position, InputIterator first, InputIterator last, false_type) {
+        iterator r(position.node_);
+
         if (first == last) {
-            return position;
+            return r;
         }
 
         auto result = insert(position, *first);
@@ -879,8 +916,8 @@ namespace MySTL
         auto lastNode = last.node_;
 
         // 这一段参看 《STL源码剖析》 P139
-        lastNode->pre->next = positionNode;
-        firstNode->per->next = lastNode;
+        lastNode->previous->next = positionNode;
+        firstNode->previous->next = lastNode;
         positionNode->previous->next = firstNode;
 
         auto tmp = positionNode->previous;
@@ -904,7 +941,7 @@ namespace MySTL
 
     template <class T, class Allocator>
     bool operator==(const list<T, Allocator>& left, const list<T, Allocator>& right) {
-        using const_iterator = list<T, Allocator>::const_iterator;
+        using const_iterator = typename list<T, Allocator>::const_iterator;
         const_iterator end1 = left.end();
         const_iterator end2 = right.end();
 

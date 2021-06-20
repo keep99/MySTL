@@ -1,10 +1,3 @@
-/*
- * @Description: 
- * @Author: Chen.Yu
- * @Date: 2021-05-14 19:22:03
- * @LastEditTime: 2021-05-15 16:21:46
- * @LastEditors: Chen.Yu
- */
 #ifndef _QUEUE_H_
 #define _QUEUE_H_
 #include "deque.h"

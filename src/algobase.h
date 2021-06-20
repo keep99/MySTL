@@ -1,14 +1,7 @@
-/*
- * @Description: 基本的算法
- * @Author: Chen.Yu
- * @Date: 2021-04-12 17:09:22
- * @LastEditTime: 2021-04-25 16:21:10
- * @LastEditors: Chen.Yu
- */
 #ifndef _ALGOBASE_H_
 #define _ALGOBASE_H_
+
 #include "iterator_base.h"
-// #include "iterator.h"
 #include "utility.h"
 #include "type_traits.h"
 
@@ -21,13 +14,13 @@ namespace MySTL {
     // 取二者中的较大值，语义相等时保证返回第一个参数
     /***********************************************************************************/  
     template <class T>
-    inline const T& max(const T& lhs, const T& rhs) {
+    const T& max(const T& lhs, const T& rhs) {
         return lhs < rhs ? rhs : lhs;
     }
 
     /* 重载版本使用函数对象 com 进行比较 */
     template <class T, class Compare>
-    inline const T& max(const T& lhs, const T& rhs, Compare com) {
+    const T& max(const T& lhs, const T& rhs, Compare com) {
         return com(lhs, rhs) ? rhs : lhs;
     }
 
@@ -37,13 +30,13 @@ namespace MySTL {
     // 取二者中的较小值，语义相等时保证返回第一个参数
     /***********************************************************************************/  
     template <class T>
-    inline const T& min(const T& lhs, const T& rhs) {
+    const T& min(const T& lhs, const T& rhs) {
         return rhs < lhs ? rhs : lhs;
     }
 
     /* 重载版本使用函数对象 com 进行比较 */
     template <class T, class Compare>
-    inline const T& min(const T& lhs, const T& rhs, Compare com) {
+    const T& min(const T& lhs, const T& rhs, Compare com) {
         return com(rhs, lhs) ? rhs : lhs;
     }
 
@@ -53,14 +46,14 @@ namespace MySTL {
     // 将两个迭代器所指对象对调
     /*****************************************************************************************/
     template <class FIter1, class FIter2, class T>
-    inline void __iter_swap(FIter1 a, FIter1 b, T*) {
+    void __iter_swap(FIter1 a, FIter2 b, T*) {
         T tmp = *a;
         *a = *b;
         *b = tmp;
     }
 
     template <class FIter1, class FIter2>
-    inline void iter_swap(FIter1 lhs, FIter2 rhs)
+    void iter_swap(FIter1 lhs, FIter2 rhs)
     {
         __iter_swap(lhs, rhs, value_type(lhs));
     }
@@ -71,16 +64,17 @@ namespace MySTL {
     // 把 [first, last) 区间内的元素拷贝到 [result, result + (last - first)) 内
     // 具体实现看 《STL 源码剖析》 P314
     /***********************************************************************************/
-    // 1、1完全泛化版本
-    template <class InputIter, class OutputIter>
-    struct __copy_dispatch {
-        OutputIter operator()(InputIter first, InputIter last, OutputIter result) {
-            return __copy(first, last, result, iterator_category(first));
+    template <class RandomIter, class OutputIter, class Distance> 
+    OutputIter __copy_d(RandomIter first, RandomIter last, OutputIter result, Distance*) {
+        for(Distance n = last - first; n > 0; --n, ++result, ++first) {
+            *result = *first;
         }
-    };
-    /***********************************************************************************/
+
+        return result;
+    }
+
     template <class InputIter, class OutputIter>
-    inline OutputIter __copy(InputIter first, InputIter last, OutputIter result, input_iterator_tag) {
+    OutputIter __copy(InputIter first, InputIter last, OutputIter result, input_iterator_tag) {
         // 以迭代器等同与否，决定循环是否继续。速度慢
         for(; first != last; ++first) {
             *result = *first;
@@ -90,20 +84,32 @@ namespace MySTL {
     }
 
     template <class RandomIter, class OutputIter>
-    inline OutputIter __copy(RandomIter first, RandomIter last, OutputIter result, random_access_iterator_tag) {
+    OutputIter __copy(RandomIter first, RandomIter last, OutputIter result, random_access_iterator_tag) {
         return __copy_d(first, last, result, distance_type(first));
     }
 
-    template <class RandomIter, class OutputIter, class Distance> 
-    inline OutputIter __copy_d(RandomIter first, RandomIter last, OutputIter result, Distance*) {
-        for(Distance n = last - first; n > 0; --n, ++result, ++first) {
-            *result = *first;
+    // 1、1完全泛化版本
+    template <class InputIter, class OutputIter>
+    struct __copy_dispatch {
+        OutputIter operator()(InputIter first, InputIter last, OutputIter result) {
+            return __copy(first, last, result, iterator_category(first));
         }
+    };
 
-        return result;
+    /***********************************************************************************/
+    // 以下版本适合于 "指针所指对象具备 trival assignment operator"
+    template <class T>
+    T* __copy_t(const T* first, const T* last, T* result, true_type) {
+        memmove(result, first, sizeof(T) * (last - first));
+        return result + (last - first);
+    }
+    // 以下版本适合于 "指针所指对象具备 non-trival assignment operator"
+    template <class T>
+    T* __copy_t(const T* first, const T* last, T* result, false_type) {
+        // 指针毕竟是一种 random_access_iterator_tag，所以交给 __copy_d 来处理
+        return __copy_d(first, last, result, (ptrdiff_t*)(0));
     }
     /***********************************************************************************/
-
 
     // 1、2偏特化版本（1），两个参数都是 T* 指针形式
     template <class T>
@@ -115,44 +121,29 @@ namespace MySTL {
     };
     // 1、3偏特化版本（2），第一个参数是 const T*，第二个参数是 T*
     template <class T>
-    struct __copy_dispatch<T*, T*> {
+    struct __copy_dispatch<const T*, T*> {
         T* operator()(const T* first, const T* last, T* result) {
             using t = typename __type_traits<T>::has_trivial_assignment_operator; 
             return __copy_t(first, last, result, t());
         }
     };
     /***********************************************************************************/
-    // 以下版本适合于 "指针所指对象具备 trival assignment operator"
-    template <class T>
-    inline T* __copy_t(const T* first, const T* last, T* result, true_type) {
-        memmove(result, first, sizeof(T) * (last - first));
-        return result + (last - first);
-    }
-    // 以下版本适合于 "指针所指对象具备 non-trival assignment operator"
-    template <class T>
-    inline T* __copy_t(const T* first, const T* last, T* result, false_type) {
-        // 指针毕竟是一种 random_access_iterator_tag，所以交给 __copy_d 来处理
-        return __copy_d(first, last, result, (ptrdiff_t*)(0));
-    }
-    /***********************************************************************************/
-
-
     // 3、特殊版本（1），重载形式
     /* memmove : 由src所指内存区域复制count个字节到dest所指内存区域 */
-    inline char* copy(const char* first, const char* last, char* result) {
+    char* copy(const char* first, const char* last, char* result) {
         memmove(result, first, last - first);
         return result + (last - first);
     }
 
     // 2、特殊版本（2），重载形式
-    inline wchar_t* copy(const wchar_t* first, const wchar_t* last, wchar_t* result) {
+    wchar_t* copy(const wchar_t* first, const wchar_t* last, wchar_t* result) {
         memmove(result, first, sizeof(wchar_t) * (last - first));
         return result + (last - first);
     }
 
     // 1、完全泛化版本
     template <class InputIter, class OutputIter>
-    inline OutputIter copy(InputIter first, InputIter last, OutputIter result) {
+    OutputIter copy(InputIter first, InputIter last, OutputIter result) {
         return __copy_dispatch<InputIter, OutputIter>()(first, last, result);
     }
 
@@ -164,17 +155,18 @@ namespace MySTL {
     /*****************************************************************************************/
     // 底层的实现1
     template <class BidirectionalIter1, class BidirectionalIter2>
-    inline BidirectionalIter2 __copy_backward(BidirectionalIter1 first, BidirectionalIter1 last, BidirectionalIter2 result) {
+    BidirectionalIter2 __copy_backward(BidirectionalIter1 first, BidirectionalIter1 last, BidirectionalIter2 result) {
         while (first != last) {
             *--result = *--last;
-            return result;
         }
+
+        return result;
     }
 
     // 底层的实现2
     // 有“无关紧要的赋值操作符” 会执行下面这个函数
     template <class T>
-    inline T* __copy_backward_t(const T* first, const T* last, T* result, true_type) {
+    T* __copy_backward_t(const T* first, const T* last, T* result, true_type) {
         const ptrdiff_t N = last - first;
         memmove(result - N, first, sizeof(T) * N);
         return result - N;
@@ -182,7 +174,7 @@ namespace MySTL {
 
     // 没有“无关紧要的赋值操作符” 会执行下面这个函数
     template <class T>
-    inline T* __copy_backward_t(const T* first, const T* last, T* result, true_type) {
+    T* __copy_backward_t(const T* first, const T* last, T* result, false_type) {
         return __copy_backward(first, last, result);
     }
 
@@ -214,7 +206,7 @@ namespace MySTL {
 
     // 1、完全泛化版本
     template <class BidirectionalIter1, class BidirectionalIter2>
-    inline BidirectionalIter2 copy_backward(BidirectionalIter1 first, BidirectionalIter1 last, BidirectionalIter2 result) {
+    BidirectionalIter2 copy_backward(BidirectionalIter1 first, BidirectionalIter1 last, BidirectionalIter2 result) {
         return __copy_backward_dispatch<BidirectionalIter1, BidirectionalIter2>()(first, last, result);
     }
 
@@ -240,7 +232,7 @@ namespace MySTL {
     // 返回一个 pair 分别指向拷贝结束的尾部
     /*****************************************************************************************/
     template <class InputIterator, class Size, class OutputIterator>
-    MySTL::pair<InputIterator, OutputIterator> __copy_n(InputIterator first, Size n, OutputIterator result, MySTL::input_iterator_tag) {
+    MySTL::pair<InputIterator, OutputIterator> __copy_n(InputIterator first, Size n, OutputIterator result, input_iterator_tag) {
         for(; n > 0; --n, ++first, ++result) {
             *result = *first;
         }
@@ -249,7 +241,7 @@ namespace MySTL {
     }
 
     template <class InputIterator, class Size, class OutputIterator>
-    MySTL::pair<InputIterator, OutputIterator> __copy_n(InputIterator first, Size n, OutputIterator result, MySTL::random_access_iterator_tag) {
+    MySTL::pair<InputIterator, OutputIterator> __copy_n(InputIterator first, Size n, OutputIterator result, random_access_iterator_tag) {
         auto last = first + n;
         return pair<InputIterator, OutputIterator>(last, MySTL::copy(first, last, result));
     }
@@ -273,7 +265,7 @@ namespace MySTL {
     };
 
     template <class InputIterator, class OutputIterator>
-    inline OutputIterator __move(InputIterator first, InputIterator last, OutputIterator result, input_iterator_tag) {
+    OutputIterator __move(InputIterator first, InputIterator last, OutputIterator result, input_iterator_tag) {
         for(; first != last; ++first, ++result) {
             *result = MySTL::move(*first);
         }
@@ -282,12 +274,12 @@ namespace MySTL {
     }
 
     template <class InputIterator, class OutputIterator>
-    inline OutputIterator __move(InputIterator first, InputIterator last, OutputIterator result, random_access_iterator_tag) {
+    OutputIterator __move(InputIterator first, InputIterator last, OutputIterator result, random_access_iterator_tag) {
         return __move_d(first, last, result, distance_type(first));
     }
 
     template <class RandomIter, class OutputIter, class Distance>
-    inline OutputIter __move_d(RandomIter first, RandomIter last, OutputIter result, Distance*) {
+    OutputIter __move_d(RandomIter first, RandomIter last, OutputIter result, Distance*) {
         for(Distance n = last - first; n > 0; --n, ++result, ++first) {
             *result = *first;
         }
@@ -304,7 +296,7 @@ namespace MySTL {
     };
 
     template <class T>
-    struct __move_dispatch<T*, T*> {
+    struct __move_dispatch<const T*, T*> {
         T* operator()(const T* first, const T* last, T* result) {
             using t = typename __type_traits<T>::has_trivial_assignment_operator;
             return __move_t(first, last, result, t());
@@ -312,7 +304,7 @@ namespace MySTL {
     };
 
     template <class T>
-    inline T* __move_t(const T* first, const T* last, T* result, true_type) {
+    T* __move_t(const T* first, const T* last, T* result, true_type) {
         const size_t n = static_cast<size_t>(last - first);
         if(n != 0) {
             memmove(result, first, n * sizeof(T));
@@ -322,7 +314,7 @@ namespace MySTL {
     }
 
     template <class T>
-    inline T* __move_t(const T* first, const T* last, T* result, false_type) {
+    T* __move_t(const T* first, const T* last, T* result, false_type) {
         return __move_d(first, last, result, (ptrdiff_t*)(0));
     }
 
@@ -344,7 +336,7 @@ namespace MySTL {
     };
 
     template <class BidirectionalIter1, class BidirectionalIter2>
-    inline BidirectionalIter2 __move_backward(BidirectionalIter1 first, BidirectionalIter1 last, BidirectionalIter2 result, bidirectional_iterator_tag) {
+    BidirectionalIter2 __move_backward(BidirectionalIter1 first, BidirectionalIter1 last, BidirectionalIter2 result, bidirectional_iterator_tag) {
         while(first != last) {
             // * 和 -- 的优先级相同，结合方向从右到左
             *--result = MySTL::move(*--last);
@@ -354,12 +346,12 @@ namespace MySTL {
     }
 
     template <class BidirectionalIter1, class BidirectionalIter2>
-    inline BidirectionalIter2 __move_backward(BidirectionalIter1 first, BidirectionalIter1 last, BidirectionalIter2 result, random_access_iterator_tag) {
+    BidirectionalIter2 __move_backward(BidirectionalIter1 first, BidirectionalIter1 last, BidirectionalIter2 result, random_access_iterator_tag) {
         return __move_backward_d(first, last, result, distance_type(first));
     }
 
     template <class RandomIter, class BidirectionalIter2, class Distance>
-    inline BidirectionalIter2 __move_backward_d(RandomIter first, RandomIter last, BidirectionalIter2 result, Distance*) {
+    BidirectionalIter2 __move_backward_d(RandomIter first, RandomIter last, BidirectionalIter2 result, Distance*) {
         for(Distance n = last - first; n > 0; --n) {
             *--result = MySTL::move(*--last);
         }
@@ -376,7 +368,7 @@ namespace MySTL {
     };
 
     template <class T>
-    struct __move_backward_dispatch<T*, T*> {
+    struct __move_backward_dispatch<const T*, T*> {
         T* operator()(const T* first, const T* last, T* result) {
             using t = typename __type_traits<T>::has_trivial_assignment_operator;
             return __move_backward_t(first, last, result, t());
@@ -384,7 +376,7 @@ namespace MySTL {
     };
 
     template <class T>
-    inline T* __move_backward_t(const T* first, const T* last, T* result, true_type) {
+    T* __move_backward_t(const T* first, const T* last, T* result, MySTL::true_type) {
         const size_t n = static_cast<size_t>(last - first);
         if(n != 0) {
             result -= n;
@@ -395,7 +387,7 @@ namespace MySTL {
     }
 
     template <class T>
-    inline T* __move_backward_t(const T* first, const T* last, T* result, false_type) {
+    T* __move_backward_t(const T* first, const T* last, T* result, MySTL::false_type) {
         return __move_backward_d(first, last, result, (ptrdiff_t*)(0));
     }
 
@@ -496,19 +488,19 @@ namespace MySTL {
     /*****************************************************************************************/
     /* 特例化 */
     template <class Size>
-    void fill_n(unsigned char* first, Size n, const unsigned char& c) {
+    unsigned char* fill_n(unsigned char* first, Size n, const unsigned char& c) {
         fill(first, first + n, c);
         return first + n;
     }
 
     template <class Size>
-    void fill_n(signed char* first, Size n, const signed char& c) {
+    signed char* fill_n(signed char* first, Size n, const signed char& c) {
         fill(first, first + n, c);
         return first + n;
     }
 
     template <class Size>
-    void fill_n(char* first, Size n, const char& c) {
+    char* fill_n(char* first, Size n, const char& c) {
         fill(first, first + n, c);
         return first + n;
     }
@@ -534,7 +526,7 @@ namespace MySTL {
     /*****************************************************************************************/
     template <class InputIter1, class InputIter2>
     bool lexicographical_compare(InputIter1 first1, InputIter1 last1, InputIter2 first2, InputIter2 last2) {
-        for(; first1 !+ last1 && first2 != last2; ++first1, ++first2) {
+        for(; first1 != last1 && first2 != last2; ++first1, ++first2) {
             if(*first1 < *first2) {
                 return true;
             }
@@ -551,7 +543,7 @@ namespace MySTL {
     // 重载对象使用 函数对象 comp 代替比较操作
     template <class InputIter1, class InputIter2, class Compare> 
     bool lexicographical_compare(InputIter1 first1, InputIter1 last1, InputIter2 first2, InputIter2 last2, Compare comp) {
-        for(; first1 !+ last1 && first2 != last2; ++first1, ++first2) {
+        for(; first1 != last1 && first2 != last2; ++first1, ++first2) {
             if(comp(*first1, *first2)) {
                 return true;
             }
@@ -583,9 +575,4 @@ namespace MySTL {
         return result != 0 ? result < 0 : (len1 < len2);
     }
 } // namespace MySTL
-
-
-
 #endif
-
-

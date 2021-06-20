@@ -1,18 +1,12 @@
-/*
- * @Description: 
- * @Author: Chen.Yu
- * @Date: 2021-04-09 21:26:18
- * @LastEditTime: 2021-04-10 18:24:48
- * @LastEditors: Chen.Yu
- */
-
 #include "alloc.h"
 #include <string.h> //memcpy
+
+#include <cstdlib>
 
 namespace MySTL {
     char* alloc::start_free = nullptr;
     char* alloc::end_free = nullptr;
-    size_t alloc::heap_size = 0;
+    std::size_t alloc::heap_size = 0;
 
     alloc::obj* volatile alloc::free_list[alloc::_NFREELIST] = {
         nullptr, nullptr, nullptr, nullptr, 
@@ -21,12 +15,13 @@ namespace MySTL {
         nullptr, nullptr, nullptr, nullptr,
     };
 
-    void* alloc::allocate(size_t bytes) {
+    void* alloc::allocate(std::size_t bytes) {
         if (bytes > _MAX_BYTES) {
-            return mallocAlloc::allocate(bytes);
+            // return mallocAlloc::allocate(bytes);
+            return malloc(bytes);
         }
 
-        size_t index = FREELIST_INDEX(bytes);
+        std::size_t index = FREELIST_INDEX(bytes);
         obj* my_free_list = free_list[index];
 
         if (my_free_list == nullptr) {
@@ -38,24 +33,27 @@ namespace MySTL {
         return my_free_list;
     }
 
-    void alloc::deallocate(void* ptr, size_t bytes) {
+    void alloc::deallocate(void* ptr, std::size_t bytes) {
         if (bytes > _MAX_BYTES) {
-            mallocAlloc::deallocate(ptr);
-            return;
+            // mallocAlloc::deallocate(ptr);
+            free(ptr);
         }
 
-        size_t index = FREELIST_INDEX(bytes);
-        obj* node = static_cast<obj*>(ptr);
-        node->free_list_next = free_list[index];
-        free_list[index] = node;
+        else {
+            std::size_t index = FREELIST_INDEX(bytes);
+            obj* node = static_cast<obj*>(ptr);
+            node->free_list_next = free_list[index];
+            free_list[index] = node;
+        }
     }
 
     //该实现参考 SGI STL 源码
-    void* alloc::reallocate(void* ptr, size_t old_sz, size_t new_sz) {
-        size_t maxBytes = static_cast<size_t>(_MAX_BYTES);
+    void* alloc::reallocate(void* ptr, std::size_t old_sz, std::size_t new_sz) {
+        std::size_t maxBytes = static_cast<std::size_t>(_MAX_BYTES);
         // 新旧内存空间的大小都大于 128 bytes，则第一级内存空间配置器
         if(old_sz > maxBytes && new_sz > maxBytes) {
-            return mallocAlloc::reallocate(ptr, new_sz);
+            // return mallocAlloc::reallocate(ptr, new_sz);
+            return realloc(ptr, new_sz);
         }
         // 如果新旧值上调到 8 的倍数后，是同一个数，则不需要调整，直接返回原内存空间的指针即可
         if(ROUND_UP(old_sz) == ROUND_UP(new_sz)) {
@@ -63,7 +61,7 @@ namespace MySTL {
         }
 
         void* result = allocate(new_sz);
-        size_t copy_sz = new_sz > old_sz ? old_sz : new_sz;
+        std::size_t copy_sz = new_sz > old_sz ? old_sz : new_sz;
         ::memcpy(result, ptr, copy_sz);
         deallocate(ptr, old_sz);
         return result;
@@ -71,9 +69,9 @@ namespace MySTL {
 
     //返回一个大小为n的对象，并且有时候会为适当的freelist增加节点
     //假设bytes已经上调为8的倍数
-    void *alloc::refill(size_t bytes) {
+    void *alloc::refill(std::size_t bytes) {
         //记录获取的区块数量
-        size_t nobjs = _NOBJS;
+        std::size_t nobjs = _NOBJS;
      
         //从内存池中取nobjs个区块作为freelist的新节点
         char *chunk = chunk_alloc(bytes, nobjs);
@@ -93,7 +91,7 @@ namespace MySTL {
         //剩下的空间分离出来
         *my_list = next_obj = (obj *)(chunk + bytes);
 
-        for (int i = 1;; ++i) {
+        for (size_t i = 1;; ++i) {
             current_obj = next_obj;
             next_obj = (obj *)((char *)next_obj +bytes);
             if (nobjs - 1 == i) {
@@ -108,10 +106,10 @@ namespace MySTL {
     }
   
     //内存池(一大块空闲的空间) bytes已经上调为8的倍数
-    char *alloc::chunk_alloc(size_t bytes, size_t& nobjs) {
+    char *alloc::chunk_alloc(std::size_t bytes, std::size_t& nobjs) {
         char *result = 0;
-        size_t bytes_need = bytes * nobjs;
-        size_t bytes_left  = end_free - start_free;
+        std::size_t bytes_need = bytes * nobjs;
+        std::size_t bytes_left  = end_free - start_free;
      
         if (bytes_left > bytes_need) {
             result = start_free;
@@ -125,7 +123,7 @@ namespace MySTL {
             return result;
         } else { //一个区块的无法提供
             //每次申请两倍的新内存+
-            size_t bytes_to_get = 2 * bytes_need + ROUND_UP(heap_size >> 4);
+            std::size_t bytes_to_get = 2 * bytes_need + ROUND_UP(heap_size >> 4);
             //试着让内存池中的残余零头还有利用价值
             if (bytes_left > 0) {
                 obj * volatile * my_list = free_list + FREELIST_INDEX(bytes_left);
@@ -151,8 +149,6 @@ namespace MySTL {
                     }
                 }
                 end_free = nullptr; //没有内存可用
-                // 调用第一级空间配置器
-                start_free = static_cast<char*>(mallocAlloc::allocate(bytes_to_get));
             }
 
             heap_size += bytes_to_get;

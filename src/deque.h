@@ -1,20 +1,15 @@
-/*
- * @Description: 
- * @Author: Chen.Yu
- * @Date: 2021-04-05 14:07:42
- * @LastEditTime: 2021-05-09 03:14:07
- * @LastEditors: Chen.Yu
- */
 #ifndef _DEQUE_H_
 #define _DEQUE_H_
 
 #include <initializer_list>
 
-#include "allocator.h"
-#include "iterator_base.h"
-#include "iterator_reverse_iterator.h"
-#include "type_traits.h"
 #include "algobase.h"
+#include "algo.h"
+#include "allocator.h"
+// #include "iterator_base.h"
+// #include "iterator_reverse_iterator.h"
+#include "iterator.h"
+#include "type_traits.h"
 #include "utility.h"
 #include "memory_function.h"
 
@@ -138,7 +133,7 @@ namespace MySTL {
             /* 以下实现随机存取 */
             self& operator+=(difference_type n) {
                 difference_type offset = n + (current_ - first_);
-                if (offset >= 0 && offset < deque_buf_size()) {
+                if (offset >= 0 && static_cast<size_t>(offset) < deque_buf_size()) {
                     // 目标在同一缓冲区内
                     current_ += n;
                 }
@@ -146,7 +141,7 @@ namespace MySTL {
                 else {
                     // 标的位置不在同一缓冲区中
                     difference_type nodeOffset = offset > 0 
-                        ? (offset / static_cast<difference_type>deque_buf_size()) 
+                        ? (offset / static_cast<difference_type>(deque_buf_size())) 
                         : -static_cast<difference_type>((-offset - 1) / deque_buf_size()) - 1;
                     // 切换至正确的节点（亦即缓冲区）
                     set_node(node_ + nodeOffset);
@@ -211,7 +206,11 @@ namespace MySTL {
         using reverse_iterator          = MySTL::reverse_iterator<iterator>;
         using const_reverse_iterator    = MySTL::reverse_iterator<const_iterator>;
 
+    protected:
         using map_pointer               = T**; // add
+
+        // 一个缓冲区中的容量
+        static size_t deque_buf_size() { return detail::__deque_buf_size(sizeof(T)); }
 
     private:
         using allocator_type = Allocator;
@@ -244,7 +243,8 @@ namespace MySTL {
             fill_initialize(count, value);
         }
 
-        template <class InputIterator>
+        template <class InputIterator, typename std::enable_if<
+            MySTL::is_input_iterator<InputIterator>::value, int>::type = 0>
         deque(InputIterator first, InputIterator last) 
         { copy_initialize(first, last, iterator_category(first)); }
 
@@ -285,20 +285,21 @@ namespace MySTL {
                 const size_type length = size(); 
                 if (length >= other.size()) {
                     // 当前 deque 比 other 大，则将 other 的元素拷贝到 当前 deque，然后 erase 多余的元素
-                    auto newEnd = MySTL::copy(other.bein(), other.end(), begin());
+                    auto newEnd = MySTL::copy(other.begin(), other.end(), begin());
                     erase(newEnd, end());
                 } else {
                     // 当前 deque 比 other 小
                     // 则将 other 的一部分拷贝到当前的 deque，然后将剩下的元素插入到 cend() 之前
-                    MySTL::copy_n(other.begin(), length, begin());
-                    insert(finish_, other.begin() + static_cast<difference_type>(length), other.end());
+                    iterator mid = other.start_ + static_cast<difference_type>(length);
+                    MySTL::copy(other.start_, mid, start_);
+                    insert(finish_, mid, other.finish_);
                 }
             }
 
             return *this;
         }
 
-        deque& operator=(const deque&& other) {
+        deque& operator=(deque&& other) {
             if (this != &other) {
                 clear();
                 start_ = MySTL::move(other.start_);
@@ -329,7 +330,7 @@ namespace MySTL {
         { copy_assign(first, last, iterator_category(first)); }
 
         void assign(std::initializer_list<T> ilist) 
-        { copy_assign(ilist.begin(), ilist.end(); MySTL::forward_iterator_tag()); }
+        { copy_assign(ilist.begin(), ilist.end(), MySTL::forward_iterator_tag()); }
 
         allocator_type get_allocator() { return allocator_type(); }
         
@@ -406,7 +407,7 @@ namespace MySTL {
             return finish_;
         }
 
-        reverse_iterator rbegin() noexcept () {
+        reverse_iterator rbegin() noexcept {
             return reverse_iterator(end());
         }
 
@@ -415,7 +416,7 @@ namespace MySTL {
         }
 
         const_reverse_iterator crbegin() const noexcept {
-            return rebegin();
+            return rbegin();
         }
 
         reverse_iterator rend() noexcept {
@@ -450,23 +451,25 @@ namespace MySTL {
             return static_cast<size_type>(-1);
         }
 
-        /**
-         * @description: 请求移除所有未使用的缓冲区 
-         * @param  {*}
-         * @return {*}
-         */
-        void shrink_to_fit() {
-            // 至少会留下头部缓冲区
-            for (auto current = map_; current < start_.node_; ++current) {
-                node_allocator::deallocate(*current, deque_buf_size()); 
-                *current = nullptr;
-            }
+        // /**
+        //  * @description: 请求移除所有未使用的缓冲区 
+        //  * @param  {*}
+        //  * @return {*}
+        //  */
+        // void shrink_to_fit() {
+        //     // 至少会留下头部缓冲区
+        //     for (auto current = map_; current < start_.node_; ++current) {
+        //         node_allocator::deallocate(*current, deque_buf_size()); 
+        //         // deallocate_node(*current);
+        //         *current = nullptr;
+        //     }
 
-            for(auto current = finish_.node_ + 1; current < map_ + mapSize_; ++current) {
-                node_allocator::deallocate(*current, deque_buf_size()); 
-                *current = nullptr;
-            }
-        }
+        //     for(auto current = finish_.node_ + 1; current < map_ + mapSize_; ++current) {
+        //         node_allocator::deallocate(*current, deque_buf_size()); 
+        //         // deallocate_node(*current);
+        //         *current = nullptr;
+        //     }
+        // }
 
 
         /* 修改容器相关操作 */
@@ -476,7 +479,8 @@ namespace MySTL {
         void clear() {
             // 以下针对头尾之外的每一个缓冲区（他们一定是饱满的）。析构中间缓冲区中的对象
             for(map_pointer node = start_.node_ + 1; node < finish_.node_; ++node) {
-                node_allocator::destroy(*node, deque_buf_size());
+                node_allocator::destroy(*node, *node + deque_buf_size());
+                deallocate_node(*node);
             }
 
             if(start_.node_ != finish_.node_) {
@@ -485,19 +489,20 @@ namespace MySTL {
                 MySTL::destroy(start_.current_, start_.last_);
                 // 将尾缓冲区的目前所有元素析构
                 MySTL::destroy(finish_.first_, finish_.current_);
+                deallocate_node(finish_.first_);
             } else {
                 // 只有一个缓冲区
                 // 将此唯一缓冲区内的所有元素析构
                 MySTL::destroy(start_.current_, finish_.current_);
             }
             
-            shrink_to_fit(); // 留下一个缓冲区，回收其他缓冲区的内存空间
+            // shrink_to_fit(); // 留下一个缓冲区，回收其他缓冲区的内存空间
             finish_ = start_;
         }
 
         /* insert */
         /* 以下实现 insert。在某点（之前）插入元素。返回被插入元素的迭代器 */
-        iterator insert(const_iterator position, const_reference value) {
+        iterator insert(iterator position, const_reference value) {
             if (position.current_ == begin().current_) {
                 push_front(value); // TO DO 
                 return begin();
@@ -509,7 +514,7 @@ namespace MySTL {
             }
         }
 
-        iterator insert(const_iterator position, const value_type&& value) {
+        iterator insert(iterator position, const value_type&& value) {
             // if (position.current_ == cbegin().current_) {
             //     emplace_front(MySTL::move(value));
             //     return begin();
@@ -526,18 +531,21 @@ namespace MySTL {
             fill_insert(position, count, value);
         }
 
-        template <class InputIterator>
-        iterator insert(const_iterator position, InputIterator first, InputIterator last) {
+        template <class InputIterator, typename std::enable_if<
+        MySTL::is_input_iterator<InputIterator>::value, int>::type = 0>
+        void insert(iterator position, InputIterator first, InputIterator last) {
+            // using is_Integral = is_integral<InputIterator>;
             insert_dispatch(position, first, last, iterator_category(first));
+            // insert_dispatch(position, first, last, is_Integral());
         }
 
-        iterator insert(const_iterator position, std::initializer_list<T> ilist) {
-            return insert(position, ilist.begin(), ilist.end());
+        void insert(iterator position, std::initializer_list<T> ilist) {
+            insert(position, ilist.begin(), ilist.end());
         }
 
         /* empalce */
         template <class... Args>
-        iterator emplace(const_iterator position, Args&&... args) {
+        iterator emplace(iterator position, Args&&... args) {
             if(position.current_ == start_.current_) {
                 emplace_front(MySTL::forward<Args>(args)...);
                 return start_;
@@ -581,7 +589,7 @@ namespace MySTL {
                     // 前面的元素少，拷贝前面的元素
                     MySTL::copy_backward(begin(), first, last);
                     auto newStart = begin() + n;
-                    node_allocator::destroy(begin(), newStart);
+                    node_allocator::destroy(begin().current_, newStart.current_);
                     for (auto node = start_.node_; node < newStart.node_; ++node) {
                         deallocate_node(*node);
                     }
@@ -590,7 +598,7 @@ namespace MySTL {
                     // 后面的元素少，拷贝后面的元素
                     MySTL::copy(last, end(), first);
                     auto newFinish = end() - n;
-                    node_allocator::destroy(newFinish, end());
+                    node_allocator::destroy(newFinish.current_, end().current_);
                     for (auto node = newFinish.node_ + 1; node <= finish_.node_; ++node) {
                         deallocate_node(*node);
                     }
@@ -618,7 +626,7 @@ namespace MySTL {
             }
         }
 
-        void push_back(const value_types&& value) {
+        void push_back(const value_type&& value) {
             emplace_back(MySTL::move(value));
         }
 
@@ -626,13 +634,13 @@ namespace MySTL {
         template <class... Args>
         void emplace_back(Args&&... args) {
             if (finish_.current_ != finish_.last_ - 1) {
-                node_allocator::construct(finish_.current_, tinySTL::forward<Args>(args)...);
+                node_allocator::construct(finish_.current_, MySTL::forward<Args>(args)...);
                 ++finish_.current_;
             } else {
                 // 最后一个缓冲区只剩下一个可用空间，则在尾部分配一个新的缓冲区。
                 reserve_map_at_back();
                 *(finish_.node_ + 1) = allocate_node();
-                node_allocator::construct(finish_.current_, tinySTL::forward<Args>(args)...);
+                node_allocator::construct(finish_.current_, MySTL::forward<Args>(args)...);
                 finish_.set_node(finish_.node_ + 1);
                 finish_.current_ = finish_.first_;
             }
@@ -710,9 +718,9 @@ namespace MySTL {
         void resize(size_type count, const_reference value) {
             const auto len = size();
             if (count < len) {
-                erase(cbegin() + count, cend());
+                erase(begin() + count, end());
             } else {
-                insert(cend(), count - len, value);
+                insert(end(), count - len, value);
             }
         }
 
@@ -864,7 +872,7 @@ namespace MySTL {
             try
             {
                 for(cur = nStart; cur <= nFinish; ++cur) {
-                    *it = node_allocator::allocate(deque_buf_size());
+                    *cur = node_allocator::allocate(deque_buf_size());
                 }
             }
             catch (...)
@@ -928,7 +936,7 @@ namespace MySTL {
         }
 
         iterator reserve_elements_at_back(size_type n) {
-            size_type nAfter = finish_.last - finish_.current_ - 1;
+            size_type nAfter = finish_.last_ - finish_.current_ - 1;
             if(n > nAfter) {
                 // 空间不够，需要分配新的缓冲区
                 new_elements_at_back(n - nAfter); // TO DO
@@ -940,7 +948,7 @@ namespace MySTL {
         /* 在前面预留 n 个的缓冲区 */
         void reserve_map_at_front(size_type n = 1) {
             // 如果 map 前端的节点备用空间不足
-            if (n > start_.node_ - map_) {
+            if (n > static_cast<size_type>(start_.node_ - map_)) {
                 // 符合以上条件则必须重换一个 map（配置更大的，拷贝原来的，释放原来的）
                 reallocate_map(n, true);
             }
@@ -968,11 +976,12 @@ namespace MySTL {
                 if (newStart < start_.node_) {
                     MySTL::copy(start_.node_, finish_.node_ + 1, newStart);
                 } else {
-                    MySTL::copy_backward(start_.node_, finish_.node_ + 1, newStart + nodesToAdd);
+                    MySTL::copy_backward(start_.node_, finish_.node_ + 1, newStart + oldNumNodes);
                 }
             } 
             else { // 如果增加缓冲区后的个数的 2 倍大于等于 mapSize_，则需要重新配置空间。此时，会导致所有迭代器失效。
-                mapSize_ += MySTL::max(mapSize_, nodesToAdd) + 2;
+                size_type newMapSize_ = mapSize_ + MySTL::max(mapSize_, nodesToAdd) + 2;
+                mapSize_ = newMapSize_;
                 auto newMap = allocate_map();
                 newStart = newMap + (mapSize_ - newNumNodes) / 2 + (addToFront ? nodesToAdd : 0);
                 MySTL::copy(start_.node_, finish_.node_ + 1, newStart);
@@ -1005,7 +1014,7 @@ namespace MySTL {
             }
             else {
                 // 在后半段插入
-                empalce_back(back());
+                emplace_back(back());
                 auto back1 = finish_;
                 --back1;
                 auto back2 = back1;
@@ -1013,7 +1022,7 @@ namespace MySTL {
                 position = start_ + elems_before;
                 MySTL::copy(position, back2, back1);
             }
-            *position = value_type;
+            *position = MySTL::move(value_copy);
             return position;
         }
 
@@ -1023,16 +1032,16 @@ namespace MySTL {
             size_type len = size();
             value_type value_copy = value;
             if(elems_before < difference_type(len / 2)) {
-                iterator newstart = reserve_elements_at_front(n);
+                iterator newstart = reserve_elements_at_front(count);
                 iterator oldstart = start_;
                 position = start_ + elems_before;
 
-                if(elems_before >= difference_type(n)) {
-                    iterator start_n = start_ + difference_type(n);
+                if(elems_before >= difference_type(count)) {
+                    iterator start_n = start_ + difference_type(count);
                     uninitialized_copy(start_, start_n, newstart);
                     start_ = newstart;
                     MySTL::copy(start_n, position, oldstart);
-                    MySTL::fill(position - difference_type(n), position, value_copy);
+                    MySTL::fill(position - difference_type(count), position, value_copy);
                 }
                 else {
                     // __uninitialized_copy_fill(_M_start, __pos, __new_start, 
@@ -1049,27 +1058,27 @@ namespace MySTL {
                 const difference_type elems_after = difference_type(len) - elems_before;
                 position = finish_ - elems_after;
 
-                if(elems_after > difference_type(n)) {
-                    iterator finish_n = finish_ - difference_type(n);
+                if(elems_after > difference_type(count)) {
+                    iterator finish_n = finish_ - difference_type(count);
                     uninitialized_copy(finish_n, finish_, finish_);
                     finish_ = newfinish;
                     MySTL::copy_backward(finish_n, finish_, oldfinish);
-                    MySTL::fill(position, position + difference_type(n), value_copy);
+                    MySTL::fill(position, position + difference_type(count), value_copy);
                 }
                 else {
                     // __uninitialized_fill_copy
-                    uninitialized_fill(finish_, position + difference_type(n), value_copy);
-                    uninitialized_copy(position, finish_, position + difference_type(n));
+                    uninitialized_fill(finish_, position + difference_type(count), value_copy);
+                    uninitialized_copy(position, finish_, position + difference_type(count));
                     finish_ = newfinish;
                     MySTL::fill(position, oldfinish, value_copy);
                 }
             }
         }
 
-        void insert_aux(iterator position, const_iterator first, const_iterator last, size_type n) {
+        void insert_aux(iterator position, iterator first, iterator last, size_type n) {
             const difference_type elems_before = position - start_;
             size_type len = size();
-            if(elems_before < len / 2) {
+            if(static_cast<size_type>(elems_before) < len / 2) {
                 iterator newstart = reserve_elements_at_front(n);
                 iterator oldstart = start_;
                 position = start_ + elems_before;
@@ -1081,7 +1090,7 @@ namespace MySTL {
                     MySTL::copy(first, last, position - difference_type(n));
                 }
                 else {
-                    const_iterator mid = first + (n - elems_before); 
+                    iterator mid = first + (n - elems_before); 
                     // __uninitialized_copy_copy(_M_start, __pos, __new_start, 
                     //               _M_start, __x_copy);
                     iterator mid1 = uninitialized_copy(start_, position, newstart);
@@ -1092,7 +1101,7 @@ namespace MySTL {
                 }
             }
             else {
-                iterator newfinish = reserve_map_at_back(n);
+                iterator newfinish = reserve_elements_at_back(n);
                 iterator oldfinish = finish_;
                 const difference_type elems_after = difference_type(len) - elems_before;
                 position = finish_ - elems_after;
@@ -1137,6 +1146,16 @@ namespace MySTL {
                 insert_aux(position, first, last, n);
             }
         }
+
+        // template <class Integer>
+        // void insert_dispatch(iterator position, Integer n, Integer x, true_type) {
+        //     fill_insert(position, static_cast<size_type>(n), static_cast<value_type>(x));
+        // }
+
+        // template <class InputIterator>
+        // void insert_dispatch(iterator position, InputIterator first, InputIterator lastm false_type) {
+        //     insert(position, first, last, iterator_category(first));
+        // }
 
         void new_elements_at_front(size_type new_elems) {
             size_type new_nodes = (new_elems + deque_buf_size() - 1) / deque_buf_size();
@@ -1183,7 +1202,7 @@ namespace MySTL {
     /* 非成员函数 */
     template <class T, class Allocator>
     bool operator==(const deque<T, Allocator> &left, const deque<T, Allocator> &right) {
-        return left.size() == right.size() && tinySTL::equal(left.cbegin(), left.cend(), right.cbegin());
+        return left.size() == right.size() && MySTL::equal(left.cbegin(), left.cend(), right.cbegin());
     }
 
     template <class T, class Allocator>
@@ -1193,7 +1212,7 @@ namespace MySTL {
 
     template <class T, class Allocator>
     bool operator<(const deque<T, Allocator> &left, const deque<T, Allocator> &right) {
-        return tinySTL::lexicographical_compare(left.cbegin(), left.cend(), right.cbegin(), right.cend());
+        return MySTL::lexicographical_compare(left.cbegin(), left.cend(), right.cbegin(), right.cend());
     }
 
     template <class T, class Allocator>

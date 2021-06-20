@@ -1,10 +1,3 @@
-/*
- * @Description: 
- * @Author: Chen.Yu
- * @Date: 2021-05-07 16:50:59
- * @LastEditTime: 2021-05-11 15:08:06
- * @LastEditors: Chen.Yu
- */
 #ifndef _HASHTABLE_H
 #define _HASHTABLE_H
 
@@ -77,7 +70,7 @@ namespace MySTL {
             cur_ = cur_->next;
             if(!cur_) {
                 size_type bucket = ht_->bkt_num(old->value);
-                while(!cur && ++bucket < ht_->buckets_.size()) {
+                while(!cur_ && ++bucket < ht_->buckets_.size()) {
                     cur_ = ht_->buckets_[bucket];
                 }
             }
@@ -164,8 +157,8 @@ namespace MySTL {
     };
 
     // 虽然开链法并不要求表格大小必须为质数，但是仍然以质数来设计表格的大小
-    // 并且先将28个质数（逐渐呈现大约两倍的关系）计算好，以被随时访问
-    // 同时提供一个函数，用来查询这28个质数之中，“最接近某数并大于某数”的质数
+    // 并且先将29个质数（逐渐呈现大约两倍的关系）计算好，以被随时访问
+    // 同时提供一个函数，用来查询这29个质数之中，“最接近某数并大于某数”的质数
     enum { num_primes = 29 };
     
     static const unsigned long prime_list[num_primes] = {
@@ -233,19 +226,19 @@ namespace MySTL {
         allocator_type get_allocator() const { return allocator_type(); }
 
     private:
-        using hashtable_node_allocator = typename Allocator::template rebind<node_type>::other;
-        // using hashtable_node_pointer_allocator = typename Allocator::template rebind<hashtable_node<value_type>*>::other;
-
         using node_type             = hashtable_node<Value>;
         using node_ptr              = node_type*;
+
+        using hashtable_node_allocator = typename Allocator::template rebind<node_type>::other;
+        using hashtable_node_pointer_allocator = typename Allocator::template rebind<node_ptr>::other;
 
     private:
         // hashtable 的成员变量
         // 占大小
         hasher hash_;
-        key_type equals_;
+        key_equal equals_;
         ExtractKey getkey_;
-        MySTL::vector<node_type*, Allocator> buckets_; // 以 vector 来完成，动态扩充能力
+        MySTL::vector<node_ptr, hashtable_node_pointer_allocator> buckets_; // 以 vector 来完成，动态扩充能力
         size_t numElements_;
 
     public:
@@ -266,7 +259,7 @@ namespace MySTL {
                   const HashFcn& hash,
                   const EqualKey& equals)
             : hash_(hash),
-              equals_(equal),
+              equals_(equals),
               getkey_(ExtractKey()),
               numElements_(0)
         {
@@ -359,9 +352,9 @@ namespace MySTL {
             return const_iterator(nullptr, this);
         }
 
-        template <class Key, class Value, class HashFcn, class ExtractKey, class EqualKey, class Allocator>
-        friend bool operator==(const hashtable<Key, Value, HashFcn, ExtractKey, EqualKey, Allocator>& ht1,
-                               const hashtable<Key, Value, HashFcn, ExtractKey, EqualKey, Allocator>& ht2);
+        template <class Key1, class Value1, class HashFcn1, class ExtractKey1, class EqualKey1, class Allocator1>
+        friend bool operator==(const hashtable<Key1, Value1, HashFcn1, ExtractKey1, EqualKey1, Allocator1>& ht1,
+                               const hashtable<Key1, Value1, HashFcn1, ExtractKey1, EqualKey1, Allocator1>& ht2);
 
         // 容器相关操作
         bool empty() const { return size() == 0; }
@@ -544,11 +537,11 @@ namespace MySTL {
         // 判断元素的落脚处 bkt_num
         // 版本一：接受实值 和 buckets 个数
         size_type bkt_num(const value_type& obj, size_t n) const 
-        { return bkt_num_key(get_key(obj), n); }
+        { return bkt_num_key(getkey_(obj), n); }
 
         // 版本二：只接受实值
         size_type bkt_num(const value_type& obj) const
-        { return bkt_num_key(get_key(obj)); }
+        { return bkt_num_key(getkey_(obj)); }
 
         // 版本三：只接受键值
         size_type bkt_num_key(const key_type& key) const
@@ -792,7 +785,7 @@ namespace MySTL {
         if (numElements_ > old_n) {
             const size_type n = next_size(num_elements_hint);
             if (n > old_n) {
-                vector<node_type*, Allocator> tmp(n, static_cast<node_type*>(0)); // 设立新的 buckets
+                vector<node_type*, hashtable_node_pointer_allocator> tmp(n, static_cast<node_type*>(0)); // 设立新的 buckets
                 try
                 {
                     for (size_type bucket = 0; bucket < old_n; ++bucket) {
@@ -800,14 +793,14 @@ namespace MySTL {
                         // 以下处理每一个旧的 bucket 所含的每一个节点
                         while (first) {
                             // 以下找出节点落在哪一个新的 bucket 内
-                            size_type new_bucket = bkt_num(first -> val, n);
+                            size_type new_bucket = bkt_num(first -> value, n);
                             // (1) 令旧的 bucket 指向其所对应之串行的下一个节点（以便迭代处理）
                             buckets_[bucket] = first -> next;
                             // (2)(3) 将当前节点插入到新 bucket 内，成为其对应串行的第一个节点
                             first -> next = tmp[new_bucket];
                             tmp[new_bucket] = first;
                             // (4) 回到旧的 bucket 所指的待处理串行，准备处理下一个节点
-                            first = buckets[bucket];
+                            first = buckets_[bucket];
                         }
                     }
                     buckets_.swap(tmp);
@@ -1020,11 +1013,11 @@ namespace MySTL {
         tmp -> next = nullptr;
         try
         {
-            data_allocator::construct(&tmp ->value, obj);
+            construct(&tmp ->value, obj);
         }
         catch(...)
         {
-            data_allocator::deallocate(tmp);
+            hashtable_node_allocator::deallocate(tmp, 1);
             throw;
         }
 
@@ -1035,8 +1028,9 @@ namespace MySTL {
     void hashtable<Key, Value, HashFcn, ExtractKey, EqualKey, Allocator>::
         destroy_node(node_ptr n)
     {
-        data_allocator::destroy(&node -> val);
-        hashtable_node_allocator::deallocate(n);
+        // 优先级：-> 大于 &
+        destroy(&n->value);
+        hashtable_node_allocator::deallocate(n, 1);
         n = nullptr;
     }
 
@@ -1058,7 +1052,7 @@ namespace MySTL {
         }
         else {
             node_type* cur_next;
-            for(cur_next = cur->next; cur_next != first; cur = next, next = cur->next) {}
+            for(cur_next = cur->next; cur_next != first; cur = cur_next, cur_next = cur->next) {}
             while(cur_next != last) {
                 cur->next = cur_next->next;
                 destroy_node(cur_next);

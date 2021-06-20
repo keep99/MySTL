@@ -1,0 +1,1 @@
+/usr/bin/c++   -O0 -Wall -g2 -ggdb   CMakeFiles/list_test.dir/list_test.cpp.o CMakeFiles/list_test.dir/__/src/alloc.cpp.o  -o list_test 

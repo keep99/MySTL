@@ -1,10 +1,3 @@
-/*
- * @Description: 
- * @Author: Chen.Yu
- * @Date: 2021-05-10 20:41:32
- * @LastEditTime: 2021-05-11 15:45:14
- * @LastEditors: Chen.Yu
- */
 #ifndef _UNORDERED_MAP_H
 #define _UNORDERED_MAP_H
 
@@ -35,7 +28,7 @@ namespace MySTL {
     class unordered_map
     {
     private:
-        using hashtable_type = hashtable<Key, pair<const Key, Value>, HashFcn, 
+        using hashtable_type = hashtable<Key, MySTL::pair<const Key, Value>, HashFcn, 
                                          selectfirst<pair<const Key, Value>>, EqualKey, Allocator>;
         hashtable_type ht_; // 底层以 hashtable 完成
 
@@ -52,12 +45,12 @@ namespace MySTL {
         using pointer           = typename hashtable_type::pointer;
         using const_pointer     = typename hashtable_type::const_pointer;
         using reference         = typename hashtable_type::reference;
-        using const_reference   = typename hashtable_table::const_reference;
+        using const_reference   = typename hashtable_type::const_reference;
         
-        using iterator          = typename hashtable_table::iterator;
-        using const_iterator    = typename hashtable_table::const_iterator;
+        using iterator          = typename hashtable_type::iterator;
+        using const_iterator    = typename hashtable_type::const_iterator;
 
-        using allocator_type    = typename hashtable_table::allocator_type;
+        using allocator_type    = typename hashtable_type::allocator_type;
 
         hasher hash_fcn() const { return ht_.hash_fcn(); }
         key_equal key_eq() const { return ht_.key_eq(); }
@@ -109,7 +102,7 @@ namespace MySTL {
         unordered_map& operator=(const unordered_map& rhs)
         {
             // 其实这里的自赋值处理可以不用，hashtable 保证
-            if(this != rhs) {
+            if(this != &rhs) {
                 ht_ = rhs.ht_;
             }
 
@@ -162,6 +155,9 @@ namespace MySTL {
         // insert
         pair<iterator, bool> insert(const value_type& value)
         { return ht_.insert_unique(value); }
+
+        // pair<iterator, bool> insert(value_type&& value)
+        // { return ht_.insert_unique(MySTL::move(value)); }
         
         template <class InputIterator>
         void insert(InputIterator first, InputIterator last)
@@ -174,7 +170,7 @@ namespace MySTL {
             return ht_.insert_unique_noresize(obj);
         }
 
-        iterator find(const key_type& key) const { return ht_.find(key); }
+        iterator find(const key_type& key) { return ht_.find(key); }
 
         const_iterator find(const key_type& key) const { return ht_.find(key); }
 
@@ -184,7 +180,7 @@ namespace MySTL {
 
         size_type count(const key_type& key) const { return ht_.count(key); }
 
-        pair<iterator, iterator> equal_range(const key_type& key) const 
+        pair<iterator, iterator> equal_range(const key_type& key)
         { return ht_.equal_range(key); }
 
         pair<const_iterator, const_iterator> equal_range(const key_type& key) const 
@@ -203,7 +199,7 @@ namespace MySTL {
 
         size_type bucket_count() const { return ht_.bucket_count(); }
 
-        size_type max_bucket_count const { return ht_.max_bucket_count(); }
+        size_type max_bucket_count() const { return ht_.max_bucket_count(); }
 
         size_type elems_in_bucket(size_type n) const { return ht_.elems_in_bucket(n); }
     };
@@ -268,12 +264,12 @@ namespace MySTL {
         using pointer           = typename hashtable_type::pointer;
         using const_pointer     = typename hashtable_type::const_pointer;
         using reference         = typename hashtable_type::reference;
-        using const_reference   = typename hashtable_table::const_reference;
+        using const_reference   = typename hashtable_type::const_reference;
         
-        using iterator          = typename hashtable_table::iterator;
-        using const_iterator    = typename hashtable_table::const_iterator;
+        using iterator          = typename hashtable_type::iterator;
+        using const_iterator    = typename hashtable_type::const_iterator;
 
-        using allocator_type    = typename hashtable_table::allocator_type;
+        using allocator_type    = typename hashtable_type::allocator_type;
 
         hasher hash_fcn() const { return ht_.hash_fcn(); }
         key_equal key_eq() const { return ht_.key_eq(); }
@@ -390,13 +386,13 @@ namespace MySTL {
             return ht_.insert_equal_noresize(obj);
         }
 
-        iterator find(const key_type& key) const { return ht_.find(key); }
+        iterator find(const key_type& key) { return ht_.find(key); }
 
         const_iterator find(const key_type& key) const { return ht_.find(key); }
 
         size_type count(const key_type& key) const { return ht_.count(key); }
 
-        pair<iterator, iterator> equal_range(const key_type& key) const 
+        pair<iterator, iterator> equal_range(const key_type& key)
         { return ht_.equal_range(key); }
 
         pair<const_iterator, const_iterator> equal_range(const key_type& key) const 
@@ -415,7 +411,7 @@ namespace MySTL {
 
         size_type bucket_count() const { return ht_.bucket_count(); }
 
-        size_type max_bucket_count const { return ht_.max_bucket_count(); }
+        size_type max_bucket_count() const { return ht_.max_bucket_count(); }
 
         size_type elems_in_bucket(size_type n) const { return ht_.elems_in_bucket(n); }
     };

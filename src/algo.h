@@ -1,13 +1,6 @@
-/*
- * @Description: 
- * @Author: Chen.Yu
- * @Date: 2021-04-25 16:24:28
- * @LastEditTime: 2021-05-10 18:40:20
- * @LastEditors: Chen.Yu
- */
 #ifndef _ALGO_H_
 #define _ALGO_H_
-#include <cstddef>
+
 #include "algobase.h"
 #include "iterator_base.h"
 #include "iterator_reverse_iterator.h"
@@ -15,6 +8,7 @@
 #include "type_traits.h"
 #include "tempbuf.h"
 #include "heap.h"
+#include "utility"
 
 namespace MySTL {
     /*****************************************************************************************/
@@ -140,186 +134,6 @@ namespace MySTL {
         }
 
         return first;
-    }
-
-
-    /*****************************************************************************************/
-    // find_end
-    // 在[first1, last1)区间中查找[first2, last2)最后一次出现的地方，若不存在返回 last1
-    /*****************************************************************************************/
-    // 以下是 forward_iterator_tag 版本
-    template <class ForwardIter1, class ForwardIter2>
-    ForwardIter1
-    find_end_dispatch(ForwardIter1 first1, ForwardIter1 last1,
-                      ForwardIter2 first2, ForwardIter2 last2,
-                      forward_iterator_tag, forward_iterator_tag)
-    {
-        if(first2 == last2) {
-            return last1;
-        }
-        else {
-            ForwardIter1 result = last1;
-            while(1) {
-                // 以下利用 search() 查找某个子序列的首次出现点。找不到的话就返回 last1
-                ForwardIter1 new_result = MySTL::search(first1, last1, first2, last2);
-                if(new_result == last1) {   // 没找到
-                    return result;
-                }
-                else {
-                    result = new_result;
-                    first1 = new_result;    // 调动一个标兵，准备下一次查找行动
-                    ++first1;
-                }
-            }
-        }
-    }
-
-    // 以下是 bidirectional_iterator_tag 版本（可以逆序查找）
-    template <class BidirectIter1, class BidirectIter2>
-    BidirectIter1
-    find_end_dispatch(BidirectIter1 first1, BidirectIter1 last1,
-                      BidirectIter2 first2, BidirectIter2 last2,
-                      bidirectional_iterator_tag, bidirectional_iterator_tag)
-    {
-        using reviter1 = reverse_iterator<ForwardIter1>;
-        using reviter2 = reverse_iterator<ForwardIter2>;
-
-        reviter1 rlast1(first1);
-        reviter2 rlast2(first2);
-        reviter1 rresult = MySTL::search(reviter1(last1), rlast1, reviter2(last2), rlast2);
-        if(rresult == rlast1) { // 没找到
-            return last1;
-        }
-        else { // 找到了
-            BidirectIter1 result = rresult.base();  // 转会正常迭代器（非逆序）
-            MySTL::advance(result, -MySTL::distance(first2, last2)); // 调整回到子序列的起头处
-            return result;
-        }
-    }
-
-    template <class ForwardIter1, class ForwardIter2>
-    ForwardIter1
-    find_end(ForwardIter1 first1, ForwardIter1 last1,
-             ForwardIter2 first2, ForwardIter2 last2)
-    {
-        using Category1 = typename iterator_traits<ForwardIter1>::iterator_category;
-        using Category2 = typename iterator_traits<ForwardIter2>::iterator_category;
-
-        return MySTL::find_end_dispatch(first1, last1, first2, last2, Category1(), Category2());
-    }
-
-
-    template <class ForwardIter1, class ForwardIter2, class Compare>
-    ForwardIter1
-    find_end_dispatch(ForwardIter1 first1, ForwardIter1 last1,
-                      ForwardIter2 first2, ForwardIter2 last2, Compare comp,
-                      forward_iterator_tag, forward_iterator_tag)
-    {
-        if(first2 == last2) {
-            return last1;
-        }
-        else {
-            ForwardIter1 result = last1;
-            while(1) {
-                // 以下利用 search() 查找某个子序列的首次出现点。找不到的话就返回 last1
-                ForwardIter1 new_result = MySTL::search(first1, last1, first2, last2, comp);
-                if(new_result == last1) {   // 没找到
-                    return result;
-                }
-                else {
-                    result = new_result;
-                    first1 = new_result;    // 调动一个标兵，准备下一次查找行动
-                    ++first1;
-                }
-            }
-        }
-    }
-
-    // 以下是 bidirectional_iterator_tag 版本（可以逆序查找）
-    template <class BidirectIter1, class BidirectIter2, class Compare>
-    BidirectIter1
-    find_end_dispatch(BidirectIter1 first1, BidirectIter1 last1,
-                      BidirectIter2 first2, BidirectIter2 last2, Compare comp,
-                      bidirectional_iterator_tag, bidirectional_iterator_tag)
-    {
-        using reviter1 = reverse_iterator<ForwardIter1>;
-        using reviter2 = reverse_iterator<ForwardIter2>;
-
-        reviter1 rlast1(first1);
-        reviter2 rlast2(first2);
-        reviter1 rresult = MySTL::search(reviter1(last1), rlast1, reviter2(last2), rlast2, comp);
-        if(rresult == rlast1) { // 没找到
-            return last1;
-        }
-        else { // 找到了
-            BidirectIter1 result = rresult.base();  // 转会正常迭代器（非逆序）
-            MySTL::advance(result, -MySTL::distance(first2, last2)); // 调整回到子序列的起头处
-            return result;
-        }
-    }
-    
-    // 重载函数版本，使用 comp 代替比较操作
-    template <class ForwardIter1, class ForwardIter2, class Compare>
-    ForwardIter1
-    find_end(ForwardIter1 first1, ForwardIter1 last1,
-             ForwardIter2 first2, ForwardIter2 last2, Compare comp)
-    {
-        using Category1 = typename iterator_traits<ForwardIter1>::iterator_category;
-        using Category2 = typename iterator_traits<ForwardIter2>::iterator_category;
-
-        return MySTL::find_end_dispatch(first1, last1, first2, last2, comp, Category1(), Category2());
-    }
-
-
-    /*****************************************************************************************/
-    // find_first_of
-    // 在[first1, last1)中查找[first2, last2)中的某些元素，返回指向第一次出现的元素的迭代器
-    /*****************************************************************************************/
-    template <class InputIter, class ForwardIter>
-    InputIter
-    find_first_of(InputIter first1, InputIter last1,
-                  ForwardIter first2, ForwardIter last2)
-    {
-        for(; first1 != last1; ++first1) {
-            for(ForwardIter* iter = first2; iter != last2; ++iter) {
-                if(*iter == *first1) {
-                    return first1;
-                }
-            }
-        }
-
-        return last1;
-    }
-
-    template <class InputIter, class ForwardIter, class Compare>
-    InputIter
-    find_first_of(InputIter first1, InputIter last1,
-                  ForwardIter first2, ForwardIter last2, Compare comp)
-    {
-        for(; first1 != last1; ++first1) {
-            for(ForwardIter* iter = first2; iter != last2; ++iter) {
-                if(comp(*iter, *first1)) {
-                    return first1;
-                }
-            }
-        }
-
-        return last1;
-    }
-
-
-    /*****************************************************************************************/
-    // for_each
-    // 使用一个函数对象 f 对[first, last)区间内的每个元素执行一个 operator() 操作，但不能改变元素内容
-    // f() 可返回一个值，但该值会被忽略
-    /*****************************************************************************************/
-    template <class InputIter, class Function>
-    Function for_each(InputIter first, InputIter last, Function f) {
-        for(; first != last; ++first) {
-            f(*first);
-        }
-
-        return f;
     }
 
 
@@ -473,7 +287,187 @@ namespace MySTL {
         }    
     }
 
+
+    /*****************************************************************************************/
+    // find_end
+    // 在[first1, last1)区间中查找[first2, last2)最后一次出现的地方，若不存在返回 last1
+    /*****************************************************************************************/
+    // 以下是 forward_iterator_tag 版本
+    template <class ForwardIter1, class ForwardIter2>
+    ForwardIter1
+    find_end_dispatch(ForwardIter1 first1, ForwardIter1 last1,
+                      ForwardIter2 first2, ForwardIter2 last2,
+                      forward_iterator_tag, forward_iterator_tag)
+    {
+        if(first2 == last2) {
+            return last1;
+        }
+        else {
+            ForwardIter1 result = last1;
+            while(1) {
+                // 以下利用 search() 查找某个子序列的首次出现点。找不到的话就返回 last1
+                ForwardIter1 new_result = MySTL::search(first1, last1, first2, last2);
+                if(new_result == last1) {   // 没找到
+                    return result;
+                }
+                else {
+                    result = new_result;
+                    first1 = new_result;    // 调动一个标兵，准备下一次查找行动
+                    ++first1;
+                }
+            }
+        }
+    }
+
+    // 以下是 bidirectional_iterator_tag 版本（可以逆序查找）
+    template <class BidirectIter1, class BidirectIter2>
+    BidirectIter1
+    find_end_dispatch(BidirectIter1 first1, BidirectIter1 last1,
+                      BidirectIter2 first2, BidirectIter2 last2,
+                      bidirectional_iterator_tag, bidirectional_iterator_tag)
+    {
+        using reviter1 = reverse_iterator<BidirectIter1>;
+        using reviter2 = reverse_iterator<BidirectIter2>;
+
+        reviter1 rlast1(first1);
+        reviter2 rlast2(first2);
+        reviter1 rresult = MySTL::search(reviter1(last1), rlast1, reviter2(last2), rlast2);
+        if(rresult == rlast1) { // 没找到
+            return last1;
+        }
+        else { // 找到了
+            BidirectIter1 result = rresult.base();  // 转会正常迭代器（非逆序）
+            MySTL::advance(result, -MySTL::distance(first2, last2)); // 调整回到子序列的起头处
+            return result;
+        }
+    }
+
+    template <class ForwardIter1, class ForwardIter2, class Compare>
+    ForwardIter1
+    find_end_dispatch(ForwardIter1 first1, ForwardIter1 last1,
+                      ForwardIter2 first2, ForwardIter2 last2, Compare comp,
+                      forward_iterator_tag, forward_iterator_tag)
+    {
+        if(first2 == last2) {
+            return last1;
+        }
+        else {
+            ForwardIter1 result = last1;
+            while(1) {
+                // 以下利用 search() 查找某个子序列的首次出现点。找不到的话就返回 last1
+                ForwardIter1 new_result = MySTL::search(first1, last1, first2, last2, comp);
+                if(new_result == last1) {   // 没找到
+                    return result;
+                }
+                else {
+                    result = new_result;
+                    first1 = new_result;    // 调动一个标兵，准备下一次查找行动
+                    ++first1;
+                }
+            }
+        }
+    }
+
     
+    template <class ForwardIter1, class ForwardIter2>
+    ForwardIter1
+    find_end(ForwardIter1 first1, ForwardIter1 last1,
+             ForwardIter2 first2, ForwardIter2 last2)
+    {
+        using Category1 = typename iterator_traits<ForwardIter1>::iterator_category;
+        using Category2 = typename iterator_traits<ForwardIter2>::iterator_category;
+
+        return MySTL::find_end_dispatch(first1, last1, first2, last2, Category1(), Category2());
+    }
+
+    // 以下是 bidirectional_iterator_tag 版本（可以逆序查找）
+    template <class BidirectIter1, class BidirectIter2, class Compare>
+    BidirectIter1
+    find_end_dispatch(BidirectIter1 first1, BidirectIter1 last1,
+                      BidirectIter2 first2, BidirectIter2 last2, Compare comp,
+                      bidirectional_iterator_tag, bidirectional_iterator_tag)
+    {
+        using reviter1 = reverse_iterator<BidirectIter1>;
+        using reviter2 = reverse_iterator<BidirectIter2>;
+
+        reviter1 rlast1(first1);
+        reviter2 rlast2(first2);
+        reviter1 rresult = MySTL::search(reviter1(last1), rlast1, reviter2(last2), rlast2, comp);
+        if(rresult == rlast1) { // 没找到
+            return last1;
+        }
+        else { // 找到了
+            BidirectIter1 result = rresult.base();  // 转会正常迭代器（非逆序）
+            MySTL::advance(result, -MySTL::distance(first2, last2)); // 调整回到子序列的起头处
+            return result;
+        }
+    }
+
+    // 重载函数版本，使用 comp 代替比较操作
+    template <class ForwardIter1, class ForwardIter2, class Compare>
+    ForwardIter1
+    find_end(ForwardIter1 first1, ForwardIter1 last1,
+             ForwardIter2 first2, ForwardIter2 last2, Compare comp)
+    {
+        using Category1 = typename iterator_traits<ForwardIter1>::iterator_category;
+        using Category2 = typename iterator_traits<ForwardIter2>::iterator_category;
+
+        return MySTL::find_end_dispatch(first1, last1, first2, last2, comp, Category1(), Category2());
+    }
+
+
+    /*****************************************************************************************/
+    // find_first_of
+    // 在[first1, last1)中查找[first2, last2)中的某些元素，返回指向第一次出现的元素的迭代器
+    /*****************************************************************************************/
+    template <class InputIter, class ForwardIter>
+    InputIter
+    find_first_of(InputIter first1, InputIter last1,
+                  ForwardIter first2, ForwardIter last2)
+    {
+        for(; first1 != last1; ++first1) {
+            for(ForwardIter* iter = first2; iter != last2; ++iter) {
+                if(*iter == *first1) {
+                    return first1;
+                }
+            }
+        }
+
+        return last1;
+    }
+
+    template <class InputIter, class ForwardIter, class Compare>
+    InputIter
+    find_first_of(InputIter first1, InputIter last1,
+                  ForwardIter first2, ForwardIter last2, Compare comp)
+    {
+        for(; first1 != last1; ++first1) {
+            for(ForwardIter* iter = first2; iter != last2; ++iter) {
+                if(comp(*iter, *first1)) {
+                    return first1;
+                }
+            }
+        }
+
+        return last1;
+    }
+
+
+    /*****************************************************************************************/
+    // for_each
+    // 使用一个函数对象 f 对[first, last)区间内的每个元素执行一个 operator() 操作，但不能改变元素内容
+    // f() 可返回一个值，但该值会被忽略
+    /*****************************************************************************************/
+    template <class InputIter, class Function>
+    Function for_each(InputIter first, InputIter last, Function f) {
+        for(; first != last; ++first) {
+            f(*first);
+        }
+
+        return f;
+    }
+
+
     /*****************************************************************************************/
     // adjacent_find
     // 找出第一对匹配的相邻元素，缺省使用 operator== 比较，如果找到返回一个迭代器，指向这对元素的第一个元素
@@ -544,7 +538,7 @@ namespace MySTL {
 
     template <class RandomIter, class T>
     RandomIter 
-    lower_bound_dispatch(RandomIter first, RandomIter last, const T& value, forward_iterator_tag) {
+    lower_bound_dispatch(RandomIter first, RandomIter last, const T& value, random_access_iterator_tag) {
         auto len = last - first;
         auto half = len;
         RandomIter middle;
@@ -561,12 +555,6 @@ namespace MySTL {
             }
         }
         return first;
-    }
-
-    template <class ForwardIter, class T>
-    ForwardIter
-    lower_bound(ForwardIter first, ForwardIter last, const T& value) {
-        return MySTL::lower_bound_dispatch(first, last, value, iterator_category(first));
     }
 
     template <class ForwardIter, class T, class Compare>
@@ -595,7 +583,7 @@ namespace MySTL {
 
     template <class RandomIter, class T, class Compare>
     RandomIter 
-    lower_bound_dispatch(RandomIter first, RandomIter last, const T& value, forward_iterator_tag, Compare comp) {
+    lower_bound_dispatch(RandomIter first, RandomIter last, const T& value, random_access_iterator_tag, Compare comp) {
         auto len = last - first;
         auto half = len;
         RandomIter middle;
@@ -612,6 +600,12 @@ namespace MySTL {
             }
         }
         return first;
+    }
+
+    template <class ForwardIter, class T>
+    ForwardIter
+    lower_bound(ForwardIter first, ForwardIter last, const T& value) {
+        return MySTL::lower_bound_dispatch(first, last, value, iterator_category(first));
     }
 
     template <class ForwardIter, class T, class Compare>
@@ -652,7 +646,7 @@ namespace MySTL {
 
     template <class RandomIter, class T>
     RandomIter 
-    upper_bound_dispatch(RandomIter first, RandomIter last, const T& value, forward_iterator_tag) {
+    upper_bound_dispatch(RandomIter first, RandomIter last, const T& value, random_access_iterator_tag) {
         auto len = last - first;
         auto half = len;
         RandomIter middle;
@@ -669,12 +663,6 @@ namespace MySTL {
             }
         }
         return first;
-    }
-
-    template <class ForwardIter, class T>
-    ForwardIter
-    upper_bound(ForwardIter first, ForwardIter last, const T& value) {
-        return MySTL::upper_bound_dispatch(first, last, value, iterator_category(first));
     }
 
     template <class ForwardIter, class T, class Compare>
@@ -703,7 +691,7 @@ namespace MySTL {
 
     template <class RandomIter, class T, class Compare>
     RandomIter 
-    upper_bound_dispatch(RandomIter first, RandomIter last, const T& value, forward_iterator_tag, Compare comp) {
+    upper_bound_dispatch(RandomIter first, RandomIter last, const T& value, random_access_iterator_tag, Compare comp) {
         auto len = last - first;
         auto half = len;
         RandomIter middle;
@@ -720,6 +708,12 @@ namespace MySTL {
             }
         }
         return first;
+    }
+
+    template <class ForwardIter, class T>
+    ForwardIter
+    upper_bound(ForwardIter first, ForwardIter last, const T& value) {
+        return MySTL::upper_bound_dispatch(first, last, value, iterator_category(first));
     }
 
     template <class ForwardIter, class T, class Compare>
@@ -752,12 +746,6 @@ namespace MySTL {
     // 查找[first,last)区间中与 value 相等的元素所形成的区间，返回一对迭代器指向区间首尾
     // 第一个迭代器指向第一个不小于 value 的元素，第二个迭代器指向第一个大于 value 的元素
     /*****************************************************************************************/
-    template <class ForwardIter, class T>
-    MySTL::pair<ForwardIter, ForwardIter>
-    equal_range(ForwardIter first, ForwardIter last, const T& value) {
-        return MySTL::equal_range_dispatch(first, last, value, iterator_category(first));
-    }
-
     template <class ForwardIter, class T>
     MySTL::pair<ForwardIter, ForwardIter>
     equal_range_dispatch(ForwardIter first, ForwardIter last, const T& value, forward_iterator_tag) {
@@ -814,12 +802,6 @@ namespace MySTL {
 
     template <class ForwardIter, class T, class Compare>
     MySTL::pair<ForwardIter, ForwardIter>
-    equal_range(ForwardIter first, ForwardIter last, const T& value, Compare comp) {
-        return MySTL::equal_range_dispatch(first, last, value, iterator_category(first), comp);
-    }
-
-    template <class ForwardIter, class T, class Compare>
-    MySTL::pair<ForwardIter, ForwardIter>
     equal_range_dispatch(ForwardIter first, ForwardIter last, const T& value, forward_iterator_tag, Compare comp) {
         auto len = last - first;
         auto half = len;
@@ -870,6 +852,18 @@ namespace MySTL {
         }
 
         return pair<RandomIter, RandomIter>(first, first);
+    }
+
+    template <class ForwardIter, class T>
+    MySTL::pair<ForwardIter, ForwardIter>
+    equal_range(ForwardIter first, ForwardIter last, const T& value) {
+        return MySTL::equal_range_dispatch(first, last, value, iterator_category(first));
+    }
+
+    template <class ForwardIter, class T, class Compare>
+    MySTL::pair<ForwardIter, ForwardIter>
+    equal_range(ForwardIter first, ForwardIter last, const T& value, Compare comp) {
+        return MySTL::equal_range_dispatch(first, last, value, iterator_category(first), comp);
     }
 
 
@@ -1030,7 +1024,7 @@ namespace MySTL {
                 return right;
             }
             else {                      // right <= left < mid
-                return left
+                return left;
             }
         }
         else if(left < right) {         // mid <= left < right
@@ -1174,7 +1168,7 @@ namespace MySTL {
 
     template <class InputIter1, class InputIter2, class OutputIter, class BinaryOperation>
     OutputIter
-    transform(InputIter1 first1, InputIter1 last,
+    transform(InputIter1 first1, InputIter1 last1,
               InputIter2 first2, OutputIter result, BinaryOperation binary_op) 
     {
         for(; first1 != last1; ++first1, ++first2, ++result) {
@@ -1182,19 +1176,6 @@ namespace MySTL {
         }
 
         return result;
-    }
-
-
-    /*****************************************************************************************/
-    // remove
-    // 移除所有与指定 value 相等的元素
-    // 并不从容器中删除这些元素，所以 remove 和 remove_if 不适用于 array
-    /*****************************************************************************************/    
-    template <class ForwardIter, class T>
-    ForwardIter remove(ForwardIter first, ForwardIter last, const T& value) {
-        first = MySTL::find(first, last, value); // 找出第一个相等的元素
-        auto next = first;
-        return first == last ? first : MySTL::remove_copy(++next, last, first, value);
     }
 
 
@@ -1215,6 +1196,20 @@ namespace MySTL {
 
         return result;
     }
+
+
+    /*****************************************************************************************/
+    // remove
+    // 移除所有与指定 value 相等的元素
+    // 并不从容器中删除这些元素，所以 remove 和 remove_if 不适用于 array
+    /*****************************************************************************************/    
+    template <class ForwardIter, class T>
+    ForwardIter remove(ForwardIter first, ForwardIter last, const T& value) {
+        first = MySTL::find(first, last, value); // 找出第一个相等的元素
+        auto next = first;
+        return first == last ? first : MySTL::remove_copy(++next, last, first, value);
+    }
+    
 
     /*****************************************************************************************/
     // remove_copy_if
@@ -1601,9 +1596,9 @@ namespace MySTL {
     bool is_permutation(ForwardIter1 first1, ForwardIter1 last1,
                         ForwardIter2 first2, ForwardIter2 last2)
     {   
-        using v1 = iterator_traits<ForwardIter1>::value_type;
-        using v2 = iterator_traits<ForwardIter2>::value_type;
-        static_assert(MySTL::is_same<v1, v2>::value, "the type should be same in MySTL::is_permutation");
+        using v1 = typename iterator_traits<ForwardIter1>::value_type;
+        using v2 = typename iterator_traits<ForwardIter2>::value_type;
+        static_assert(std::is_same<v1, v2>::value, "the type should be same in MySTL::is_permutation");
 
         return is_permutation_aux(first1, last1, first2, last2, MySTL::equal_to<v1>()); // TO DO
     }
@@ -1635,7 +1630,7 @@ namespace MySTL {
             if(*i < *ii) { // 如果前一个元素小于后一个元素
                 BidirectionalIter j = last; // 令 j 指向尾端
                 while(!(*i < *--j)) {}
-                MySTL::iter_swap(i， j); // 交换 i,j 所指元素 
+                MySTL::iter_swap(i, j); // 交换 i,j 所指元素 
                 MySTL::reverse(ii, last); // 将 ii 之后（包括 ii）所有元素反转
                 return true;
             }
@@ -1664,7 +1659,7 @@ namespace MySTL {
             if(comp(*i, *ii)) { // 如果前一个元素小于后一个元素
                 BidirectionalIter j = last; // 令 j 指向尾端
                 while(!comp(*i, *--j)) {}
-                MySTL::iter_swap(i， j); // 交换 i,j 所指元素 
+                MySTL::iter_swap(i, j); // 交换 i,j 所指元素 
                 MySTL::reverse(ii, last); // 将 ii 之后（包括 ii）所有元素反转
                 return true;
             }
@@ -1792,7 +1787,7 @@ namespace MySTL {
             return;
         }
         if(len1 + len2 == 2) {
-            if(*middle < *first)) {
+            if(*middle < *first) {
                 MySTL::iter_swap(first, middle);
             }
 
@@ -1856,6 +1851,30 @@ namespace MySTL {
                 }
                 --last2;
             }
+        }
+    }
+
+    // rotate_adaptive 和 rotate 的功效差不多，只是针对缓冲区的存在，做了优化
+    template <class BidirectionalIter1, class BidirectionalIter2, class Distance>
+    BidirectionalIter1
+    rotate_adaptive(BidirectionalIter1 first, BidirectionalIter1 middle,
+                    BidirectionalIter1 last, Distance len1, Distance len2,
+                    BidirectionalIter2 buffer, Distance buffer_size)
+    {
+        BidirectionalIter2 buffer_end;
+        if(len1 > len2 && len2 <= buffer_size)
+        {
+            buffer_end = MySTL::copy(middle, last, buffer);
+            MySTL::copy_backward(first, middle, last);
+            return MySTL::copy(buffer, buffer_end, first);
+        }
+        else if(len1 <= buffer_size) {
+            buffer_end = MySTL::copy(first, middle, buffer);
+            MySTL::copy(middle, last, first);
+            return MySTL::copy_backward(buffer, buffer_end, last);
+        }
+        else {
+            return MySTL::rotate(first, middle, last);
         }
     }
 
@@ -1935,7 +1954,7 @@ namespace MySTL {
         if(first == middle || middle == last) {
             return;
         }
-        MySTL::inpalce_merge_aux(first, middle, last, value_type(first));
+        MySTL::inplace_merge_aux(first, middle, last, value_type(first));
     }
     
     // 参考http://www.cocoachina.com/articles/135990
@@ -2017,29 +2036,6 @@ namespace MySTL {
         }
     }
 
-    // rotate_adaptive 和 rotate 的功效差不多，只是针对缓冲区的存在，做了优化
-    template <class BidirectionalIter1, class BidirectionalIter2, class Distance>
-    BidirectionalIter1
-    rotate_adaptive(BidirectionalIter1 first, BidirectionalIter1 middle,
-                    BidirectionalIter1 last, Distance len1, Distance len2,
-                    BidirectionalIter2 buffer, Distance buffer_size)
-    {
-        BidirectionalIter2 buffer_end;
-        if(len1 > len2 && len2 <= buffer_size)
-        {
-            buffer_end = MySTL::copy(middle, last, buffer);
-            MySTL::copy_backward(first, middle, last);
-            return MySTL::copy(buffer, buffer_end, first);
-        }
-        else if(len1 <= buffer_size) {
-            buffer_end = MySTL::copy(first, middle, buffer);
-            MySTL::copy(middle, last, first);
-            return MySTL::copy_backward(buffer, buffer_end, last);
-        }
-        else {
-            return MySTL::rotate(first, middle, last);
-        }
-    }
 
     // 参考 《STL 源码剖析》P405
     template <class BidirectionalIter, class Distance, class Pointer, class Compare>
@@ -2117,7 +2113,7 @@ namespace MySTL {
         if(first == middle || middle == last) {
             return;
         }
-        MySTL::inpalce_merge_aux(first, middle, last, value_type(first), comp);
+        MySTL::inplace_merge_aux(first, middle, last, value_type(first), comp);
     }
 
 
@@ -2186,14 +2182,6 @@ namespace MySTL {
         return result_iter;
     }
 
-    template <class InputIter, class RandomIter>
-    RandomIter
-    paritial_sort_copy(InputIter first, InputIter last,
-                       RandomIter result_first, RandomIter result_last)
-    {
-        return MySTL::psort_copy_aux(first, last, result_first, result_last, distance_type(result_first));
-    }
-
     template <class InputIter, class RandomIter, class Distance, class Compare>
     RandomIter
     psort_copy_aux(InputIter first, InputIter last,
@@ -2220,6 +2208,14 @@ namespace MySTL {
         MySTL::sort_heap(result_first, result_iter, comp);
         return result_iter;
     }
+    
+    template <class InputIter, class RandomIter>
+    RandomIter
+    paritial_sort_copy(InputIter first, InputIter last,
+                       RandomIter result_first, RandomIter result_last)
+    {
+        return MySTL::psort_copy_aux(first, last, result_first, result_last, distance_type(result_first));
+    }
 
     template <class InputIter, class RandomIter, class Compare>
     RandomIter
@@ -2239,8 +2235,8 @@ namespace MySTL {
     /*****************************************************************************************/    
     template <class ForwardIter, class UnaryPredicate>
     ForwardIter
-    partition(ForwardIter first, ForwardIter last,
-            UnaryPredicate unary_pred)
+    partition_aux(ForwardIter first, ForwardIter last,
+            UnaryPredicate unary_pred, forward_iterator_tag)
     {
         if(first == last) {
             return first;
@@ -2267,8 +2263,8 @@ namespace MySTL {
 
     template <class BidirectionalIter, class UnaryPredicate>
     BidirectionalIter
-    partition(BidirectionalIter first, BidirectionalIter last,
-            UnaryPredicate unary_pred)
+    partition_aux(BidirectionalIter first, BidirectionalIter last,
+            UnaryPredicate unary_pred, bidirectional_iterator_tag)
     {
         while(true) {
             while(first != last && unary_pred(*first)) { // 找到第一个不满足 条件 的 first位置
@@ -2610,40 +2606,12 @@ namespace MySTL {
     // output_iterator_tag 是 唯写，不能进行读操作 *result != *first
     template <class InputIter, class ForwardIter>
     ForwardIter 
-    unique_copy_dispatch(InputIter first, InputIter last, ForwardIter result, forward_iterator_tag)
+    unique_copy_dispatch(InputIter first, InputIter last, ForwardIter result, output_iterator_tag)
     {
         auto value = *first;
         *result = value;
         while(++first != last) {
             if(value != *first) {
-                value = *first;
-                *++result = value;
-            }
-        }
-    }
-
-
-    template <class InputIter, class OutputIter>
-    OutputIter
-    unique_copy(InputIter first, InputIter last, OutputIter result) 
-    {
-        if(first == last) {
-            return result;
-        }
-
-        return MySTL::unique_copy_dispatch(first, last, result, iterator_category(result));
-    }
-
-    // unique_copy_dispatch 的 output_iterator_tag 版本
-    // output_iterator_tag 是 唯写，不能进行读操作 *result != *first
-    template <class InputIter, class ForwardIter, class Compare>
-    ForwardIter 
-    unique_copy_dispatch(InputIter first, InputIter last, ForwardIter result, forward_iterator_tag, Compare comp)
-    {
-        auto value = *first;
-        *result = value;
-        while(++first != last) {
-            if(!comp(value, *first)) {
                 value = *first;
                 *++result = value;
             }
@@ -2663,6 +2631,33 @@ namespace MySTL {
         }
 
         return ++result;
+    }
+
+    // unique_copy_dispatch 的 output_iterator_tag 版本
+    // output_iterator_tag 是 唯写，不能进行读操作 *result != *first
+    template <class InputIter, class ForwardIter, class Compare>
+    ForwardIter 
+    unique_copy_dispatch(InputIter first, InputIter last, ForwardIter result, output_iterator_tag, Compare comp)
+    {
+        auto value = *first;
+        *result = value;
+        while(++first != last) {
+            if(!comp(value, *first)) {
+                value = *first;
+                *++result = value;
+            }
+        }
+    }
+
+    template <class InputIter, class OutputIter>
+    OutputIter
+    unique_copy(InputIter first, InputIter last, OutputIter result) 
+    {
+        if(first == last) {
+            return result;
+        }
+
+        return MySTL::unique_copy_dispatch(first, last, result, iterator_category(result));
     }
 
     // 重载版本使用函数对象 comp 代替比较操作

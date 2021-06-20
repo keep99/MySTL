@@ -1,39 +1,42 @@
-/*
- * @Description: vector
- * @Author: Chen.Yu
- * @Date: 2021-04-03 14:03:48
- * @LastEditTime: 2021-05-10 23:37:38
- * @LastEditors: Chen.Yu
- */
 #ifndef _VECTOR_H_
 #define _VECTOR_H_
 #include <initializer_list>
 
+#include "algobase.h"
 #include "allocator.h"
+#include "memory_function.h"
+#include "alloc.h"
 #include "iterator.h"
 #include "type_traits.h"
 #include "utility.h"
-#include "memory_function.h"
-#include "algobase.h"  
+
+
 
 namespace MySTL {
-    template<class T, class Alloc = allocator<T>> 
+    template<class T, class Alloc = MySTL::allocator<T>> 
     class vector {
     public:
-        // vetor 的嵌套型别定义
-        // typedef T           value_type;
-        // typedef T*          pointer;
-        // typedef T*          iterator;
-        // typedef const T*    const_iterator;
-        // typedef T&          reference;
-        // typedef size_t      size_type;
-        // typedef ptrdiff_t   difference_type;
+        using allocator_type         = Alloc;
+        using data_allocator         = Alloc;
+
+        // using value_type             = typename allocator_type::value_type;
+        // using pointer                = typename allocator_type::pointer;
+        // using const_pointer          = typename allocator_type::const_pointer;
+        // using iterator               = value_type*;
+        // using const_iterator         = const value_type*;
+        // using reference              = typename allocator_type::reference;
+        // using const_reference        = typename allocator_type::const_reference;
+        // using size_type              = typename allocator_type::size_type;
+        // using difference_type        = typename allocator_type::difference_type;
+
+        // using reverse_iterator       = MySTL::reverse_iterator<iterator>;
+        // using const_reverse_iterator = MySTL::reverse_iterator<const_iterator>;
 
         using value_type             = T;
         using pointer                = T*;
         using const_pointer          = const T*;
-        using iterator               = T*;
-        using const_iterator         = const T*;
+        using iterator               = value_type*;
+        using const_iterator         = const value_type*;
         using reference              = T&;
         using const_reference        = const T&;
         using size_type              = size_t;
@@ -41,9 +44,6 @@ namespace MySTL {
 
         using reverse_iterator       = MySTL::reverse_iterator<iterator>;
         using const_reverse_iterator = MySTL::reverse_iterator<const_iterator>;
-
-        using allocator_type         = Alloc;
-        using data_allocator         = Alloc;
 
     private:
         // 删除这个，占用空间！
@@ -61,21 +61,21 @@ namespace MySTL {
         // 构造函数（只实现了部分）
         vector() : start_(nullptr), finish_(nullptr), end_of_storage_(nullptr) {}
         vector(size_type n, const T& value) { fill_initialize(n, value); }
-        vector(int       n, const T& value) { fill_initialize(n, value); }
-        vector(long      n, const T& value) { fill_initialize(n, value); }
         
         explicit vector(size_type n) : vector(n, T()) {}
 
         
-        // 这边可能传入迭代器，也可能传入两个数
-        template <class InputIterator>
-        vector(InputIterator first, InputIterator last) : vector() {
+        // 这边只接受传入迭代器
+        template <class InputIterator, typename std::enable_if<
+            MySTL::is_input_iterator<InputIterator>::value, int>::type = 0>
+        vector(InputIterator first, InputIterator last) {
             // 如果 InputIterator 为整数类型，则此构造函数的效果如同
             // vector(static_cast<size_type>(first), static_cast<value_type>(last)),
             // 实际调用的是 fill_initialize，构造
             // 如果 InputIterator 为迭代器类型，才是迭代器版本的构造函数
             // 实际调用的是 copy_initialize，拷贝
-            initialize_aux(first, last, is_integral<InputIterator>());
+            // initialize_aux(first, last, is_integral<InputIterator>());
+            initialize_aux(first, last);
         }
     
         // 列表初始化
@@ -94,7 +94,7 @@ namespace MySTL {
         //     swap(other);
         // }
         // 以上的实现不好，改为下面的实现
-        vector(const vector&& other) noexcept : 
+        vector(vector&& other) noexcept : 
                 start_(other.start_),
                 finish_(other.finish_),
                 end_of_storage_(other.end_of_storage_)
@@ -114,8 +114,8 @@ namespace MySTL {
             //     dataAllocator.deallocate(start_, capacity());
             // }
             // 先析构，后回收内存。在 finish_（包含finish_）之后的位置没有元素，只需要回收内存即可
-            data_allocator::destroy(begin(), end());
-            data_allocator::deallocate(start_, end_of_storage_ - start_);
+            data_allocator::destroy(start_, finish_);
+            data_allocator::deallocate(start_, static_cast<std::size_t>(end_of_storage_ - start_));
             // 不需要重置 start_, finish_, end_of_storage_。
         }
 
@@ -135,7 +135,7 @@ namespace MySTL {
                     vector tmp(rhs.begin(), rhs.end());
                     swap(tmp);
                 }
-                else if (size() > = len) {
+                else if (size() >= len) {
                     auto i = MySTL::copy(rhs.begin(), rhs.end(), begin());
                     data_allocator::destroy(i, finish_);
                     finish_ = start_ + len;
@@ -154,7 +154,7 @@ namespace MySTL {
         // fixed : 移动复制运算符需要释放左侧运算对象
         vector& operator=(vector &&rhs) noexcept {
             data_allocator::destroy(start_, finish_);
-            data_allocator::deallocate(start_, end_of_storage_ - start_);
+            data_allocator::deallocate(start_, static_cast<std::size_t>(end_of_storage_ - start_));
             start_ = rhs.start_;
             finish_ = rhs.finish_;
             end_of_storage_ = rhs.end_of_storage_;
@@ -311,8 +311,8 @@ namespace MySTL {
                 const size_type old_size = size();
                 iterator tmp = data_allocator::allocate(newCapacity);
                 MySTL::uninitialized_copy(start_, finish_, tmp);
-                data_allocator.destroy(start_, finish_);
-                data_allocator::deallocate(start_, end_of_storage_ - start_);
+                data_allocator::destroy(start_, finish_);
+                data_allocator::deallocate(start_, static_cast<std::size_t>(end_of_storage_ - start_));
                 start_ = tmp;
                 finish_ = tmp + old_size;
                 end_of_storage_ = tmp + newCapacity;
@@ -341,8 +341,8 @@ namespace MySTL {
                 auto shrink_to_size = size();
                 iterator tmp = data_allocator::allocate(shrink_to_size);
                 MySTL::uninitialized_copy(start_, finish_, tmp);
-                data_allocator.destroy(start_, finish_);
-                data_allocator::deallocate(start_, end_of_storage_ - start_);
+                data_allocator::destroy(start_, finish_);
+                data_allocator::deallocate(start_, static_cast<std::size_t>(end_of_storage_ - start_));
                 start_ = tmp;
                 finish_ = tmp + shrink_to_size;
                 end_of_storage_ = tmp + shrink_to_size;
@@ -369,7 +369,7 @@ namespace MySTL {
         iterator erase(iterator first, iterator last) {
             iterator newEnd = MySTL::copy(last, finish_, first);
             data_allocator::destroy(newEnd, end()); // 销毁元素
-
+            finish_ = finish_ - (last - first);
             return first;
         }
 
@@ -400,7 +400,7 @@ namespace MySTL {
             const size_type n = xposition - begin();
             if(finish_ != end_of_storage_ && xposition == finish_) {
                 // 有空间并且是插入点是最后一个位置
-                data_allocator::construct(&*finish_, std::move(value));
+                data_allocator::construct(&*finish_, MySTL::move(value));
                 ++finish_;
             }
             else {
@@ -427,8 +427,8 @@ namespace MySTL {
 
         template <class InputIterator>
         void insert(const_iterator position, InputIterator first, InputIterator last) {
-            using is_Integral = typename is_integral<InputIterator>;
-            insert_dispatch(position, first, last, is_integral());
+            using is_Integral = is_integral<InputIterator>;
+            insert_dispatch(position, first, last, is_Integral());
         }
 
         iterator insert(const_iterator position, std::initializer_list<value_type> ilist) {
@@ -458,7 +458,7 @@ namespace MySTL {
                 *xpos = value_type(MySTL::forward<Args>(args)...);
             }
             else {
-                reallocate_emplace(xpos, mystl::forward<Args>(args)...);
+                reallocate_emplace(xpos, MySTL::forward<Args>(args)...);
             }
 
             return begin() + n;
@@ -507,7 +507,7 @@ namespace MySTL {
         void swap(vector& other) noexcept {
             MySTL::swap(start_, other.start_);
             MySTL::swap(finish_, other.finish_);
-            MySTL::swap(end_of_storage_, other.end_of_stage_);
+            MySTL::swap(end_of_storage_, other.end_of_storage_);
         }
 
 
@@ -548,7 +548,7 @@ namespace MySTL {
          * @param  {*}
          * @return {*}
          */
-        template <calss  InputIterator>
+        template <class  InputIterator>
         void copy_initialize(InputIterator first, InputIterator last, input_iterator_tag) {
             while (first != last) {
                 if (capacity() == size()) {
@@ -558,13 +558,17 @@ namespace MySTL {
             }
         }
 
-        template <class InputIterator>
-        void initialize_aux(InputIterator first, InputIterator last, true_type) {
-            fill_initialize(static_cast<size_type>(last - first), static_cast<value_type>(last));
-        }
+        // template <class InputIterator>
+        // void initialize_aux(InputIterator first, InputIterator last, true_type) {
+        //     fill_initialize(static_cast<size_type>(first), static_cast<value_type>(last));
+        // }
 
+        // template <class InputIterator>
+        // void initialize_aux(InputIterator first, InputIterator last, false_type) {
+        //     copy_initialize(first, last, iterator_category(first));
+        // }
         template <class InputIterator>
-        void initialize_aux(InputIterator first, InputIterator last, false_type) {
+        void initialize_aux(InputIterator first, InputIterator last) {
             copy_initialize(first, last, iterator_category(first));
         }
 
@@ -602,7 +606,7 @@ namespace MySTL {
                 ++finish_;
                 T value_copy = value;
                 MySTL::copy_backward(position, finish_ - 2, finish_ - 1);
-                *position = value_type;
+                *position = value_copy;
             }
             else {    // 已无备用空间
                 const size_type old_size = size();
@@ -619,13 +623,13 @@ namespace MySTL {
                 catch (...) 
                 {
                     data_allocator::destroy(newstart, newfinish);
-                    data_allocator::deallocate(newstart, len);
+                    data_allocator::deallocate(newstart, static_cast<std::size_t>(len));
                     throw;
                 }
                 
                 // 以下清除并释放旧的 vector
                 data_allocator::destroy(start_, finish_);
-                data_allocator::deallocate(start_, end_of_storage_ - start_);
+                data_allocator::deallocate(start_, static_cast<std::size_t>(end_of_storage_ - start_));
                 start_ = newstart;
                 finish_ = newfinish;
                 end_of_storage_ = newstart + len;
@@ -680,13 +684,13 @@ namespace MySTL {
                 catch (...)
                 {
                     data_allocator::destroy(new_start, new_finish);
-                    data_allocator::deallocate(new_start, len);
+                    data_allocator::deallocate(new_start, static_cast<std::size_t>(len));
                     throw;
                 }
 
                 // 以下清除并释放旧的 vector
                 data_allocator::destroy(start_, finish_);
-                data_allocator::deallocate(start_, end_of_storage_ - start_);
+                data_allocator::deallocate(start_, static_cast<std::size_t>(end_of_storage_ - start_));
                 // 以下调整 start finish end_of_storage 到新的 vector
                 start_ = new_start;
                 finish_ = new_finish;
@@ -718,13 +722,13 @@ namespace MySTL {
                 catch (...) 
                 {
                     data_allocator::destroy(newstart, newfinish);
-                    data_allocator::deallocate(newstart, len);
+                    data_allocator::deallocate(newstart, static_cast<std::size_t>(len));
                     throw;
                 }
                 
                 // 以下清除并释放旧的 vector
                 data_allocator::destroy(start_, finish_);
-                data_allocator::deallocate(start_, end_of_storage_ - start_);
+                data_allocator::deallocate(start_, static_cast<std::size_t>(end_of_storage_ - start_));
                 start_ = newstart;
                 finish_ = newfinish;
                 end_of_storage_ = newstart + len;
@@ -732,7 +736,7 @@ namespace MySTL {
 
         template <class Iter>
         void range_initialize(Iter first, Iter last) {
-            auto size_type len = distance(first, last);
+            size_type len = distance(first, last);
             const size_type initsize = MySTL::max(static_cast<size_type>(last - first), static_cast<size_type>(16));
             try
             {
@@ -742,12 +746,14 @@ namespace MySTL {
             }
             catch (...)
             {
-                data_allocator::deallocate(start_, len);
+                data_allocator::deallocate(start_, static_cast<std::size_t>(len));
                 start_ = nullptr;
                 finish_ = nullptr;
                 end_of_storage_ = nullptr;
                 throw;
             }
+
+            MySTL::uninitialized_copy(first, last, start_);
         }
 
     }; // class vector
@@ -815,13 +821,13 @@ namespace MySTL {
                 catch (...)
                 {
                     data_allocator::destroy(new_start, new_finish);
-                    data_allocator::deallocate(new_start, len);
+                    data_allocator::deallocate(new_start, static_cast<std::size_t>(len));
                     throw;
                 }
 
                 // 以下清除并释放旧的 vector
                 data_allocator::destroy(start_, finish_);
-                data_allocator::deallocate(start_, end_of_storage_ - start_);
+                data_allocator::deallocate(start_, static_cast<std::size_t>(end_of_storage_ - start_));
                 // 以下调整 start finish end_of_storage 到新的 vector
                 start_ = new_start;
                 finish_ = new_finish;

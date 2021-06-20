@@ -1,33 +1,28 @@
-/*
- * @Description: 
- * @Author: Chen.Yu
- * @Date: 2021-04-02 21:56:56
- * @LastEditTime: 2021-05-11 01:25:58
- * @LastEditors: Chen.Yu
- */
 #ifndef _CONSTRUCT_H
 #define _CONSTRUCT_H
 
 #include <new> //placement new
 
 #include "type_traits.h"
+#include "utility.h"
+#include "iterator_base.h"
 
 namespace MySTL {
     template <class T1, class T2>
-    inline void construct(T1* ptr1, const T2& value) {
+    inline void construct(T1* ptr, const T2& value) {
         //placement new
-        new(ptr1) T1(value);
+        new((void*)ptr) T1(value);
     }
 
     // 可变参数模板
     template <class T, class ... Args>
     inline void construct(T* ptr, Args&&... args) {
-        ::new(ptr) T(MySTL::forward<Args>(args)...);
+        ::new((void*)ptr) T(MySTL::forward<Args>(args)...);
     }
 
     template <class T>
     inline void construct(T* ptr) {
-        ::new(ptr) T();
+        ::new((void*)ptr) T();
     }
 
     template <class T>

@@ -1,10 +1,3 @@
-/*
- * @Description: 迭代器适配器。reverse_iterator。可以将一般迭代器的行进方向逆向，使原本应该前进的 operator++ 变为了后退操作。operator-- 变为了前进操作。
- * @Author: Chen.Yu
- * @Date: 2021-04-02 14:50:09
- * @LastEditTime: 2021-04-14 17:22:44
- * @LastEditors: Chen.Yu
- */
 #ifndef _ITERATOR_REVERSE_ITERATOR_H
 #define _ITERATOR_REVERSE_ITERATOR_H
 
@@ -25,8 +18,8 @@ namespace MySTL {
 
         using iterator_type     = Iterator;
 
-        reverse_iterator() : {}
-        explicit reverse_iterator(iterator_type x) : current_(x) {}
+        reverse_iterator() {}
+        explicit reverse_iterator(iterator_type& x) : current_(x) {}
         
         template <class U>
         explicit reverse_iterator(const reverse_iterator<U>& other) : current_(other.base()) {}
@@ -116,27 +109,33 @@ namespace MySTL {
     inline bool operator>(reverse_iterator<Iterator> left, reverse_iterator<Iterator> right) {
         return right.base() > left.base();
     }
+
     // >=
     template <class Iterator>
     inline bool operator>=(reverse_iterator<Iterator> left, reverse_iterator<Iterator> right) {
         return !(right > left);
     }
+    
     // <
     template <class Iterator>
     inline bool operator<(reverse_iterator<Iterator> left, reverse_iterator<Iterator> right) {
         return right > left;
     }
+
     // <=
     template <class Iterator>
     inline bool operator<=(reverse_iterator<Iterator> left, reverse_iterator<Iterator> right) {
         return !(left > right);
     }
+
     template <class Iterator>
     inline reverse_iterator<Iterator> operator+(
             typename reverse_iterator<Iterator>::difference_type n,
-            const reverse_iterator<Iterator> &it) {
-        return reverse_iterator<Iterator>(it.base() - n)
+            const reverse_iterator<Iterator> &it) 
+    {
+        return reverse_iterator<Iterator>(it.base() - n);
     }
+
     template <class Iterator>
     inline typename reverse_iterator<Iterator>::difference_type operator-(
            const reverse_iterator<Iterator>& x,

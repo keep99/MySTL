@@ -1,0 +1,1 @@
+/usr/bin/c++   -O0 -Wall -g2 -ggdb   CMakeFiles/vector_test.dir/vector_test.cpp.o CMakeFiles/vector_test.dir/__/src/alloc.cpp.o  -o vector_test 

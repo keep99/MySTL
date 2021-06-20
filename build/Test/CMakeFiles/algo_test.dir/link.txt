@@ -1,0 +1,1 @@
+/usr/bin/c++   -O0 -Wall -g2 -ggdb   CMakeFiles/algo_test.dir/algo_test.cpp.o CMakeFiles/algo_test.dir/__/src/alloc.cpp.o  -o algo_test 

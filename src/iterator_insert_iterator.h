@@ -1,11 +1,3 @@
-/*
- * @Description: 迭代器适配器。insert iterator。可以将一般迭代器的赋值操作转变为插入操作。
- *               分为尾部插入的back_insert_iterator、头部插入的front_insert_iterator、在任意位置插入的insert_iterator。
- * @Author: Chen.Yu
- * @Date: 2021-04-02 21:46:25
- * @LastEditTime: 2021-04-10 18:24:27
- * @LastEditors: Chen.Yu
- */
 #ifndef _ITERATOR_INSERT_ITERATOR_H
 #define _ITERATOR_INSERT_ITERATOR_H
 
@@ -34,7 +26,7 @@ namespace MySTL {
         // C++ Primer P610 重载版本一般是两个，一个版本接受一个指向const的左值引用，另外一个版本接受一个指向非const的右值引用
         // // 对赋值运算符（=）进行了重载，借助此运算符，我们可以直接将新元素插入到目标容器的尾部
         back_insert_iterator& operator=(const typename Container::value_type& value) {
-            container_=>push_back(value);
+            container_->push_back(value);
             
             return *this;
         }
@@ -73,7 +65,7 @@ namespace MySTL {
 
         // 对赋值运算符（=）进行了重载，借助此运算符，我们可以直接将新元素插入到目标容器的头部
         front_insert_iterator& operator=(const typename Container::value_type& value) {
-            container_=>push_front(value);
+            container_->push_front(value);
 
             return *this;
         }

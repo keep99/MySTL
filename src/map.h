@@ -1,10 +1,3 @@
-/*
- * @Description: 
- * @Author: Chen.Yu
- * @Date: 2021-05-14 19:21:28
- * @LastEditTime: 2021-05-15 03:49:49
- * @LastEditors: Chen.Yu
- */
 #ifndef _MAP_H_
 #define _MAP_H_
 #include "rb_tree.h"
@@ -22,12 +15,12 @@ namespace MySTL {
         using key_type              = Key;
         using data_type             = T;
         using mapped_type           = T;
-        using value_type            = pair<const Key, T>
+        using value_type            = pair<const Key, T>;
         using key_compare           = Compare;
         using value_compare         = Compare;
 
     private:
-        using rb_tree_type          = MySTL::rb_tree<key_type, value_type, MySTL::identity<value_type>, Compare, Allocator>;
+        using rb_tree_type          = MySTL::rb_tree<key_type, value_type, MySTL::selectfirst<value_type>, Compare, Allocator>;
         rb_tree_type tree_;    // 采用红黑树来实现
 
     public:
@@ -89,6 +82,11 @@ namespace MySTL {
 	  	{
 	  		return tree_.insert_unique(x);
 	  	}
+
+        pair<iterator,bool> insert(value_type&& x)
+	  	{
+	  		return tree_.insert_unique(MySTL::move(x));
+	  	}
         
         iterator insert(iterator position, const value_type& x) {
             return tree_.insert_unique(position, x);
@@ -117,28 +115,30 @@ namespace MySTL {
 
         void clear() {tree_.clear();}
 
-        iterator find(const key_type& x) const { return tree_.find(x); }
+        iterator find(const key_type& x) { return tree_.find(x); }
         const_iterator find(const key_type& x) const { return tree_find(x); }
-        size_type count(const key_type& x) const { return tree_.count(x); }
+        size_type count(const key_type& x) { return tree_.count(x); }
         iterator lower_bound(const key_type& x) { return tree_.lower_bound(x); }
         const_iterator lower_bound(const key_type& x) const { return tree_.lower_bound(x); } 
-        iterator upper_bound(const key_type& x) const { return tree_.upper_bound(x); }
+        iterator upper_bound(const key_type& x) { return tree_.upper_bound(x); }
         const_iterator upper_bound(const key_type& x) const { return tree_.upper_bound(x); } 
         pair<iterator,iterator> equal_range(const key_type& x) { return tree_.equal_range(x); }
         pair<const_iterator,const_iterator> equal_range(const key_type& x) const { return tree_.equal_range(x); }
 
+        template <class K1, class T1, class C1, class A1>
         friend bool operator==(const map&, const map&);
+        template <class K1, class T1, class C1, class A1>
         friend bool operator<(const map&, const map&);
     };
 
-    template <class Key, class T, class Compare, class Allocator>
-    bool operator== (const map<Key, Compare, Allocator>& lhs, const map<Key, Compare, Allocator>& rhs)
+    template <class K1, class T1, class C1, class A1>
+    bool operator== (const map<K1, T1, C1, A1>& lhs, const map<K1, T1, C1, A1>& rhs)
     {
         return lhs.size() == rhs.size() && MySTL::equal(lhs.cbegin(), lhs.cend(), rhs.cbegin());
     }
 
-    template <class Key, class T, class Compare, class Allocator>
-    bool operator< (const map<Key, Compare, Allocator>& lhs, const map<Key, Compare, Allocator>& rhs)
+    template <class K1, class T1, class C1, class A1>
+    bool operator< (const map<K1, T1, C1, A1>& lhs, const map<K1, T1, C1, A1>& rhs)
     {
         return MySTL::lexicographical_compare(lhs.cbegin(), lhs.cend(), rhs.cbegin(), rhs.cend());
     }
@@ -151,7 +151,7 @@ namespace MySTL {
         using key_type              = Key;
         using data_type             = T;
         using mapped_type           = T;
-        using value_type            = pair<const Key, T>
+        using value_type            = pair<const Key, T>;
         using key_compare           = Compare;
         using value_compare         = Compare;
 
@@ -246,28 +246,30 @@ namespace MySTL {
 
         void clear() {tree_.clear();}
 
-        iterator find(const key_type& x) const { return tree_.find(x); }
+        iterator find(const key_type& x) { return tree_.find(x); }
         const_iterator find(const key_type& x) const { return tree_find(x); }
-        size_type count(const key_type& x) const { return tree_.count(x); }
+        size_type count(const key_type& x) { return tree_.count(x); }
         iterator lower_bound(const key_type& x) { return tree_.lower_bound(x); }
         const_iterator lower_bound(const key_type& x) const { return tree_.lower_bound(x); } 
-        iterator upper_bound(const key_type& x) const { return tree_.upper_bound(x); }
+        iterator upper_bound(const key_type& x) { return tree_.upper_bound(x); }
         const_iterator upper_bound(const key_type& x) const { return tree_.upper_bound(x); } 
         pair<iterator,iterator> equal_range(const key_type& x) { return tree_.equal_range(x); }
         pair<const_iterator,const_iterator> equal_range(const key_type& x) const { return tree_.equal_range(x); }
 
+        template <class K1, class T1, class C1, class A1>
         friend bool operator==(const multimap&, const multimap&);
+        template <class K1, class T1, class C1, class A1>
         friend bool operator<(const multimap&, const multimap&);
     };
 
-    template <class Key, class T, class Compare, class Allocator>
-    bool operator== (const multimap<Key, Compare, Allocator>& lhs, const multimap<Key, Compare, Allocator>& rhs)
+    template <class K1, class T1, class C1, class A1>
+    bool operator== (const multimap<K1, T1, C1, A1>& lhs, const multimap<K1, T1, C1, A1>& rhs)
     {
         return lhs.size() == rhs.size() && MySTL::equal(lhs.cbegin(), lhs.cend(), rhs.cbegin());
     }
 
-    template <class Key, class T, class Compare, class Allocator>
-    bool operator< (const multimap<Key, Compare, Allocator>& lhs, const multimap<Key, Compare, Allocator>& rhs)
+    template <class K1, class T1, class C1, class A1>
+    bool operator< (const multimap<K1, T1, C1, A1>& lhs, const multimap<K1, T1, C1, A1>& rhs)
     {
         return MySTL::lexicographical_compare(lhs.cbegin(), lhs.cend(), rhs.cbegin(), rhs.cend());
     }

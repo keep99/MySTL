@@ -1,10 +1,3 @@
-/*
- * @Description: 哈希函数对象
- * @Author: Chen.Yu
- * @Date: 2021-05-10 20:18:24
- * @LastEditTime: 2021-05-10 20:36:32
- * @LastEditors: Chen.Yu
- */
 #ifndef _HASH_FUN_H
 #define _HASH_FUN_H
 #include <cstddef>
@@ -71,20 +64,6 @@ namespace MySTL {
     struct hash<unsigned short>
     {
         size_t operator()(unsigned short x) const
-        { return x; }
-    };
-
-    template <>
-    struct hash<int>
-    {
-        size_t operator()(int x) const
-        { return x; }
-    };
-
-    template <>
-    struct hash<unsigned int>
-    {
-        size_t operator()(unsigned int x) const
         { return x; }
     };
 

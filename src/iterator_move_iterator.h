@@ -1,10 +1,3 @@
-/*
- * @Description: 迭代器适配器。move_iterator。其可以实现以移动而非复制的方式，将某个区域空间中的元素移动至另一个指定的空间。
- * @Author: Chen.Yu
- * @Date: 2021-04-02 21:47:37
- * @LastEditTime: 2021-04-10 22:12:13
- * @LastEditors: Chen.Yu
- */
 #ifndef _ITERATOR_MOVE_ITERATOR_H
 #define _ITERATOR_MOVE_ITERATOR_H
 

@@ -1,10 +1,3 @@
-/*
- * @Description: unordered_set, unordered_multiset
- * @Author: Chen.Yu
- * @Date: 2021-05-10 20:41:46
- * @LastEditTime: 2021-05-11 14:53:43
- * @LastEditors: Chen.Yu
- */
 #ifndef _UNORDERED_SET_H
 #define _UNORDERED_SET_H
 
@@ -50,12 +43,12 @@ namespace MySTL {
         using pointer           = typename hashtable_type::const_pointer;
         using const_pointer     = typename hashtable_type::const_pointer;
         using reference         = typename hashtable_type::const_reference;
-        using const_reference   = typename hashtable_table::const_reference;
+        using const_reference   = typename hashtable_type::const_reference;
         
-        using iterator          = typename hashtable_table::const_iterator;
-        using const_iterator    = typename hashtable_table::const_iterator;
+        using iterator          = typename hashtable_type::const_iterator;
+        using const_iterator    = typename hashtable_type::const_iterator;
 
-        using allocator_type    = typename hashtable_table::allocator_type;
+        using allocator_type    = typename hashtable_type::allocator_type;
 
         hasher hash_fcn() const { return ht_.hash_fcn(); }
         key_equal key_eq() const { return ht_.key_eq(); }
@@ -107,7 +100,7 @@ namespace MySTL {
         unordered_set& operator=(const unordered_set& rhs)
         {
             // 其实这里的自赋值处理可以不用，hashtable 保证
-            if(this != rhs) {
+            if(this != &rhs) {
                 ht_ = rhs.ht_;
             }
 
@@ -117,7 +110,7 @@ namespace MySTL {
         unordered_set& operator=(unordered_set&& rhs) noexcept
         {
             // 其实这里的自赋值处理可以不用，hashtable 保证
-            if(this != rhs) {
+            if(this != &rhs) {
                 ht_ = MySTL::move(rhs.ht_);
             }
 
@@ -193,7 +186,7 @@ namespace MySTL {
 
         size_type bucket_count() const { return ht_.bucket_count(); }
 
-        size_type max_bucket_count const { return ht_.max_bucket_count(); }
+        size_type max_bucket_count() const { return ht_.max_bucket_count(); }
 
         size_type elems_in_bucket(size_type n) const { return ht_.elems_in_bucket(n); }
     };
@@ -256,12 +249,12 @@ namespace MySTL {
         using pointer           = typename hashtable_type::const_pointer;
         using const_pointer     = typename hashtable_type::const_pointer;
         using reference         = typename hashtable_type::const_reference;
-        using const_reference   = typename hashtable_table::const_reference;
+        using const_reference   = typename hashtable_type::const_reference;
         
-        using iterator          = typename hashtable_table::const_iterator;
-        using const_iterator    = typename hashtable_table::const_iterator;
+        using iterator          = typename hashtable_type::const_iterator;
+        using const_iterator    = typename hashtable_type::const_iterator;
 
-        using allocator_type    = typename hashtable_table::allocator_type;
+        using allocator_type    = typename hashtable_type::allocator_type;
 
         hasher hash_fcn() const { return ht_.hash_fcn(); }
         key_equal key_eq() const { return ht_.key_eq(); }
@@ -313,7 +306,7 @@ namespace MySTL {
         unordered_multiset& operator=(const unordered_multiset& rhs)
         {
             // 其实这里的自赋值处理可以不用，hashtable 保证
-            if(this != rhs) {
+            if(this != &rhs) {
                 ht_ = rhs.ht_;
             }
 
@@ -323,7 +316,7 @@ namespace MySTL {
         unordered_multiset& operator=(unordered_multiset&& rhs) noexcept
         {
             // 其实这里的自赋值处理可以不用，hashtable 保证
-            if(this != rhs) {
+            if(this != &rhs) {
                 ht_ = MySTL::move(rhs.ht_);
             }
 
@@ -399,30 +392,30 @@ namespace MySTL {
 
         size_type bucket_count() const { return ht_.bucket_count(); }
 
-        size_type max_bucket_count const { return ht_.max_bucket_count(); }
+        size_type max_bucket_count() const { return ht_.max_bucket_count(); }
 
         size_type elems_in_bucket(size_type n) const { return ht_.elems_in_bucket(n); }
     };
 
     template <class Value, class HashFcn, class EqualKey, class Allocator>
     inline bool 
-    operator==(const unordered_set<Value, HashFcn, EqualKey, Allocator>& us1,
-               const unordered_set<Value, HashFcn, EqualKey, Allocator>& us2)
+    operator==(const unordered_multiset<Value, HashFcn, EqualKey, Allocator>& us1,
+               const unordered_multiset<Value, HashFcn, EqualKey, Allocator>& us2)
     {
         return us1.ht_ == us2.ht_;
     }
 
     template <class Value, class HashFcn, class EqualKey, class Allocator>
     inline bool 
-    operator!=(const unordered_set<Value, HashFcn, EqualKey, Allocator>& us1,
-               const unordered_set<Value, HashFcn, EqualKey, Allocator>& us2)
+    operator!=(const unordered_multiset<Value, HashFcn, EqualKey, Allocator>& us1,
+               const unordered_multiset<Value, HashFcn, EqualKey, Allocator>& us2)
     {
         return !(us1 == us2);
     }
 
     template <class Value, class HashFcn, class EqualKey, class Allocator>
-    void swap(unordered_set<Value, HashFcn, EqualKey, Allocator>& us1,
-              unordered_set<Value, HashFcn, EqualKey, Allocator>& us2)
+    void swap(unordered_multiset<Value, HashFcn, EqualKey, Allocator>& us1,
+              unordered_multiset<Value, HashFcn, EqualKey, Allocator>& us2)
     {
         us1.swap(us2);
     }

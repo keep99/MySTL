@@ -1,10 +1,3 @@
-/*
- * @Description: 
- * @Author: Chen.Yu
- * @Date: 2021-05-05 23:12:34
- * @LastEditTime: 2021-05-06 17:31:07
- * @LastEditors: Chen.Yu
- */
 #ifndef _HEAP_H
 #define _HEAP_H
 
@@ -79,7 +72,7 @@ namespace MySTL {
     // 上溯，被堆顶覆盖的元素不一定就能被放到叶子节点，其实还需要再进行一次上溯操作
     // 参考 《STL 源码剖析》 P176
     template <class RandomIter, class T, class Distance>
-    void adjust_heap(RandomIter first, RandomIter holeIndex, Distance len, T value)
+    void adjust_heap(RandomIter first, Distance holeIndex, Distance len, T value)
     {
         Distance topIndex = holeIndex;
         Distance rchild = 2 * holeIndex + 2; // 洞节点的右子节点
@@ -112,7 +105,7 @@ namespace MySTL {
     void pop_heap_aux(RandomIter first, RandomIter last, RandomIter result, T value, Distance*)
     {
         *result = *first;   // 设定尾值为首值
-        MySTL::adjust(first, static_cast<Distance>(0), last - first, value);
+        MySTL::adjust_heap(first, static_cast<Distance>(0), last - first, value);
     }
 
     template <class RandomIter>
@@ -123,7 +116,7 @@ namespace MySTL {
 
 
     template <class RandomIter, class T, class Distance, class Compare>
-    void adjust_heap(RandomIter first, RandomIter holeIndex, Distance len, T value, Compare comp)
+    void adjust_heap(RandomIter first, Distance holeIndex, Distance len, T value, Compare comp)
     {
         Distance topIndex = holeIndex;
         Distance rchild = 2 * holeIndex + 2; // 洞节点的右子节点
@@ -156,7 +149,7 @@ namespace MySTL {
     void pop_heap_aux(RandomIter first, RandomIter last, RandomIter result, T value, Distance*, Compare comp)
     {
         *result = *first;   // 设定尾值为首值
-        MySTL::adjust(first, static_cast<Distance>(0), last - first, value, comp);
+        MySTL::adjust_heap(first, static_cast<Distance>(0), last - first, value, comp);
     }
 
     template <class RandomIter, class Compare>

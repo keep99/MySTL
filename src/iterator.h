@@ -1,13 +1,5 @@
-/*
- * @Description: 迭代器总的头文件
- * @Author: Chen.Yu
- * @Date: 2021-04-03 13:45:03
- * @LastEditTime: 2021-04-10 22:40:36
- * @LastEditors: Chen.Yu
- */
-
-#ifndef _ITERATOR_H
-#define _ITERATOR_H
+#ifndef _ITERATOR_H_
+#define _ITERATOR_H_
 
 #include "iterator_base.h"
 #include "iterator_reverse_iterator.h"  // 反向迭代器适配器

@@ -1,10 +1,3 @@
-/*
- * @Description: 仿函数
- * @Author: Chen.Yu
- * @Date: 2021-04-26 23:11:53
- * @LastEditTime: 2021-05-10 22:26:21
- * @LastEditors: Chen.Yu
- */
 #ifndef _FUNCTIONAL_H
 #define _FUNCTIONAL_H
 
@@ -52,13 +45,6 @@ namespace MySTL {
     struct divides : public binary_funciton<T, T, T>
     {
         T operator()(const T& x, const T& y) const { return x / y; } 
-    };
-
-    // 函数对象：模取
-    template <class T>
-    struct modulus : public binary_funciton<T, T, T>
-    {
-        T operator()(const T& x, const T& y) const { return x % y; } 
     };
 
     // 函数对象：模取
