@@ -1,1 +1,0 @@
-/usr/bin/c++   -O0 -Wall -g2 -ggdb   CMakeFiles/deque_test.dir/deque_test.cpp.o CMakeFiles/deque_test.dir/__/src/alloc.cpp.o  -o deque_test 

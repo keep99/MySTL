@@ -1,1 +1,0 @@
-/usr/bin/c++   -O0 -Wall -g2 -ggdb   CMakeFiles/map_test.dir/map_test.cpp.o CMakeFiles/map_test.dir/__/src/alloc.cpp.o  -o map_test 
