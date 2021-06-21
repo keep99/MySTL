@@ -130,20 +130,20 @@ namespace MySTL {
     /***********************************************************************************/
     // 3、特殊版本（1），重载形式
     /* memmove : 由src所指内存区域复制count个字节到dest所指内存区域 */
-    char* copy(const char* first, const char* last, char* result) {
+    inline char* copy(const char* first, const char* last, char* result) {
         memmove(result, first, last - first);
         return result + (last - first);
     }
 
     // 2、特殊版本（2），重载形式
-    wchar_t* copy(const wchar_t* first, const wchar_t* last, wchar_t* result) {
+    inline wchar_t* copy(const wchar_t* first, const wchar_t* last, wchar_t* result) {
         memmove(result, first, sizeof(wchar_t) * (last - first));
         return result + (last - first);
     }
 
     // 1、完全泛化版本
     template <class InputIter, class OutputIter>
-    OutputIter copy(InputIter first, InputIter last, OutputIter result) {
+    inline OutputIter copy(InputIter first, InputIter last, OutputIter result) {
         return __copy_dispatch<InputIter, OutputIter>()(first, last, result);
     }
 
@@ -458,24 +458,24 @@ namespace MySTL {
     // 为 [first, last)区间内的所有元素填充新值
     /*****************************************************************************************/   
     /* 特例化 */
-    void fill(unsigned char* first, unsigned char* last, const unsigned char& c) {
+    inline void fill(unsigned char* first, unsigned char* last, const unsigned char& c) {
         unsigned char tmp = c;
         memset(first, tmp, last - first);
     }
 
-    void fill(signed char* first, signed char* last, const signed char& c) {
+    inline void fill(signed char* first, signed char* last, const signed char& c) {
         signed char tmp = c;
         memset(first, static_cast<unsigned char>(tmp), last - first);
     }
 
-    void fill(char* first, char* last, const char& c) {
+    inline void fill(char* first, char* last, const char& c) {
         char tmp = c;
         memset(first, static_cast<unsigned char>(tmp), last - first);
     }
 
 
     template <class ForwardIter, class T>
-    void fill(ForwardIter first, ForwardIter last, const T& value) {
+    inline void fill(ForwardIter first, ForwardIter last, const T& value) {
         for(; first != last; ++first) {
             *first = value;
         }
@@ -525,7 +525,7 @@ namespace MySTL {
     // (4)如果同时到达 last1 和 last2 返回 false
     /*****************************************************************************************/
     template <class InputIter1, class InputIter2>
-    bool lexicographical_compare(InputIter1 first1, InputIter1 last1, InputIter2 first2, InputIter2 last2) {
+    inline bool lexicographical_compare(InputIter1 first1, InputIter1 last1, InputIter2 first2, InputIter2 last2) {
         for(; first1 != last1 && first2 != last2; ++first1, ++first2) {
             if(*first1 < *first2) {
                 return true;
@@ -542,7 +542,7 @@ namespace MySTL {
 
     // 重载对象使用 函数对象 comp 代替比较操作
     template <class InputIter1, class InputIter2, class Compare> 
-    bool lexicographical_compare(InputIter1 first1, InputIter1 last1, InputIter2 first2, InputIter2 last2, Compare comp) {
+    inline bool lexicographical_compare(InputIter1 first1, InputIter1 last1, InputIter2 first2, InputIter2 last2, Compare comp) {
         for(; first1 != last1 && first2 != last2; ++first1, ++first2) {
             if(comp(*first1, *first2)) {
                 return true;
@@ -558,7 +558,7 @@ namespace MySTL {
     }
 
     // 针对原始指针得 const unsigned char* 得特化版本
-    bool lexicographical_compare(const unsigned char* first1,
+    inline bool lexicographical_compare(const unsigned char* first1,
                                  const unsigned char* last1,
                                  const unsigned char* first2, 
                                  const unsigned char* last2) 
