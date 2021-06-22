@@ -615,10 +615,10 @@ namespace MySTL {
                 iterator newfinish = newstart;
                 try
                 {
-                    newfinish = uninitialized_copy(start_, position, newstart);
+                    newfinish = MySTL::uninitialized_copy(start_, position, newstart);
                     data_allocator::construct(newfinish, value);
                     ++newfinish;
-                    newfinish = uninitialized_copy(position, finish_, newfinish);
+                    newfinish = MySTL::uninitialized_copy(position, finish_, newfinish);
                 }
                 catch (...) 
                 {
@@ -736,24 +736,28 @@ namespace MySTL {
 
         template <class Iter>
         void range_initialize(Iter first, Iter last) {
-            size_type len = distance(first, last);
-            const size_type initsize = MySTL::max(static_cast<size_type>(last - first), static_cast<size_type>(16));
-            try
-            {
-                start_ = data_allocator::allocate(initsize);
-                finish_ = start_ + len;
-                end_of_storage_ = start_ + initsize;
-            }
-            catch (...)
-            {
-                data_allocator::deallocate(start_, static_cast<std::size_t>(len));
-                start_ = nullptr;
-                finish_ = nullptr;
-                end_of_storage_ = nullptr;
-                throw;
-            }
+            // size_type len = distance(first, last);
+            // const size_type initsize = MySTL::max(static_cast<size_type>(last - first), static_cast<size_type>(16));
+            // try
+            // {
+            //     start_ = data_allocator::allocate(initsize);
+            //     finish_ = start_ + len;
+            //     end_of_storage_ = start_ + initsize;
+            // }
+            // catch (...)
+            // {
+            //     data_allocator::deallocate(start_, static_cast<std::size_t>(len));
+            //     start_ = nullptr;
+            //     finish_ = nullptr;
+            //     end_of_storage_ = nullptr;
+            //     throw;
+            // }
 
-            MySTL::uninitialized_copy(first, last, start_);
+            // MySTL::uninitialized_copy(first, last, start_);
+
+            for(; first != last; ++first) {
+                emplace_back(*first);
+            }
         }
 
     }; // class vector
