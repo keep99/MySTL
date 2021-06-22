@@ -7,7 +7,6 @@
 #include "construct.h"
 #include "iterator_base.h" 
 
-
 #include <string.h>
 #include <new>
 
@@ -73,7 +72,7 @@ namespace MySTL {
 
 
     template <class InputIterator, class ForwardIterator>
-    ForwardIterator uninitialized_copy(InputIterator first, InputIterator last, ForwardIterator result) {
+    inline ForwardIterator uninitialized_copy(InputIterator first, InputIterator last, ForwardIterator result) {
         return __uninitialized_copy(first, last, result, value_type(result));
     }
 
