@@ -499,7 +499,7 @@ namespace MySTL {
 
         // pop_back
         void pop_back() {
-            data_allocator::destroy(finish_);
+            data_allocator::destroy(finish_ - 1);
             --finish_;
         }
 
