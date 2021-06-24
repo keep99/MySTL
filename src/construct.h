@@ -1,13 +1,13 @@
-#ifndef _CONSTRUCT_H
+#ifndef TOYSTL_
 #define _CONSTRUCT_H
 
-#include <new> //placement new
+#include <new> // placement new
 
 #include "type_traits.h"
 #include "utility.h"
 #include "iterator_base.h"
 
-namespace MySTL {
+namespace toystl {
     template <class T1, class T2>
     void construct(T1* ptr, const T2& value) {
         //placement new
@@ -17,7 +17,7 @@ namespace MySTL {
     // 可变参数模板
     template <class T, class ... Args>
     void construct(T* ptr, Args&&... args) {
-        ::new((void*)ptr) T(MySTL::forward<Args>(args)...);
+        ::new((void*)ptr) T(toystl::forward<Args>(args)...);
     }
 
     template <class T>

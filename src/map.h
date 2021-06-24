@@ -6,9 +6,9 @@
 #include "utility.h"
 #include "algobase.h"
 
-namespace MySTL {
+namespace toystl {
     // map
-    template <class Key, class T, class Compare = MySTL::less<Key>, class Allocator = MySTL::allocator<Key>>
+    template <class Key, class T, class Compare = toystl::less<Key>, class Allocator = toystl::allocator<Key>>
     class map
     {
     public:
@@ -20,7 +20,7 @@ namespace MySTL {
         using value_compare         = Compare;
 
     private:
-        using rb_tree_type          = MySTL::rb_tree<key_type, value_type, MySTL::selectfirst<value_type>, Compare, Allocator>;
+        using rb_tree_type          = toystl::rb_tree<key_type, value_type, toystl::selectfirst<value_type>, Compare, Allocator>;
         rb_tree_type tree_;    // 采用红黑树来实现
 
     public:
@@ -85,7 +85,7 @@ namespace MySTL {
 
         pair<iterator,bool> insert(value_type&& x)
 	  	{
-	  		return tree_.insert_unique(MySTL::move(x));
+	  		return tree_.insert_unique(toystl::move(x));
 	  	}
         
         iterator insert(iterator position, const value_type& x) {
@@ -134,17 +134,17 @@ namespace MySTL {
     template <class K1, class T1, class C1, class A1>
     bool operator== (const map<K1, T1, C1, A1>& lhs, const map<K1, T1, C1, A1>& rhs)
     {
-        return lhs.size() == rhs.size() && MySTL::equal(lhs.cbegin(), lhs.cend(), rhs.cbegin());
+        return lhs.size() == rhs.size() && toystl::equal(lhs.cbegin(), lhs.cend(), rhs.cbegin());
     }
 
     template <class K1, class T1, class C1, class A1>
     bool operator< (const map<K1, T1, C1, A1>& lhs, const map<K1, T1, C1, A1>& rhs)
     {
-        return MySTL::lexicographical_compare(lhs.cbegin(), lhs.cend(), rhs.cbegin(), rhs.cend());
+        return toystl::lexicographical_compare(lhs.cbegin(), lhs.cend(), rhs.cbegin(), rhs.cend());
     }
 
     // multimap
-    template <class Key, class T, class Compare = MySTL::less<Key>, class Allocator = MySTL::allocator<Key>>
+    template <class Key, class T, class Compare = toystl::less<Key>, class Allocator = toystl::allocator<Key>>
     class multimap
     {
     public:
@@ -156,7 +156,7 @@ namespace MySTL {
         using value_compare         = Compare;
 
     private:
-        using rb_tree_type          = MySTL::rb_tree<key_type, value_type, MySTL::identity<value_type>, Compare, Allocator>;
+        using rb_tree_type          = toystl::rb_tree<key_type, value_type, toystl::identity<value_type>, Compare, Allocator>;
         rb_tree_type tree_;    // 采用红黑树来实现
 
     public:
@@ -265,15 +265,15 @@ namespace MySTL {
     template <class K1, class T1, class C1, class A1>
     bool operator== (const multimap<K1, T1, C1, A1>& lhs, const multimap<K1, T1, C1, A1>& rhs)
     {
-        return lhs.size() == rhs.size() && MySTL::equal(lhs.cbegin(), lhs.cend(), rhs.cbegin());
+        return lhs.size() == rhs.size() && toystl::equal(lhs.cbegin(), lhs.cend(), rhs.cbegin());
     }
 
     template <class K1, class T1, class C1, class A1>
     bool operator< (const multimap<K1, T1, C1, A1>& lhs, const multimap<K1, T1, C1, A1>& rhs)
     {
-        return MySTL::lexicographical_compare(lhs.cbegin(), lhs.cend(), rhs.cbegin(), rhs.cend());
+        return toystl::lexicographical_compare(lhs.cbegin(), lhs.cend(), rhs.cbegin(), rhs.cend());
     }
 
-} // namespace MySTL
+} // namespace toystl
 
 #endif

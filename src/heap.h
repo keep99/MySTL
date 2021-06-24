@@ -5,7 +5,7 @@
 
 #include <cstddef>
 
-namespace MySTL {
+namespace toystl {
     /*****************************************************************************************/
     // push_heap
     // 该函数接受两个迭代器，表示一个 heap 容器的首尾，并且新元素已经插入到底部容器的最尾端，调整 heap
@@ -28,13 +28,13 @@ namespace MySTL {
     template <class RandomIter, class Distance>
     void push_heap_d(RandomIter first, RandomIter last, Distance*)
     {
-        MySTL::push_heap_aux(first, (last - first) - 1, static_cast<Distance>(0), *(last - 1));
+        toystl::push_heap_aux(first, (last - first) - 1, static_cast<Distance>(0), *(last - 1));
     }
 
     template <class RandomIter>
     void push_heap(RandomIter first, RandomIter last) 
     {
-        MySTL::push_heap_d(first, last, distance_type(first));
+        toystl::push_heap_d(first, last, distance_type(first));
     }
 
     template <class RandomIter, class Distance, class T, class Compare>
@@ -54,13 +54,13 @@ namespace MySTL {
     template <class RandomIter, class Distance, class Compare>
     void push_heap_d(RandomIter first, RandomIter last, Distance*, Compare comp)
     {
-        MySTL::push_heap_aux(first, (last - first) - 1, static_cast<Distance>(0), *(last - 1), comp);
+        toystl::push_heap_aux(first, (last - first) - 1, static_cast<Distance>(0), *(last - 1), comp);
     }
 
     template <class RandomIter, class Compare>
     void push_heap(RandomIter first, RandomIter last, Compare comp) 
     {
-        MySTL::push_heap_d(first, last, distance_type(first), comp);
+        toystl::push_heap_d(first, last, distance_type(first), comp);
     }
 
     /*****************************************************************************************/
@@ -97,7 +97,7 @@ namespace MySTL {
         }
 
         // 再执行一次上溯过程
-        MySTL::push_heap_aux(first, holeIndex, topIndex, value);
+        toystl::push_heap_aux(first, holeIndex, topIndex, value);
     }
 
 
@@ -105,13 +105,13 @@ namespace MySTL {
     void pop_heap_aux(RandomIter first, RandomIter last, RandomIter result, T value, Distance*)
     {
         *result = *first;   // 设定尾值为首值
-        MySTL::adjust_heap(first, static_cast<Distance>(0), last - first, value);
+        toystl::adjust_heap(first, static_cast<Distance>(0), last - first, value);
     }
 
     template <class RandomIter>
     void pop_heap(RandomIter first, RandomIter last)
     {
-        MySTL::pop_heap_aux(first, last - 1, last - 1, *(last - 1), distance_type(first));
+        toystl::pop_heap_aux(first, last - 1, last - 1, *(last - 1), distance_type(first));
     }
 
 
@@ -141,7 +141,7 @@ namespace MySTL {
         }
 
         // 再执行一次上溯过程
-        MySTL::push_heap_aux(first, holeIndex, topIndex, value, comp);
+        toystl::push_heap_aux(first, holeIndex, topIndex, value, comp);
     }
 
 
@@ -149,13 +149,13 @@ namespace MySTL {
     void pop_heap_aux(RandomIter first, RandomIter last, RandomIter result, T value, Distance*, Compare comp)
     {
         *result = *first;   // 设定尾值为首值
-        MySTL::adjust_heap(first, static_cast<Distance>(0), last - first, value, comp);
+        toystl::adjust_heap(first, static_cast<Distance>(0), last - first, value, comp);
     }
 
     template <class RandomIter, class Compare>
     void pop_heap(RandomIter first, RandomIter last, Compare comp)
     {
-        MySTL::pop_heap_aux(first, last - 1, last - 1, *(last - 1), distance_type(first), comp);
+        toystl::pop_heap_aux(first, last - 1, last - 1, *(last - 1), distance_type(first), comp);
     }
 
     /*****************************************************************************************/
@@ -166,7 +166,7 @@ namespace MySTL {
     void sort_heap(RandomIter first, RandomIter last)
     {
         while(last - first > 1) {
-            MySTL::pop_heap(first, last--);
+            toystl::pop_heap(first, last--);
         }
     }
 
@@ -174,7 +174,7 @@ namespace MySTL {
     void sort_heap(RandomIter first, RandomIter last, Compare comp)
     {
         while(last - first > 1) {
-            MySTL::pop_heap(first, last--, comp);
+            toystl::pop_heap(first, last--, comp);
         }
     }
 
@@ -192,7 +192,7 @@ namespace MySTL {
         Distance len = last - first;
         auto holeIndex = (len - 2) / 2;
         while(true) {
-            MySTL::adjust_heap(first, holeIndex, len, *(first + holeIndex));
+            toystl::adjust_heap(first, holeIndex, len, *(first + holeIndex));
             if(holeIndex == 0) {
                 return;
             }
@@ -203,7 +203,7 @@ namespace MySTL {
     template <class RandomIter>
     void make_heap(RandomIter first, RandomIter last)
     {
-        MySTL::make_heap_aux(first, last, distance_type(first));
+        toystl::make_heap_aux(first, last, distance_type(first));
     }
 
     template <class RandomIter, class Distance, class Compare>
@@ -216,7 +216,7 @@ namespace MySTL {
         Distance len = last - first;
         auto holeIndex = (len - 2) / 2;
         while(true) {
-            MySTL::adjust_heap(first, holeIndex, len, *(first + holeIndex), comp);
+            toystl::adjust_heap(first, holeIndex, len, *(first + holeIndex), comp);
             if(holeIndex == 0) {
                 return;
             }
@@ -227,11 +227,11 @@ namespace MySTL {
     template <class RandomIter, class Compare>
     void make_heap(RandomIter first, RandomIter last, Compare comp)
     {
-        MySTL::make_heap_aux(first, last, distance_type(first));
+        toystl::make_heap_aux(first, last, distance_type(first));
     }
 
 
-} // namespace MySTL
+} // namespace toystl
 
 
 #endif

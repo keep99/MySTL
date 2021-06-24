@@ -1,6 +1,6 @@
 #include "profiler.h"
 
-namespace MySTL {
+namespace toystl {
     namespace profiler {
         ProfilerInstance::DurationTime ProfilerInstance::duringTime_;
         ProfilerInstance::TimePoint ProfilerInstance::startTime_;

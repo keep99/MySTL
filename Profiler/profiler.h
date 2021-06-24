@@ -15,7 +15,7 @@
 #include <sys/resource.h>
 #include <sys/time.h>
 
-namespace MySTL {
+namespace toystl {
     namespace profiler {
         class ProfilerInstance {
         public:

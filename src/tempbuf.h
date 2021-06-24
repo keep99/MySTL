@@ -9,7 +9,7 @@
 #include "memory_function.h"
 #include "construct.h"
 
-namespace MySTL {
+namespace toystl {
     // 类模板 : temporary_buffer
     // 进行临时缓冲区的申请与释放
     template <class ForwardIterator, class T>
@@ -26,7 +26,7 @@ namespace MySTL {
 
         ~temporary_buffer()
         {
-            MySTL::destroy(buffer, buffer + len);
+            toystl::destroy(buffer, buffer + len);
             free(buffer);
         }
 
@@ -41,7 +41,7 @@ namespace MySTL {
         void allocate_buffer();
         void initialize_buffer(const T&, std::true_type) {}
         void initialize_buffer(const T& value, std::false_type)
-        { MySTL::uninitialized_fill_n(buffer, len, value); }
+        { toystl::uninitialized_fill_n(buffer, len, value); }
 
     private:
         temporary_buffer(const temporary_buffer&);
@@ -55,7 +55,7 @@ namespace MySTL {
         {
             try
             {
-                len = MySTL::distance(first, last);
+                len = toystl::distance(first, last);
                 allocate_buffer();
                 if (len > 0)
                 {

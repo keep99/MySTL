@@ -12,8 +12,8 @@
 
 
 
-namespace MySTL {
-    template<class T, class Alloc = MySTL::allocator<T>> 
+namespace toystl {
+    template<class T, class Alloc = toystl::allocator<T>> 
     class vector {
     public:
         using allocator_type         = Alloc;
@@ -29,8 +29,8 @@ namespace MySTL {
         // using size_type              = typename allocator_type::size_type;
         // using difference_type        = typename allocator_type::difference_type;
 
-        // using reverse_iterator       = MySTL::reverse_iterator<iterator>;
-        // using const_reverse_iterator = MySTL::reverse_iterator<const_iterator>;
+        // using reverse_iterator       = toystl::reverse_iterator<iterator>;
+        // using const_reverse_iterator = toystl::reverse_iterator<const_iterator>;
 
         using value_type             = T;
         using pointer                = T*;
@@ -42,8 +42,8 @@ namespace MySTL {
         using size_type              = size_t;
         using difference_type        = ptrdiff_t;
 
-        using reverse_iterator       = MySTL::reverse_iterator<iterator>;
-        using const_reverse_iterator = MySTL::reverse_iterator<const_iterator>;
+        using reverse_iterator       = toystl::reverse_iterator<iterator>;
+        using const_reverse_iterator = toystl::reverse_iterator<const_iterator>;
 
     private:
         // 删除这个，占用空间！
@@ -67,7 +67,7 @@ namespace MySTL {
         
         // 这边只接受传入迭代器
         template <class InputIterator, typename std::enable_if<
-            MySTL::is_input_iterator<InputIterator>::value, int>::type = 0>
+            toystl::is_input_iterator<InputIterator>::value, int>::type = 0>
         vector(InputIterator first, InputIterator last) {
             // 如果 InputIterator 为整数类型，则此构造函数的效果如同
             // vector(static_cast<size_type>(first), static_cast<value_type>(last)),
@@ -136,13 +136,13 @@ namespace MySTL {
                     swap(tmp);
                 }
                 else if (size() >= len) {
-                    auto i = MySTL::copy(rhs.begin(), rhs.end(), begin());
+                    auto i = toystl::copy(rhs.begin(), rhs.end(), begin());
                     data_allocator::destroy(i, finish_);
                     finish_ = start_ + len;
                 }
                 else {
-                    MySTL::copy(rhs.begin(), rhs.begin() + size(), start_);
-                    MySTL::uninitialized_copy(rhs.begin() + size(), rhs.end(), finish_);
+                    toystl::copy(rhs.begin(), rhs.begin() + size(), start_);
+                    toystl::uninitialized_copy(rhs.begin() + size(), rhs.end(), finish_);
                     end_of_storage_ = finish_ = start_ + len;
                 }
             }
@@ -310,7 +310,7 @@ namespace MySTL {
             if (newCapacity > capacity()) {
                 const size_type old_size = size();
                 iterator tmp = data_allocator::allocate(newCapacity);
-                MySTL::uninitialized_copy(start_, finish_, tmp);
+                toystl::uninitialized_copy(start_, finish_, tmp);
                 data_allocator::destroy(start_, finish_);
                 data_allocator::deallocate(start_, static_cast<std::size_t>(end_of_storage_ - start_));
                 start_ = tmp;
@@ -340,7 +340,7 @@ namespace MySTL {
             if(finish_ < end_of_storage_) {
                 auto shrink_to_size = size();
                 iterator tmp = data_allocator::allocate(shrink_to_size);
-                MySTL::uninitialized_copy(start_, finish_, tmp);
+                toystl::uninitialized_copy(start_, finish_, tmp);
                 data_allocator::destroy(start_, finish_);
                 data_allocator::deallocate(start_, static_cast<std::size_t>(end_of_storage_ - start_));
                 start_ = tmp;
@@ -357,7 +357,7 @@ namespace MySTL {
             // 如果清除的元素不是最后一个元素，那么需要把清除位置的后面元素往前面挪
             if (position + 1 != end()) {
                 // copy 函数，输出区间的起点与输入区间不重叠，没有问题。
-                MySTL::copy(position + 1, finish_, position);
+                toystl::copy(position + 1, finish_, position);
             }
             --finish_;
             data_allocator::destroy(finish_);
@@ -367,7 +367,7 @@ namespace MySTL {
 
         // erase [first, end) 中的所有元素
         iterator erase(iterator first, iterator last) {
-            iterator newEnd = MySTL::copy(last, finish_, first);
+            iterator newEnd = toystl::copy(last, finish_, first);
             data_allocator::destroy(newEnd, end()); // 销毁元素
             finish_ = finish_ - (last - first);
             return first;
@@ -400,7 +400,7 @@ namespace MySTL {
             const size_type n = xposition - begin();
             if(finish_ != end_of_storage_ && xposition == finish_) {
                 // 有空间并且是插入点是最后一个位置
-                data_allocator::construct(&*finish_, MySTL::move(value));
+                data_allocator::construct(&*finish_, toystl::move(value));
                 ++finish_;
             }
             else {
@@ -422,7 +422,7 @@ namespace MySTL {
 
         template <class InputIterator>
         void insert_dispatch(const_iterator position, InputIterator first, InputIterator last, false_type) {
-            range_insert(position, first, last, MySTL::iterator_category(first));
+            range_insert(position, first, last, toystl::iterator_category(first));
         }
 
         template <class InputIterator>
@@ -447,18 +447,18 @@ namespace MySTL {
             iterator xpos = const_cast<iterator>(position);
             const size_type n = xpos - start_;
             if (finish_ != end_of_storage_ && xpos == finish_) {
-                data_allocator::construct(&*finish_, MySTL::forward<Args>(args)...);
+                data_allocator::construct(&*finish_, toystl::forward<Args>(args)...);
                 ++finish_;
             }
             else if (finish_ != end_of_storage_) {
                 auto newfinish = finish_;
                 data_allocator::construct(&*finish_, *(finish_ - 1));
                 ++newfinish;
-                MySTL::copy_backward(xpos, finish_ - 1, finish_);
-                *xpos = value_type(MySTL::forward<Args>(args)...);
+                toystl::copy_backward(xpos, finish_ - 1, finish_);
+                *xpos = value_type(toystl::forward<Args>(args)...);
             }
             else {
-                reallocate_emplace(xpos, MySTL::forward<Args>(args)...);
+                reallocate_emplace(xpos, toystl::forward<Args>(args)...);
             }
 
             return begin() + n;
@@ -468,11 +468,11 @@ namespace MySTL {
         template <class... Args>
         void emplace_back(Args&&... args) {
             if (finish_ < end_of_storage_) {
-                data_allocator::construct(&*finish_, MySTL::forward<Args>(args)...);
+                data_allocator::construct(&*finish_, toystl::forward<Args>(args)...);
                 ++finish_;
             }
             else {
-                reallocate_emplace(finish_, MySTL::forward<Args>(args)...);
+                reallocate_emplace(finish_, toystl::forward<Args>(args)...);
             } 
         }
 
@@ -494,7 +494,7 @@ namespace MySTL {
         }
 
         void push_back(value_type&& value) {
-            emplace_back(MySTL::move(value));
+            emplace_back(toystl::move(value));
         }
 
         // pop_back
@@ -505,9 +505,9 @@ namespace MySTL {
 
         // 与另外一个 vector 交换
         void swap(vector& other) noexcept {
-            MySTL::swap(start_, other.start_);
-            MySTL::swap(finish_, other.finish_);
-            MySTL::swap(end_of_storage_, other.end_of_storage_);
+            toystl::swap(start_, other.start_);
+            toystl::swap(finish_, other.finish_);
+            toystl::swap(end_of_storage_, other.end_of_storage_);
         }
 
 
@@ -523,7 +523,7 @@ namespace MySTL {
          */
         void fill_initialize(size_type n, const_reference x) {
             iterator result = data_allocator::allocate(n); // 分配可以容纳 n 个 T 类型大小的内存空间
-            MySTL::uninitialized_fill_n(result, n, x); // 在内存空间上构造 n 个 T 类型的元素
+            toystl::uninitialized_fill_n(result, n, x); // 在内存空间上构造 n 个 T 类型的元素
 
             start_ = result;
             finish_ = start_ + n;
@@ -539,7 +539,7 @@ namespace MySTL {
         void copy_initialize(ForwardIterator first, ForwardIterator last, forward_iterator_tag) {
             auto copySize = static_cast<size_type>(distance(first, last));
             start_ = data_allocator::allocate(copySize);
-            finish_ = MySTL::uninitialized_copy(first, last, start_);
+            finish_ = toystl::uninitialized_copy(first, last, start_);
             end_of_storage_ = finish_;
         }
 
@@ -582,7 +582,7 @@ namespace MySTL {
         // void reallocate(size_type newSize) {
         //     vector tmp;
         //     tmp.start_ = data_allocator::allocate(newSize);
-        //     tmp.finish_ = MySTL::uninitialized_copy(start_, finish_, tmp.start_);
+        //     tmp.finish_ = toystl::uninitialized_copy(start_, finish_, tmp.start_);
         //     tmp.end_of_storage_ = tmp.start_ + newSize;
 
         //     swap(tmp);
@@ -605,7 +605,7 @@ namespace MySTL {
                 data_allocator::construct(finish_, *(finish_ - 1));
                 ++finish_;
                 T value_copy = value;
-                MySTL::copy_backward(position, finish_ - 2, finish_ - 1);
+                toystl::copy_backward(position, finish_ - 2, finish_ - 1);
                 *position = value_copy;
             }
             else {    // 已无备用空间
@@ -616,10 +616,10 @@ namespace MySTL {
                 T value_copy = value;
                 try
                 {
-                    newfinish = MySTL::uninitialized_move(start_, position, newstart);
+                    newfinish = toystl::uninitialized_move(start_, position, newstart);
                     data_allocator::construct(&(*newfinish), value_copy);
                     ++newfinish;
-                    newfinish = MySTL::uninitialized_move(position, finish_, newfinish);
+                    newfinish = toystl::uninitialized_move(position, finish_, newfinish);
                 }
                 catch (...) 
                 {
@@ -653,34 +653,34 @@ namespace MySTL {
                     // 1、将源区间[finish-n, finish)填充到目标区间[finish, finish+n)
                     // 把插入点后的元素往后面搬，搬到 从 finish_ 开始，给新增元素腾地方 
                     // 注意，和下面的 copy 不同，这里不仅仅需要拷贝，还需要在相应的位置构造元素
-                    MySTL::uninitialized_copy(finish_ - n, finish_, finish_);
+                    toystl::uninitialized_copy(finish_ - n, finish_, finish_);
                     finish_ = finish_ + n;
                     // 2、将源区间[position,old_finish-n)从逆向cpoy到目标区间[old_finish-n, old_finish)
                     // 这里的话，直接拷贝就好了
                     // 注意，这里是 copy_backward ，将 [first, last) 区间内的每一个元素，以逆行的方向复制到 以 result - 1 为起点，方向也为逆行的区间上。
-                    MySTL::copy_backward(pos, old_finish - n, old_finish);
+                    toystl::copy_backward(pos, old_finish - n, old_finish);
                     // 3、将目标区间[position, position+n) 填充成 x_copy
-                    MySTL::fill(pos, pos + n, value_copy);
+                    toystl::fill(pos, pos + n, value_copy);
                 }
                 else {
                     // 如果插入点之后的现有元素个数 小于等于 新增元素个数
-                    MySTL::uninitialized_fill_n(finish_, n - elems_after, value_copy);
+                    toystl::uninitialized_fill_n(finish_, n - elems_after, value_copy);
                     finish_ += n - elems_after;
-                    MySTL::uninitialized_copy(pos, old_finish, finish_);
+                    toystl::uninitialized_copy(pos, old_finish, finish_);
                     fill(pos, old_finish, value_copy);
                 }
             }
             else {
                 // 如果备用空间不足，配置额外的内存
                 const size_type old_size = size();
-                const size_type len = old_size + MySTL::max(old_size, n);
+                const size_type len = old_size + toystl::max(old_size, n);
                 iterator new_start = data_allocator::allocate(len);
                 iterator new_finish = new_start;
                 try
                 {
-                    new_finish = MySTL::uninitialized_copy(start_, pos, new_start);
-                    new_finish = MySTL::uninitialized_fill_n(new_finish, n, value_copy);
-                    new_finish = MySTL::uninitialized_copy(pos, finish_, new_finish);
+                    new_finish = toystl::uninitialized_copy(start_, pos, new_start);
+                    new_finish = toystl::uninitialized_fill_n(new_finish, n, value_copy);
+                    new_finish = toystl::uninitialized_copy(pos, finish_, new_finish);
                 }
                 catch (...)
                 {
@@ -716,7 +716,7 @@ namespace MySTL {
                 try
                 {
                     newfinish = uninitialized_move(start_, pos, newstart);
-                    data_allocator::construct(&(*newfinish), MySTL::forward<Args>(args)...);
+                    data_allocator::construct(&(*newfinish), toystl::forward<Args>(args)...);
                     ++newfinish;
                     newfinish = uninitialized_move(pos, finish_, newfinish);
                 }
@@ -738,7 +738,7 @@ namespace MySTL {
         template <class Iter>
         void range_initialize(Iter first, Iter last) {
             size_type len = distance(first, last);
-            const size_type initsize = MySTL::max(static_cast<size_type>(last - first), static_cast<size_type>(16));
+            const size_type initsize = toystl::max(static_cast<size_type>(last - first), static_cast<size_type>(16));
             try
             {
                 start_ = data_allocator::allocate(initsize);
@@ -754,7 +754,7 @@ namespace MySTL {
                 throw;
             }
 
-            MySTL::uninitialized_copy(first, last, start_);
+            toystl::uninitialized_copy(first, last, start_);
 
             // for(; first != last; ++first) {
             //     emplace_back(*first);
@@ -776,7 +776,7 @@ namespace MySTL {
     template <class ForwardIterator>
     void vector<T, Alloc>::range_insert(iterator pos, ForwardIterator first, ForwardIterator last, forward_iterator_tag) {
         if (first != last) {
-            size_type n = MySTL::distance(first, last);
+            size_type n = toystl::distance(first, last);
             if (size_type(end_of_storage_ - finish_) >= n) {
                 // 如果剩下的空间满足需要的大小
                 const size_type elems_after = finish_ - pos;
@@ -786,20 +786,20 @@ namespace MySTL {
                     // 1、将源区间[finish-n, finish)填充到目标区间[finish, finish+n)
                     // 把插入点后的元素往后面搬，搬到 从 finish_ 开始，给新增元素腾地方 
                     // 注意，和下面的 copy 不同，这里不仅仅需要拷贝，还需要在相应的位置构造元素
-                    MySTL::uninitialized_copy(finish_ - n, finish_, finish_);
+                    toystl::uninitialized_copy(finish_ - n, finish_, finish_);
                     finish_ = finish_ + n;
                     // 2、将源区间[position,old_finish-n)从逆向cpoy到目标区间[old_finish-n, old_finish)
                     // 这里的话，直接拷贝就好了
                     // 注意，这里是 copy_backward ，将 [first, last) 区间内的每一个元素，以逆行的方向复制到 以 result - 1 为起点，方向也为逆行的区间上。
-                    MySTL::copy_backward(pos, old_finish - n, old_finish);
+                    toystl::copy_backward(pos, old_finish - n, old_finish);
                     // 3、将目标区间[position, position+n) 填充成 x_copy
-                    MySTL::copy(first, last, pos);
+                    toystl::copy(first, last, pos);
                 }
                 else {
                     // 如果插入点之后的现有元素个数 小于等于 新增元素个数
                     ForwardIterator mid = first;
                     // [first, mid) 上的元素个数 等于 插入点之后现有元素的个数
-                    MySTL::advance(mid, elems_after);
+                    toystl::advance(mid, elems_after);
                     // 1、先把[mid last) 拷贝到 [finish_, finish_ + n - elems_after)
                     uninitialized_copy(mid, last, finish_);
                     finish_ += n - elems_after;
@@ -807,21 +807,21 @@ namespace MySTL {
                     uninitialized_copy(pos, old_finish, finish_);
                     finish_ += elems_after;
                     // 3、最后一步，再把 [first, mid) 拷贝到 [pos, pos + elems_after)
-                    MySTL::copy(first, mid, pos);
+                    toystl::copy(first, mid, pos);
 
                 }
             }
             else {
                 // 如果剩下的空间 不 满足需要的大小，需要配置额外的内存
                 const size_type old_size = size();
-                const size_type len = old_size + MySTL::max(old_size, n);
+                const size_type len = old_size + toystl::max(old_size, n);
                 iterator new_start = data_allocator::allocate(len);
                 iterator new_finish = new_start;
                 try
                 {
-                    new_finish = MySTL::uninitialized_copy(start_, pos, new_start);
-                    new_finish = MySTL::uninitialized_copy(first, last, new_finish);
-                    new_finish = MySTL::uninitialized_copy(pos, finish_, new_finish);
+                    new_finish = toystl::uninitialized_copy(start_, pos, new_start);
+                    new_finish = toystl::uninitialized_copy(first, last, new_finish);
+                    new_finish = toystl::uninitialized_copy(pos, finish_, new_finish);
                 }
                 catch (...)
                 {
@@ -849,7 +849,7 @@ namespace MySTL {
     // =
     template <class T, class Allocator>
     bool operator==(const vector<T, Allocator> &left, const vector<T, Allocator> &right) {
-        return left.size() == right.size() && MySTL::equal(left.cbegin(), left.cend(), right.cbegin());
+        return left.size() == right.size() && toystl::equal(left.cbegin(), left.cend(), right.cbegin());
     }
 
     // != 依靠 = 来实现
@@ -860,7 +860,7 @@ namespace MySTL {
 
     template <class T, class Allocator>
     bool operator<(const vector<T, Allocator> &left, const vector<T, Allocator> &right) {
-        return MySTL::lexicographical_compare(left.cbegin(), left.cend(), right.cbegin(), right.cend());
+        return toystl::lexicographical_compare(left.cbegin(), left.cend(), right.cbegin(), right.cend());
     }
 
     template <class T, class Allocator>

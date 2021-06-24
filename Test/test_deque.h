@@ -8,15 +8,15 @@
 
 #include <deque>
 
-namespace MySTL {
+namespace toystl {
     namespace dequetest {
         class TestDeque : public ::testing::Test {
         protected:
-            // using Kitten = typename MySTL::TestHelper::nontrivial;
-            typedef typename MySTL::TestHelper::nontrivial Kitten;
+            // using Kitten = typename toystl::TestHelper::nontrivial;
+            typedef typename toystl::TestHelper::nontrivial Kitten;
             std::deque<int> std_deque_of_id{ 1, 2, 3, 4 };
             std::deque<Kitten> std_deque_of_kitten;
-            MySTL::deque<Kitten> abc_deque_of_kitten;
+            toystl::deque<Kitten> abc_deque_of_kitten;
 
             void ExpectEqual() const {
                 EXPECT_EQ(abc_deque_of_kitten.empty(),
@@ -37,7 +37,7 @@ namespace MySTL {
 
         TEST_F(TestDeque, ConstructorWithSize) {
             auto size = 73;
-            abc_deque_of_kitten = MySTL::deque<Kitten>(size);
+            abc_deque_of_kitten = toystl::deque<Kitten>(size);
             std_deque_of_kitten = std::deque<Kitten>(size);
             ExpectEqual();
         }
@@ -45,7 +45,7 @@ namespace MySTL {
         TEST_F(TestDeque, ConstructorWithSizeAndValue) {
             auto size = 73;
             auto value = Kitten(size);
-            abc_deque_of_kitten = MySTL::deque<Kitten>(size, value);
+            abc_deque_of_kitten = toystl::deque<Kitten>(size, value);
             std_deque_of_kitten = std::deque<Kitten>(size, value);
             ExpectEqual();
         }
@@ -53,10 +53,10 @@ namespace MySTL {
         // 策略不一样，非错误
         TEST_F(TestDeque, ConstructorWithInitializerDeque) {
             auto deque = { Kitten{1}, Kitten{2}, Kitten{3} };
-            abc_deque_of_kitten = MySTL::deque<Kitten>(deque);
+            abc_deque_of_kitten = toystl::deque<Kitten>(deque);
             std_deque_of_kitten = std::deque<Kitten>(deque);
             ExpectEqual();
-            abc_deque_of_kitten = MySTL::deque<Kitten>{ Kitten{1}, Kitten{2}, Kitten{3} };
+            abc_deque_of_kitten = toystl::deque<Kitten>{ Kitten{1}, Kitten{2}, Kitten{3} };
             std_deque_of_kitten = std::deque<Kitten>{ Kitten{1}, Kitten{2}, Kitten{3} };
             ExpectEqual();
         }
@@ -174,8 +174,8 @@ namespace MySTL {
         TEST_F(TestDeque, Swap) {
             auto deque_a = {1, 2, 3, 4};
             auto deque_b = {5, 6};
-            auto a = MySTL::deque<int>(deque_a);
-            auto b = MySTL::deque<int>(deque_b);
+            auto a = toystl::deque<int>(deque_a);
+            auto b = toystl::deque<int>(deque_b);
             auto size_a = a.size();
             auto size_b = b.size();
             auto end_of_a = a.back();
@@ -192,7 +192,7 @@ namespace MySTL {
         TEST_F(TestDeque, Clear) {
             auto deque_a = {1, 2, 3, 4};
             auto deque_b = {5, 6};
-            auto a = MySTL::deque<int>(deque_a);
+            auto a = toystl::deque<int>(deque_a);
             auto b = std::deque<int>(deque_b);
             a.clear();
             b.clear();

@@ -10,7 +10,7 @@
 #include <string.h>
 #include <new>
 
-namespace MySTL {
+namespace toystl {
     /* 主要包括 uninitialized_copy uninitialized_copy_n
      * uninitialized_fill uninitialized_fill_n 
      * uninitialized_move uninitialized_move_n */
@@ -50,14 +50,14 @@ namespace MySTL {
         {
             for (; first != last; ++first, ++cur) 
             {
-                MySTL::construct(&*cur, *first);
+                toystl::construct(&*cur, *first);
             }
         }
         catch (...) 
         {
             for(; result != cur; ++result) 
             {
-                MySTL::destroy(&*result);
+                toystl::destroy(&*result);
             }
         }
 
@@ -103,7 +103,7 @@ namespace MySTL {
         try
         {
             for(; n > 0; --n, ++first, ++cur) {
-                MySTL::construct(&*cur, *first);
+                toystl::construct(&*cur, *first);
                 return cur;
             }
         }
@@ -111,14 +111,14 @@ namespace MySTL {
         {
             for(; result != cur; ++result) 
             {
-                MySTL::destroy(&*result);
+                toystl::destroy(&*result);
             }
         } 
     }
 
     template <class ForwardIterator, class Size, class T>
     void uninitialized_copy_n(ForwardIterator first, Size count, const T& value) {
-        using Value = typename MySTL::iterator_traits<ForwardIterator>::value_type;
+        using Value = typename toystl::iterator_traits<ForwardIterator>::value_type;
         ForwardIterator current = first;
         try {
             while (count-- > 0) {
@@ -150,14 +150,14 @@ namespace MySTL {
         try
         {
             for(; cur != last; ++cur) {
-                MySTL::construct(&*cur, value);
+                toystl::construct(&*cur, value);
             }
         }
         catch(...)
         {
             for(; first != cur; ++first) 
             {
-                MySTL::destroy(&*first);
+                toystl::destroy(&*first);
             }
         }
     }
@@ -189,14 +189,14 @@ namespace MySTL {
         try
         {
             for(; n > 0; n--, ++cur) {
-                MySTL::construct(&*cur, value);
+                toystl::construct(&*cur, value);
             }
         }
         catch(...)
         {
             for(; first != cur; ++first) 
             {
-                MySTL::destroy(&*first);
+                toystl::destroy(&*first);
             }
         }
 
@@ -226,26 +226,26 @@ namespace MySTL {
     /***********************************************************************************/
     template <class InputIter, class ForwardIter>
     ForwardIter 
-    __uninitialized_move_aux(InputIter first, InputIter last, ForwardIter result, MySTL::true_type)
+    __uninitialized_move_aux(InputIter first, InputIter last, ForwardIter result, toystl::true_type)
     {
-        return MySTL::move(first, last, result);
+        return toystl::move(first, last, result);
     }
 
     template <class InputIter, class ForwardIter>
     ForwardIter 
-    __uninitialized_move_aux(InputIter first, InputIter last, ForwardIter result, MySTL::false_type)
+    __uninitialized_move_aux(InputIter first, InputIter last, ForwardIter result, toystl::false_type)
     {
         ForwardIter cur = result;
         try
         {
             for (; first != last; ++first, ++cur)
             {
-                MySTL::construct(&*cur, MySTL::move(*first));
+                toystl::construct(&*cur, toystl::move(*first));
             }
         }
         catch (...)
         {
-            MySTL::destroy(result, cur);
+            toystl::destroy(result, cur);
         }
 
         return cur;
@@ -260,7 +260,7 @@ namespace MySTL {
     template <class InputIter, class ForwardIter>
     ForwardIter uninitialized_move(InputIter first, InputIter last, ForwardIter result)
     {
-        return MySTL::__uninitialized_move(first, last, result, value_type(first));
+        return toystl::__uninitialized_move(first, last, result, value_type(first));
     }
 
     /***********************************************************************************/
@@ -269,27 +269,27 @@ namespace MySTL {
     /***********************************************************************************/
     template <class InputIter, class Size, class ForwardIter>
     ForwardIter 
-    __uninitialized_move_n_aux(InputIter first, Size n, ForwardIter result, MySTL::true_type)
+    __uninitialized_move_n_aux(InputIter first, Size n, ForwardIter result, toystl::true_type)
     {
-        return MySTL::move(first, first + n, result);
+        return toystl::move(first, first + n, result);
     }
 
     template <class InputIter, class Size, class ForwardIter>
     ForwardIter
-    __uninitialized_move_n_aux(InputIter first, Size n, ForwardIter result, MySTL::false_type)
+    __uninitialized_move_n_aux(InputIter first, Size n, ForwardIter result, toystl::false_type)
     {
         ForwardIter cur = result;
         try
         {
             for (; n > 0; --n, ++first, ++cur)
             {
-                MySTL::construct(&*cur, MySTL::move(*first));
+                toystl::construct(&*cur, toystl::move(*first));
             }
         }
         catch (...)
         {
             for (; result != cur; ++result) {
-                MySTL::destroy(&*result);
+                toystl::destroy(&*result);
             }
             throw;
         }
@@ -306,7 +306,7 @@ namespace MySTL {
     template <class InputIter, class Size, class ForwardIter>
     ForwardIter uninitialized_move_n(InputIter first, Size n, ForwardIter result)
     {
-        return MySTL::__uninitialized_move_n(first, n, result, value_type(first));
+        return toystl::__uninitialized_move_n(first, n, result, value_type(first));
     }
 }
 #endif

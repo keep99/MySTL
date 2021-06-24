@@ -3,7 +3,7 @@
 
 #include <cstddef> // nullptr_t
 
-namespace MySTL {
+namespace toystl {
     template <class T, T v>
     struct m_integral_constant
     {

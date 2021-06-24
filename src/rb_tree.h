@@ -7,7 +7,7 @@
 #include "functional.h"
 
 
-namespace MySTL {
+namespace toystl {
     // rb_tree 的节点颜色的类型
     using rb_tree_color_type = bool;
     static constexpr rb_tree_color_type rb_tree_red = false;
@@ -384,7 +384,7 @@ namespace MySTL {
                 z->parent->right = y;
             }
             y->parent = z->parent;
-            MySTL::swap(y->color, z->color);
+            toystl::swap(y->color, z->color);
             
             y = z;
         }
@@ -519,7 +519,7 @@ namespace MySTL {
               class Value,
               class KeyOfValue,     // 怎么从 value 取出 key
               class Compare,        // 键值大小比较规则
-              class Allocator = MySTL::allocator<Value>>
+              class Allocator = toystl::allocator<Value>>
     class rb_tree
     {
     protected:
@@ -541,8 +541,8 @@ namespace MySTL {
         
         using iterator                  = rb_tree_iterator<value_type, reference, pointer>;
         using const_iterator            = rb_tree_iterator<value_type, const_reference, const_pointer>;
-        using reverse_iterator          = MySTL::reverse_iterator<iterator>;
-        using const_reverse_iterator    = MySTL::reverse_iterator<const_iterator>;
+        using reverse_iterator          = toystl::reverse_iterator<iterator>;
+        using const_reverse_iterator    = toystl::reverse_iterator<const_iterator>;
 
     protected:
         link_type get_node() { return nodeAllocator::allocate(1); }
@@ -705,9 +705,9 @@ namespace MySTL {
 
         void swap(rb_tree& rhs) {
             if(this != &rhs) {
-                MySTL::swap(header, rhs.header);
-                MySTL::swap(node_count, rhs.node_count);
-                MySTL::swap(key_compare, rhs.key_compare);
+                toystl::swap(header, rhs.header);
+                toystl::swap(node_count, rhs.node_count);
+                toystl::swap(key_compare, rhs.key_compare);
             }
         }
 
@@ -1168,7 +1168,7 @@ namespace MySTL {
 	operator==(const rb_tree<Key, Value, KeyOfValue, Compare, Allocator>& x, 
 	           const rb_tree<Key, Value, KeyOfValue, Compare, Allocator>& y)
 	{
-	  return x.size() == y.size() && MySTL::equal(x.begin(), x.end(), y.begin());
+	  return x.size() == y.size() && toystl::equal(x.begin(), x.end(), y.begin());
 	}
 
 	template <class Key, class Value, class KeyOfValue, class Compare, class Allocator>
@@ -1176,7 +1176,7 @@ namespace MySTL {
 	operator<(const rb_tree<Key, Value, KeyOfValue, Compare, Allocator>& x, 
 	          const rb_tree<Key, Value, KeyOfValue, Compare, Allocator>& y)
 	{
-	  return MySTL::lexicographical_compare(x.begin(), x.end(), 
+	  return toystl::lexicographical_compare(x.begin(), x.end(), 
 	                                 y.begin(), y.end());
 	}
 
@@ -1209,6 +1209,6 @@ namespace MySTL {
 	  return !(x < y);
 	}
 
-} // namespace MySTL
+} // namespace toystl
 
 #endif

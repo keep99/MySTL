@@ -8,15 +8,15 @@
 
 #include <vector>
 
-namespace MySTL {
+namespace toystl {
     namespace vectortest {
         class TestVector : public ::testing::Test {
         protected:
-            // using Kitten = typename MySTL::TestHelper::nontrivial;
-            typedef typename MySTL::TestHelper::nontrivial Kitten;
+            // using Kitten = typename toystl::TestHelper::nontrivial;
+            typedef typename toystl::TestHelper::nontrivial Kitten;
             std::vector<int> std_vector_of_id{ 1, 2, 3, 4 };
             std::vector<Kitten> std_vector_of_kitten;
-            MySTL::vector<Kitten> abc_vector_of_kitten;
+            toystl::vector<Kitten> abc_vector_of_kitten;
 
             void ExpectEqual() const {
                 EXPECT_EQ(abc_vector_of_kitten.empty(),
@@ -40,7 +40,7 @@ namespace MySTL {
 
         TEST_F(TestVector, ConstructorWithSize) {
             auto size = 73;
-            abc_vector_of_kitten = MySTL::vector<Kitten>(size);
+            abc_vector_of_kitten = toystl::vector<Kitten>(size);
             std_vector_of_kitten = std::vector<Kitten>(size);
             ExpectEqual();
         }
@@ -48,7 +48,7 @@ namespace MySTL {
         TEST_F(TestVector, ConstructorWithSizeAndValue) {
             auto size = 73;
             auto value = Kitten(size);
-            abc_vector_of_kitten = MySTL::vector<Kitten>(size, value);
+            abc_vector_of_kitten = toystl::vector<Kitten>(size, value);
             std_vector_of_kitten = std::vector<Kitten>(size, value);
             ExpectEqual();
         }
@@ -56,10 +56,10 @@ namespace MySTL {
         // 策略不一样，非错误
         TEST_F(TestVector, ConstructorWithInitializerList) {
             auto list = { Kitten{1}, Kitten{2}, Kitten{3} };
-            abc_vector_of_kitten = MySTL::vector<Kitten>(list);
+            abc_vector_of_kitten = toystl::vector<Kitten>(list);
             std_vector_of_kitten = std::vector<Kitten>(list);
             ExpectEqual();
-            abc_vector_of_kitten = MySTL::vector<Kitten>{ Kitten{1}, Kitten{2}, Kitten{3} };
+            abc_vector_of_kitten = toystl::vector<Kitten>{ Kitten{1}, Kitten{2}, Kitten{3} };
             std_vector_of_kitten = std::vector<Kitten>{ Kitten{1}, Kitten{2}, Kitten{3} };
             ExpectEqual();
         }
@@ -201,8 +201,8 @@ namespace MySTL {
         TEST_F(TestVector, Swap) {
             auto list_a = {1, 2, 3, 4};
             auto list_b = {5, 6};
-            auto a = MySTL::vector<int>(list_a);
-            auto b = MySTL::vector<int>(list_b);
+            auto a = toystl::vector<int>(list_a);
+            auto b = toystl::vector<int>(list_b);
             auto size_a = a.size();
             auto size_b = b.size();
             auto end_of_a = a.back();

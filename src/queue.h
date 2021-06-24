@@ -8,9 +8,9 @@
 #include <initializer_list>
 
 
-namespace MySTL {
+namespace toystl {
     // queue
-    template <class T, class Container = MySTL::deque<T>>
+    template <class T, class Container = toystl::deque<T>>
     class queue 
     {
     public :
@@ -42,13 +42,13 @@ namespace MySTL {
         queue(const Container& c) : c_(c)
         {}
 
-        queue(const Container&& c) : c_(MySTL::move(c)) noexcept
+        queue(const Container&& c) : c_(toystl::move(c)) noexcept
         {}
 
         queue(const queue& rhs) : c_(rhs.c_)
         {}
 
-        queue(queue&& rhs) noexcept : c_(MySTL::move(rhs.c_))
+        queue(queue&& rhs) noexcept : c_(toystl::move(rhs.c_))
         {}
 
         queue& operator=(const queue& rhs)
@@ -59,7 +59,7 @@ namespace MySTL {
 
         queue& operator=(queue&& rhs) noexcept
         {
-            c_ = MySTL::move(rhs.c_);
+            c_ = toystl::move(rhs.c_);
             return *this;
         }
 
@@ -90,12 +90,12 @@ namespace MySTL {
         // 修改容器相关操作
         template <class ...Args>
         void emplace(Args&& ...args)
-        { c_.emplace_back(MySTL::forward<Args>(args)...); }
+        { c_.emplace_back(toystl::forward<Args>(args)...); }
 
         void push(const value_type& value)
         { c_.push_back(value); }
         void push(const value_type&& value)
-        { c_.emplace_back(MySTL::move()); }
+        { c_.emplace_back(toystl::move()); }
 
         void pop()
         { c_.pop_front(); }
@@ -108,7 +108,7 @@ namespace MySTL {
         }
 
         void swap(queue& rhs)
-        { MySTL::swap(c_, rhs.c_); }
+        { toystl::swap(c_, rhs.c_); }
 
     public:
         friend bool operator==(const queue& lhs, const queue& rhs);
@@ -151,7 +151,7 @@ namespace MySTL {
         return !(lhs < rhs);
     }
 
-    // 重载 MySTL 的 swap 
+    // 重载 toystl 的 swap 
     template <class T, class Container>
     void swap(queue<T, Container>& lhs, queue<T, Container>& rhs)
     {
@@ -160,8 +160,8 @@ namespace MySTL {
 
 
     // priority_queue
-    template <class T, class Container = MySTL::vector<T>, 
-              class Compare = MySTL::less<typename Container::value_type>>
+    template <class T, class Container = toystl::vector<T>, 
+              class Compare = toystl::less<typename Container::value_type>>
     class priority_queue
     {
     public:
@@ -185,58 +185,58 @@ namespace MySTL {
 
         explicit priority_queue(size_type n) : c_(n)
         {
-            MySTL::make_heap(c_.begin(), c.end(), comp_);
+            toystl::make_heap(c_.begin(), c.end(), comp_);
         }
 
         priority_queue(size_type n, const value_type& value) : c_(n, value)
         {
-            MySTL::make_heap(c_.begin(), c_.end(), comp_);
+            toystl::make_heap(c_.begin(), c_.end(), comp_);
         }
 
         template <class IIter>
         priority_queue(IIter first, IIter last) : c_(first, last)
         {
-            MySTL::make_heap(c.begin(), c.end(), comp_);
+            toystl::make_heap(c.begin(), c.end(), comp_);
         }
 
         priority_queue(std::initializer_list<T> ilist) : c_(ilist)
         {
-            MySTL::make_heap(c_.begin(), c_end(), comp_);
+            toystl::make_heap(c_.begin(), c_end(), comp_);
         }
 
         priority_queue(const Container& s) : c_(s)
         {
-            MySTL::make_heap(c_.begin(), c_.end(), comp_);
+            toystl::make_heap(c_.begin(), c_.end(), comp_);
         }
 
-        priority_queue(const Container&& s) noexcept : c_(MySTL::move(s))
+        priority_queue(const Container&& s) noexcept : c_(toystl::move(s))
         {
-            MySTL::make_heap(c.begin(), c.end(), comp_);
+            toystl::make_heap(c.begin(), c.end(), comp_);
         }
 
         priority_queue(const priority_queue& rhs) :c_(rhs.c_), comp_(rhs.comp_)
         {
-            MySTL::make_heap(c_.begin(), c_end(), comp_);
+            toystl::make_heap(c_.begin(), c_end(), comp_);
         }
 
-        priority_queue(priority_queue&& rhs) noexcept : c_(MySTL::move(rhs.c_)), comp_(rhs.comp_)
+        priority_queue(priority_queue&& rhs) noexcept : c_(toystl::move(rhs.c_)), comp_(rhs.comp_)
         {
-            MySTL::make_heap(c_.begin(), c_.end(), comp_);
+            toystl::make_heap(c_.begin(), c_.end(), comp_);
         }
 
         priority_queue& operator=(const priority_queue& rhs)
         {
             c_ = rhs.c_;
             comp_ = rhs.comp_;
-            MySTL::make_heap(c_.begin(), c_.end(), comp_);
+            toystl::make_heap(c_.begin(), c_.end(), comp_);
             return *this;
         }
 
         priority_queue& operator=(const priority_queue& rhs)
         {
-            c_ = MySTL::move(rhs.c_);
+            c_ = toystl::move(rhs.c_);
             comp_ = rhs.comp_;
-            MySTL::make_heap(c_.begin(), c_.end(), comp_);
+            toystl::make_heap(c_.begin(), c_.end(), comp_);
 
             return *this;
         }
@@ -245,7 +245,7 @@ namespace MySTL {
         {
             c_ = ilist;
             comp_ = value_compare();
-            MySTL::make_heap(c._begin(), c_end(), comp_);
+            toystl::make_heap(c._begin(), c_end(), comp_);
 
             return *this;
         }
@@ -265,25 +265,25 @@ namespace MySTL {
         template <class... Args>
         void emplace(Args&& ...agrs)
         {
-            c_.emplace_back(MySTL::forward<Args>(args)...);
-            MySTL::push_heap(c_.begin(), c_.end(), comp_);
+            c_.emplace_back(toystl::forward<Args>(args)...);
+            toystl::push_heap(c_.begin(), c_.end(), comp_);
         }
 
         void push(const value_type& value)
         {
             c_.push_back(value);
-            MySTL::push_heap(c.begin(), c.end(), comp_);
+            toystl::push_heap(c.begin(), c.end(), comp_);
         }
 
         void push(value_type&& value) 
         {
-            c_.push_back(MySTL::move(value));
-            MySTL::push_heap(c_.begin(), c_.end(), comp_);
+            c_.push_back(toystl::move(value));
+            toystl::push_heap(c_.begin(), c_.end(), comp_);
         }
 
         void pop()
         {
-            MySTL::pop_heap(c_.begin(), c_.end(), comp_);
+            toystl::pop_heap(c_.begin(), c_.end(), comp_);
             c_.pop_back();
         }
 
@@ -296,8 +296,8 @@ namespace MySTL {
 
         void swap(priority_queue& rhs)
         {
-            MySTL::swap(c_, rhs.c_);
-            MySTL::swap(comp_, rhs.comp_);
+            toystl::swap(c_, rhs.c_);
+            toystl::swap(comp_, rhs.comp_);
         }
 
     public:
@@ -326,6 +326,6 @@ namespace MySTL {
         lhs.swap(rhs);
     }
 
-}  // namespace MySTL
+}  // namespace toystl
 
 #endif

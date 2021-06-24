@@ -1,7 +1,7 @@
 #ifndef _FUNCTIONAL_H
 #define _FUNCTIONAL_H
 
-namespace MySTL {
+namespace toystl {
     // 定义一元函数的参数型别和返回值型别
     template <class Arg, class Reuslt>
     struct unarg_function

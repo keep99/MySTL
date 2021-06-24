@@ -7,7 +7,7 @@
  */
 #include "test_helper.h"
 
-namespace MySTL {
+namespace toystl {
     namespace TestHelper {
         bool operator==(const nontrivial& lhs, const nontrivial& rhs) {
             return *lhs.i_ == *rhs.i_ && lhs.j_ == rhs.j_;

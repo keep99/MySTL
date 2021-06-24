@@ -11,7 +11,7 @@
 #include <iostream>
 #include <memory>
 
-namespace MySTL {
+namespace toystl {
     namespace TestHelper {
         template <class Container>
         void print_container(Container& container, const std::string& name = "") {

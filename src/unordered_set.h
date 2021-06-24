@@ -8,16 +8,16 @@
 
 #include <initializer_list>
 
-namespace MySTL {
+namespace toystl {
     /*****************************************************************************************/
 
     // 模板类 unordered_set，键值不允许重复
     // 参数一代表键值类型，参数二代表哈希函数，缺省使用 mystl::hash，
     // 参数三代表键值比较方式，缺省使用 mystl::equal_to
     template <class Value,
-              class HashFcn = MySTL::hash<Value>,
-              class EqualKey = MySTL::equal_to<Value>,
-              class Allocator = MySTL::allocator<Value>>
+              class HashFcn = toystl::hash<Value>,
+              class EqualKey = toystl::equal_to<Value>,
+              class Allocator = toystl::allocator<Value>>
     class unordered_set;
 
     template <class Value, class HashFcn, class EqualKey, class Allocator>
@@ -94,7 +94,7 @@ namespace MySTL {
         {}
 
         unordered_set(const unordered_set&& rhs) noexcept
-            : ht_(MySTL::move(rhs.ht_))
+            : ht_(toystl::move(rhs.ht_))
         {}
 
         unordered_set& operator=(const unordered_set& rhs)
@@ -111,7 +111,7 @@ namespace MySTL {
         {
             // 其实这里的自赋值处理可以不用，hashtable 保证
             if(this != &rhs) {
-                ht_ = MySTL::move(rhs.ht_);
+                ht_ = toystl::move(rhs.ht_);
             }
 
             return *this;
@@ -221,9 +221,9 @@ namespace MySTL {
     // 参数一代表键值类型，参数二代表哈希函数，缺省使用 mystl::hash，
     // 参数三代表键值比较方式，缺省使用 mystl::equal_to
     template <class Value,
-              class HashFcn = MySTL::hash<Value>,
-              class EqualKey = MySTL::equal_to<Value>,
-              class Allocator = MySTL::allocator<Value>>
+              class HashFcn = toystl::hash<Value>,
+              class EqualKey = toystl::equal_to<Value>,
+              class Allocator = toystl::allocator<Value>>
     class unordered_multiset;
 
     template <class Value, class HashFcn, class EqualKey, class Allocator>
@@ -300,7 +300,7 @@ namespace MySTL {
         {}
 
         unordered_multiset(const unordered_multiset&& rhs) noexcept
-            : ht_(MySTL::move(rhs.ht_))
+            : ht_(toystl::move(rhs.ht_))
         {}
 
         unordered_multiset& operator=(const unordered_multiset& rhs)
@@ -317,7 +317,7 @@ namespace MySTL {
         {
             // 其实这里的自赋值处理可以不用，hashtable 保证
             if(this != &rhs) {
-                ht_ = MySTL::move(rhs.ht_);
+                ht_ = toystl::move(rhs.ht_);
             }
 
             return *this;
@@ -419,7 +419,7 @@ namespace MySTL {
     {
         us1.swap(us2);
     }
-} // namespace MySTL
+} // namespace toystl
 
 
 

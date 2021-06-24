@@ -1,6 +1,6 @@
 #include "perform_vector.h"
 
-using namespace MySTL::profiler;
+using namespace toystl::profiler;
 
 int main()
 {

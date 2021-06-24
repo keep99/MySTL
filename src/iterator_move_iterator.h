@@ -4,7 +4,7 @@
 #include "iterator_base.h"
 #include "utility.h"             
 
-namespace MySTL {
+namespace toystl {
     template <class Iterator>
     class move_iterator {
     public:
@@ -37,7 +37,7 @@ namespace MySTL {
         // 在解引用的时候强制转换成右值引用，实现从一个容器中 "移走" 所有的元素
         // 返回当前元素的右值引用
         reference operator*() {
-            return MySTL::move(*current_);
+            return toystl::move(*current_);
         }
 
         pointer operator->() const {
@@ -45,8 +45,8 @@ namespace MySTL {
         }
 
         // C++ Primer P605 尾置返回类型
-        auto operator[](difference_type n) const -> decltype(MySTL::move(current_[n])) {
-            return MySTL::move(current_[n]);
+        auto operator[](difference_type n) const -> decltype(toystl::move(current_[n])) {
+            return toystl::move(current_[n]);
         }
 
         //前置++

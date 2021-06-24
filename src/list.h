@@ -11,7 +11,7 @@
 #include "algobase.h"
 #include "utility.h"
 
-namespace MySTL
+namespace toystl
 {
     namespace detail
     {
@@ -124,8 +124,8 @@ namespace MySTL
 
         using iterator                  = detail::list_iterator<T, T&, T*>;
         using const_iterator            = detail::list_iterator<T, const T&, const T*>;
-        using reverse_iterator          = MySTL::reverse_iterator<iterator>;
-        using const_reverse_iterator    = MySTL::reverse_iterator<const_iterator>;
+        using reverse_iterator          = toystl::reverse_iterator<iterator>;
+        using const_reverse_iterator    = toystl::reverse_iterator<const_iterator>;
 
         using link_type                 = detail::list_node<T>*;
 
@@ -173,7 +173,7 @@ namespace MySTL
 
         // 这边只接受传入迭代器
         template <class InputIterator, typename std::enable_if<
-            MySTL::is_input_iterator<InputIterator>::value, int>::type = 0>
+            toystl::is_input_iterator<InputIterator>::value, int>::type = 0>
         list(InputIterator first, InputIterator last)
         { 
             node_ = allocate_node();
@@ -252,7 +252,7 @@ namespace MySTL
         template <class InputIterator>
         void assign(InputIterator first, InputIterator last)
         {
-            using is_Integral = typename MySTL::is_integral<InputIterator>;
+            using is_Integral = typename toystl::is_integral<InputIterator>;
             assign_dispatch(first, last, is_Integral());
         }
             
@@ -360,7 +360,7 @@ namespace MySTL
         // fixed。list 无大小
         size_type size() const {
             size_type result = 0;
-            result = MySTL::distance(begin(), end());
+            result = toystl::distance(begin(), end());
 
             return result;
         }
@@ -380,7 +380,7 @@ namespace MySTL
         }
 
         iterator insert(const_iterator position, T&& value)  {
-            return insert_aux(position, MySTL::move(value));
+            return insert_aux(position, toystl::move(value));
         }
 
         iterator insert(const_iterator position, size_type count, const_reference value) {
@@ -403,7 +403,7 @@ namespace MySTL
         // emplace
         template <class... Args>
         iterator emplace(const_iterator position, Args&&... args) {
-            return insert(position, T(MySTL::forward<Args>(args)...));
+            return insert(position, T(toystl::forward<Args>(args)...));
         }
 
         // erase clear
@@ -420,12 +420,12 @@ namespace MySTL
         }
 
         void push_back(T&& value) {
-            insert(end(), MySTL::move(value));
+            insert(end(), toystl::move(value));
         }
 
         template <class... Args>
         void emplace_back(Args&&... args) {
-            emplace(end(), MySTL::forward<Args>(args)...);
+            emplace(end(), toystl::forward<Args>(args)...);
         }
 
         void pop_back() {
@@ -437,12 +437,12 @@ namespace MySTL
         }
 
         void push_front(T&& value) {
-            insert(begin(), MySTL::move(value));
+            insert(begin(), toystl::move(value));
         }
 
         template <class... Args>
         void emplace_front(Args&&... args) {
-            emplace(begin(), MySTL::forward<Args>(args)...);
+            emplace(begin(), toystl::forward<Args>(args)...);
         }
 
         void pop_front() {
@@ -457,7 +457,7 @@ namespace MySTL
         }
 
         void swap(list& other) {
-            MySTL::swap(node_, other.node_);
+            toystl::swap(node_, other.node_);
         }
 
 
@@ -469,7 +469,7 @@ namespace MySTL
 
         /* C++ Primer P 587 在类模板自己的作用域中，我们可以直接使用模板名而不提供实参。比如 这里的形参类型，不是 list<T>, 而是直接写 list */
         void merge(list& other) {
-            merge(other, MySTL::less<T>());
+            merge(other, toystl::less<T>());
         }
 
         // TO DO
@@ -479,7 +479,7 @@ namespace MySTL
         // }
 
         // void merge(list&& other) {
-        //     merge(other, MySTL::less<T>());
+        //     merge(other, toystl::less<T>());
         // }
 
         /**
@@ -543,7 +543,7 @@ namespace MySTL
          * @return {*}
          */
         void unique() {
-            unique(MySTL::equal_to<T>());
+            unique(toystl::equal_to<T>());
         }
 
         // 参考这篇博文：https://www.kancloud.cn/digest/stl-sources/177268
@@ -559,7 +559,7 @@ namespace MySTL
 
 
         void sort() {
-            sort(begin(), end(), MySTL::less<T>());
+            sort(begin(), end(), toystl::less<T>());
         }
 
     private:
@@ -589,7 +589,7 @@ namespace MySTL
         template <class ...Args>
         link_type create_node(Args&&... args) {
             auto newNode = allocate_node();
-            data_allocator::construct(&(newNode->data), MySTL::forward<Args>(args)...);
+            data_allocator::construct(&(newNode->data), toystl::forward<Args>(args)...);
 
             return newNode;
         }
@@ -776,7 +776,7 @@ namespace MySTL
         }
 
         // TO DO：这个暂时不能理解
-        // using MySTL::swap;
+        // using toystl::swap;
         // swap(node_->previous, node_->next);
         // auto it = node->previous;
         // while (it != node_) {
@@ -876,7 +876,7 @@ namespace MySTL
     template <class Y>
     typename list<T, Allocator>::iterator list<T, Allocator>::insert_aux(const_iterator position, Y&& value) {
         // C++ Primer P614 : 当用于一个指向模板参数类型的右值引用函数参数（T&&）时，forward 会保持实参类型的所有细节
-        link_type newNode = create_node(MySTL::forward<Y>(value));
+        link_type newNode = create_node(toystl::forward<Y>(value));
         newNode->previous = position.node_->previous;
         newNode->next     = position.node_;
         newNode->previous->next = newNode->next->previous = newNode;
@@ -964,7 +964,7 @@ namespace MySTL
 
     template <class T, class Allocator>
     bool operator<(const list<T, Allocator>& left, const list<T, Allocator>& right) {
-        return MySTL::lexicographical_compare(left.cbegin(), left.end(), right.cbegin(), right.cend());
+        return toystl::lexicographical_compare(left.cbegin(), left.end(), right.cbegin(), right.cend());
     }
 
     template <class T, class Allocator>
@@ -986,6 +986,6 @@ namespace MySTL
     void swap(list<T, Allocator>& left, list<T, Allocator>& right) {
         left.swap(right);
     }
-} // namespace MySTL
+} // namespace toystl
 
 #endif

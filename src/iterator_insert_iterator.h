@@ -5,7 +5,7 @@
 #include "utility.h"
 #include "memory_function.h"
 
-namespace MySTL {
+namespace toystl {
     // 参考 https://www.icode9.com/content-4-742785.html
     // back_insert_iterator 迭代器可用于在指定容器的末尾处添加新元素
     // 此类型迭代器的底层实现需要调用指定容器的 push_back() 成员方法，这就意味着，此类型迭代器并不适用于 STL 标准库中所有的容器，它只适用于包含 push_back() 成员方法的容器。
@@ -32,7 +32,7 @@ namespace MySTL {
         }
 
         back_insert_iterator& operator=(typename Container::value_type&& value) {
-            container_->push_back(MySTL::move(value));
+            container_->push_back(toystl::move(value));
             
             return *this;
         }
@@ -71,7 +71,7 @@ namespace MySTL {
         }
 
         front_insert_iterator& operator=(typename Container::value_type&& value) {
-            container_->push_back(MySTL::move(value));
+            container_->push_back(toystl::move(value));
 
             return *this;
         }
@@ -115,7 +115,7 @@ namespace MySTL {
         }
 
         insert_iterator& operator=(const typename Container::value&& value) {
-            container_->insert(iterator_, MySTL::move(value));
+            container_->insert(iterator_, toystl::move(value));
             ++iterator_;
 
             return *this;

@@ -5,7 +5,7 @@
 
 #include "functional.h"
 
-namespace MySTL {
+namespace toystl {
     /*****************************************************************************************/
 
     // 模板类 unordered_map，键值不允许重复
@@ -14,9 +14,9 @@ namespace MySTL {
 
     template <class Key,
               class Value,
-              class HashFcn = MySTL::hash<Key>,
-              class EqualKey = MySTL::equal_to<Key>,
-              class Allocator = MySTL::allocator<Value>>
+              class HashFcn = toystl::hash<Key>,
+              class EqualKey = toystl::equal_to<Key>,
+              class Allocator = toystl::allocator<Value>>
     class unordered_map;
 
     template <class Key, class Value, class HashFcn, class EqualKey, class Allocator>
@@ -28,7 +28,7 @@ namespace MySTL {
     class unordered_map
     {
     private:
-        using hashtable_type = hashtable<Key, MySTL::pair<const Key, Value>, HashFcn, 
+        using hashtable_type = hashtable<Key, toystl::pair<const Key, Value>, HashFcn, 
                                          selectfirst<pair<const Key, Value>>, EqualKey, Allocator>;
         hashtable_type ht_; // 底层以 hashtable 完成
 
@@ -96,7 +96,7 @@ namespace MySTL {
         {}
 
         unordered_map(const unordered_map&& rhs) noexcept
-            : ht_(MySTL::move(rhs.ht_))
+            : ht_(toystl::move(rhs.ht_))
         {}
 
         unordered_map& operator=(const unordered_map& rhs)
@@ -113,7 +113,7 @@ namespace MySTL {
         {
             // 其实这里的自赋值处理可以不用，hashtable 保证
             if(this != rhs) {
-                ht_ = MySTL::move(rhs.ht_);
+                ht_ = toystl::move(rhs.ht_);
             }
 
             return *this;
@@ -157,7 +157,7 @@ namespace MySTL {
         { return ht_.insert_unique(value); }
 
         // pair<iterator, bool> insert(value_type&& value)
-        // { return ht_.insert_unique(MySTL::move(value)); }
+        // { return ht_.insert_unique(toystl::move(value)); }
         
         template <class InputIterator>
         void insert(InputIterator first, InputIterator last)
@@ -233,9 +233,9 @@ namespace MySTL {
     // 参数四代表键值比较方式，缺省使用 mystl::equal_to
     template <class Key,
               class Value,
-              class HashFcn = MySTL::hash<Key>,
-              class EqualKey = MySTL::equal_to<Key>,
-              class Allocator = MySTL::allocator<Value>>
+              class HashFcn = toystl::hash<Key>,
+              class EqualKey = toystl::equal_to<Key>,
+              class Allocator = toystl::allocator<Value>>
     class unordered_multimap;
 
     template <class Key, class Value, class HashFcn, class EqualKey, class Allocator>
@@ -315,7 +315,7 @@ namespace MySTL {
         {}
 
         unordered_multimap(const unordered_multimap&& rhs) noexcept
-            : ht_(MySTL::move(rhs.ht_))
+            : ht_(toystl::move(rhs.ht_))
         {}
 
         unordered_multimap& operator=(const unordered_multimap& rhs)
@@ -332,7 +332,7 @@ namespace MySTL {
         {
             // 其实这里的自赋值处理可以不用，hashtable 保证
             if(this != rhs) {
-                ht_ = MySTL::move(rhs.ht_);
+                ht_ = toystl::move(rhs.ht_);
             }
 
             return *this;
@@ -438,6 +438,6 @@ namespace MySTL {
     {
         us1.swap(us2);
     }
-} // namespace MySTL
+} // namespace toystl
 
 #endif

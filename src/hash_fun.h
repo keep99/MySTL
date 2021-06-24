@@ -2,7 +2,7 @@
 #define _HASH_FUN_H
 #include <cstddef>
 
-namespace MySTL {
+namespace toystl {
     // 对于大部分类型，hash function 什么也不做，直接返回原值
     template <class Key>
     struct hash {};
@@ -94,7 +94,7 @@ namespace MySTL {
         size_t operator()(unsigned long x) const
         { return x; }
     };
-} // namespace MySTL 
+} // namespace toystl 
 
 
 

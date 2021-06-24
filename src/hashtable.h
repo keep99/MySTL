@@ -11,7 +11,7 @@
 #include "hash_fun.h"
 
 
-namespace MySTL {
+namespace toystl {
     template <class T>
     struct hashtable_node 
     {
@@ -20,7 +20,7 @@ namespace MySTL {
     };
 
     template <class Key, class Value, class HashFcn, class ExtractKey,
-              class EqualKey, class Allocator = MySTL::allocator<Value>>
+              class EqualKey, class Allocator = toystl::allocator<Value>>
     class hashtable;
 
     template <class Key, class Value, class HashFcn, class ExtractKey, 
@@ -174,7 +174,7 @@ namespace MySTL {
     {
         const unsigned long* first = prime_list;
         const unsigned long* last = prime_list + num_primes;
-        const unsigned long* pos = MySTL::lower_bound(first, last, n);
+        const unsigned long* pos = toystl::lower_bound(first, last, n);
 
         return pos == last ? *(last - 1) : *pos;
     }
@@ -238,7 +238,7 @@ namespace MySTL {
         hasher hash_;
         key_equal equals_;
         ExtractKey getkey_;
-        MySTL::vector<node_ptr, hashtable_node_pointer_allocator> buckets_; // 以 vector 来完成，动态扩充能力
+        toystl::vector<node_ptr, hashtable_node_pointer_allocator> buckets_; // 以 vector 来完成，动态扩充能力
         size_t numElements_;
 
     public:
@@ -294,12 +294,12 @@ namespace MySTL {
               getkey_(other.getkey_),
               numElements_(other.numElements_)
         {
-            buckets_ = MySTL::move(other.buckets_);
+            buckets_ = toystl::move(other.buckets_);
         }
 
         hashtable& operator=(hashtable&& other) noexcept
         {
-            hashtable tmp(MySTL::move(other));
+            hashtable tmp(toystl::move(other));
             swap(tmp);
 
             return *this;
@@ -368,13 +368,13 @@ namespace MySTL {
         // insert 相关
         
         // 在不需要重建表格的情况下插入新节点。键值不允许重复
-        MySTL::pair<iterator, bool> insert_unique_noresize(const value_type& value);
+        toystl::pair<iterator, bool> insert_unique_noresize(const value_type& value);
 
         // 在不需要重建表格的情况下插入新节点。键值允许重复
         iterator insert_equal_noresize(const value_type& value);
 
         
-        MySTL::pair<iterator, bool> insert_unique(const value_type& value)
+        toystl::pair<iterator, bool> insert_unique(const value_type& value)
         {
             resize(numElements_ + 1);
             return insert_unique_noresize(value);
@@ -420,7 +420,7 @@ namespace MySTL {
         void insert_unique(ForwardIterator first, ForwardIterator last,
                            forward_iterator_tag)
         {
-            size_type n = MySTL::distance(first, last);
+            size_type n = toystl::distance(first, last);
             resize(numElements_ + n);
             for(; n > 0; --n, ++first) {
                 insert_unique_noresize(*first);
@@ -431,7 +431,7 @@ namespace MySTL {
         void insert_equal(ForwardIterator first, ForwardIterator last,
                           forward_iterator_tag)
         {
-            size_type n = MySTL::distance(first, last);
+            size_type n = toystl::distance(first, last);
             resize(numElements_ + n);
             for(; n > 0; --n, ++first) {
                 insert_equal_noresize(*first);
@@ -573,7 +573,7 @@ namespace MySTL {
         return true;
     }
 
-    // 重载 MySTL 的 swap
+    // 重载 toystl 的 swap
     template <class Key, class Value, class HashFcn, class ExtractKey, class EqualKey, class Allocator>
     void swap(hashtable<Key, Value, HashFcn, ExtractKey, EqualKey, Allocator>& ht1,
               hashtable<Key, Value, HashFcn, ExtractKey, EqualKey, Allocator>& ht2)
@@ -582,7 +582,7 @@ namespace MySTL {
     }
 
     template <class Key, class Value, class HashFcn, class ExtractKey, class EqualKey, class Allocator>
-    MySTL::pair<typename hashtable<Key, Value, HashFcn, ExtractKey, EqualKey, Allocator>::iterator, bool> 
+    toystl::pair<typename hashtable<Key, Value, HashFcn, ExtractKey, EqualKey, Allocator>::iterator, bool> 
     hashtable<Key, Value, HashFcn, ExtractKey, EqualKey, Allocator>::
         insert_unique_noresize(const value_type& value)
     {
@@ -602,7 +602,7 @@ namespace MySTL {
         tmp->next = first;
         buckets_[n] = tmp;
         ++numElements_;
-        return MySTL::pair<iterator, bool>(iterator(tmp, this), true);
+        return toystl::pair<iterator, bool>(iterator(tmp, this), true);
     }
 
     // 在不需要重建表格的情况下插入新节点。键值允许重复
@@ -768,11 +768,11 @@ namespace MySTL {
     void hashtable<Key, Value, HashFcn, ExtractKey, EqualKey, Allocator>::
         swap(hashtable& ht)
     {
-        MySTL::swap(hash_, ht.hash_);
-        MySTL::swap(equals_, ht.equals_);
-        MySTL::swap(getkey_, ht.getkey_);
+        toystl::swap(hash_, ht.hash_);
+        toystl::swap(equals_, ht.equals_);
+        toystl::swap(getkey_, ht.getkey_);
         buckets_.swap(ht.buckets_);
-        MySTL::swap(numElements_, ht.numElements_);
+        toystl::swap(numElements_, ht.numElements_);
     }
 
     template <class Key, class Value, class HashFcn, class ExtractKey, class EqualKey, class Allocator>
@@ -1075,6 +1075,6 @@ namespace MySTL {
             --numElements_;
         }
     }
-} // namespace MySTL
+} // namespace toystl
 
 #endif

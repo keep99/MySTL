@@ -7,7 +7,7 @@
 
 #include "type_traits.h"  // std::is_convertible
 
-namespace MySTL {
+namespace toystl {
     // 五种迭代器型别
     struct input_iterator_tag {};
     struct output_iterator_tag {};

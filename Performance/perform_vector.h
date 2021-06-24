@@ -9,17 +9,17 @@
 #include <string>
 #include <unistd.h>
 
-namespace MySTL {
+namespace toystl {
     namespace profiler {
         void vector_perform() {
             {
                 std::cout << "[----------------- Run Vector performance test -----------------]\n";
                 std::cout << "|---------------------|-------------|-------------|-------------|\n";
                 std::cout << "|      push_back      |    500000   |   5000000   |   50000000  |\n";
-                std::cout << "[---------------------------- MySTL ----------------------------]\n";
+                std::cout << "[---------------------------- toystl ----------------------------]\n";
                 int count = 500000;
-                // MySTL
-                MySTL::vector<int> mvec;
+                // toystl
+                toystl::vector<int> mvec;
                 // 1
                 ProfilerInstance::start();
                 for(int i = 0; i != count; ++i)

@@ -2,8 +2,8 @@
 #define _STACK_H_
 #include "deque.h"
 
-namespace MySTL {
-    template <class T, class Container = MySTL::deque<T>>
+namespace toystl {
+    template <class T, class Container = toystl::deque<T>>
     class stack
     {
     public:
@@ -134,5 +134,5 @@ namespace MySTL {
         lhs.swap(rhs);
     }    
 
-} // namespace MySTL
+} // namespace toystl
 #endif

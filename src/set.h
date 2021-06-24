@@ -6,9 +6,9 @@
 #include "utility.h"
 #include "algobase.h"
 
-namespace MySTL {
+namespace toystl {
     // set
-    template <class Key, class Compare = MySTL::less<Key>, class Allocator = MySTL::allocator<Key>>
+    template <class Key, class Compare = toystl::less<Key>, class Allocator = toystl::allocator<Key>>
     class set
     {
     public:
@@ -18,7 +18,7 @@ namespace MySTL {
         using value_compare         = Compare;
 
     private:
-        using rb_tree_type          = MySTL::rb_tree<value_type, key_type, MySTL::identity<value_type>, Compare, Allocator>;
+        using rb_tree_type          = toystl::rb_tree<value_type, key_type, toystl::identity<value_type>, Compare, Allocator>;
         rb_tree_type tree_;    // 采用红黑树来实现
 
     public:
@@ -79,8 +79,8 @@ namespace MySTL {
 
 	  	pair<iterator,bool> insert(const value_type& x)
 	  	{
-	  		MySTL::pair<typename rb_tree_type::iterator, bool> p = tree_.insert_unique(x);
-	  		return MySTL::pair<iterator, bool>(p.first, p.second);
+	  		toystl::pair<typename rb_tree_type::iterator, bool> p = tree_.insert_unique(x);
+	  		return toystl::pair<iterator, bool>(p.first, p.second);
 	  	}
         
         iterator insert(iterator position, const value_type& x) {
@@ -128,17 +128,17 @@ namespace MySTL {
     template <class K1, class C1, class A1>
     bool operator== (const set<K1, C1, A1>& lhs, const set<K1, C1, A1>& rhs)
     {
-        return lhs.size() == rhs.size() && MySTL::equal(lhs.cbegin(), lhs.cend(), rhs.cbegin());
+        return lhs.size() == rhs.size() && toystl::equal(lhs.cbegin(), lhs.cend(), rhs.cbegin());
     }
 
     template <class K1, class C1, class A1>
     bool operator< (const set<K1, C1, A1>& lhs, const set<K1, C1, A1>& rhs)
     {
-        return MySTL::lexicographical_compare(lhs.cbegin(), lhs.cend(), rhs.cbegin(), rhs.cend());
+        return toystl::lexicographical_compare(lhs.cbegin(), lhs.cend(), rhs.cbegin(), rhs.cend());
     }
 
     // multiset
-    template <class Key, class Compare = MySTL::less<Key>, class Allocator = MySTL::allocator<Key>>
+    template <class Key, class Compare = toystl::less<Key>, class Allocator = toystl::allocator<Key>>
     class multiset
     {
     public:
@@ -148,7 +148,7 @@ namespace MySTL {
         using value_compare         = Compare;
 
     private:
-        using rb_tree_type          = MySTL::rb_tree<value_type, key_type, MySTL::identity<value_type>, Compare, Allocator>;
+        using rb_tree_type          = toystl::rb_tree<value_type, key_type, toystl::identity<value_type>, Compare, Allocator>;
         rb_tree_type tree_;    // 采用红黑树来实现
 
     public:
@@ -259,15 +259,15 @@ namespace MySTL {
     template <class K1, class C1, class A1>
     bool operator== (const multiset<K1, C1, A1>& lhs, const multiset<K1, C1, A1>& rhs)
     {
-        return lhs.size() == rhs.size() && MySTL::equal(lhs.cbegin(), lhs.cend(), rhs.cbegin());
+        return lhs.size() == rhs.size() && toystl::equal(lhs.cbegin(), lhs.cend(), rhs.cbegin());
     }
 
     template <class K1, class C1, class A1>
     bool operator< (const multiset<K1, C1, A1>& lhs, const multiset<K1, C1, A1>& rhs)
     {
-        return MySTL::lexicographical_compare(lhs.cbegin(), lhs.cend(), rhs.cbegin(), rhs.cend());
+        return toystl::lexicographical_compare(lhs.cbegin(), lhs.cend(), rhs.cbegin(), rhs.cend());
     }
 
-} // namespace MySTL
+} // namespace toystl
 
 #endif

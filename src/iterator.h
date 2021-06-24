@@ -6,7 +6,7 @@
 #include "iterator_insert_iterator.h"   // 插入迭代器适配器
 #include "iterator_move_iterator.h"     // 移动迭代器适配器
 
-namespace MySTL {
+namespace toystl {
     // 四个辅助函数，帮助我们方便使用 插入迭代器，移动迭代器
     template <class Container>
     inline back_insert_iterator<Container> back_inserter(Container& c) {
@@ -44,8 +44,8 @@ namespace MySTL {
     }
 
     template< class Container>
-    constexpr auto cbegin(const Container& c) noexcept -> decltype(MySTL::begin(c)) {
-        return MySTL::begin(c);
+    constexpr auto cbegin(const Container& c) noexcept -> decltype(toystl::begin(c)) {
+        return toystl::begin(c);
     }
 
     template <class Container>
@@ -64,8 +64,8 @@ namespace MySTL {
     }
 
     template <class Container>
-    constexpr auto cend(const Container& c) noexcept -> decltype(MySTL::end(c)) {
-        return MySTL::end(c);
+    constexpr auto cend(const Container& c) noexcept -> decltype(toystl::end(c)) {
+        return toystl::end(c);
     }
 
     template <class Container>
