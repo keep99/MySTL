@@ -169,7 +169,7 @@ namespace MySTL {
                 return tmp -= n;    // 调用 operator-=
             }
 
-            reference operator[](difference_type n) {
+            reference operator[](difference_type n) const {
                 return *(*this + n);
             }
 
@@ -582,14 +582,14 @@ namespace MySTL {
             }
             else {
                 difference_type n = last - first;                  // 清除区间的长度
-                difference_type elementBefore = first - begin();   // 清楚区间前方的元素
-                difference_type elementAfter = end() - last;
+                difference_type elementBefore = first - begin();   // 清除区间前方的元素
+                difference_type elementAfter = end() - last;       // 清除区间后方的元素
                 
                 if (elementBefore < elementAfter) { 
                     // 前面的元素少，拷贝前面的元素
                     MySTL::copy_backward(begin(), first, last);
                     auto newStart = begin() + n;
-                    node_allocator::destroy(begin().current_, newStart.current_);
+                    destroy(begin(), newStart);
                     for (auto node = start_.node_; node < newStart.node_; ++node) {
                         deallocate_node(*node);
                     }
@@ -598,7 +598,7 @@ namespace MySTL {
                     // 后面的元素少，拷贝后面的元素
                     MySTL::copy(last, end(), first);
                     auto newFinish = end() - n;
-                    node_allocator::destroy(newFinish.current_, end().current_);
+                    destroy(newFinish, end());
                     for (auto node = newFinish.node_ + 1; node <= finish_.node_; ++node) {
                         deallocate_node(*node);
                     }
@@ -606,7 +606,7 @@ namespace MySTL {
                 }
 
                 return begin() + elementBefore;
-            } 
+            }
         }
 
         /* push_back */
@@ -1053,7 +1053,7 @@ namespace MySTL {
                 }
             }
             else {
-                iterator newfinish = reserve_map_at_back();
+                iterator newfinish = reserve_elements_at_back(count);
                 iterator oldfinish = finish_;
                 const difference_type elems_after = difference_type(len) - elems_before;
                 position = finish_ - elems_after;

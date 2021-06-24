@@ -1,0 +1,1 @@
+/usr/bin/c++   -O0 -Wall -g2 -ggdb   CMakeFiles/stl_test.dir/test_main.cpp.o CMakeFiles/stl_test.dir/__/src/alloc.cpp.o CMakeFiles/stl_test.dir/test_helper.cpp.o  -o stl_test  ../lib/libgtestd.a ../lib/libgtest_maind.a ../lib/libgtestd.a -lpthread 

@@ -218,5 +218,95 @@ namespace MySTL {
     ForwardIter uninitialized_fill_n(ForwardIter first, Size n, const T& value) {
         return __uninitialized_fill_n(first, n, value, value_type(first));
     }
+
+
+    /***********************************************************************************/
+    // uninitialized_move
+    // 把[first, last)上的内容移动到以 result 为起始处的空间，返回移动结束的位置
+    /***********************************************************************************/
+    template <class InputIter, class ForwardIter>
+    ForwardIter 
+    __uninitialized_move_aux(InputIter first, InputIter last, ForwardIter result, MySTL::true_type)
+    {
+        return MySTL::move(first, last, result);
+    }
+
+    template <class InputIter, class ForwardIter>
+    ForwardIter 
+    __uninitialized_move_aux(InputIter first, InputIter last, ForwardIter result, MySTL::false_type)
+    {
+        ForwardIter cur = result;
+        try
+        {
+            for (; first != last; ++first, ++cur)
+            {
+                MySTL::construct(&*cur, MySTL::move(*first));
+            }
+        }
+        catch (...)
+        {
+            MySTL::destroy(result, cur);
+        }
+
+        return cur;
+    }
+
+    template <class InputIter, class ForwardIter, class T1>
+    ForwardIter __uninitialized_move(InputIter first, InputIter last, ForwardIter result, T1*) {
+        using is_POD = typename __type_traits<T1>::is_POD_type;
+        return __uninitialized_move_aux(first, last, result, is_POD());
+    }
+
+    template <class InputIter, class ForwardIter>
+    ForwardIter uninitialized_move(InputIter first, InputIter last, ForwardIter result)
+    {
+        return MySTL::__uninitialized_move(first, last, result, value_type(first));
+    }
+
+    /***********************************************************************************/
+    // uninitialized_move_n
+    // 把[first, last)上的内容移动到以 result 为起始处的空间，返回移动结束的位置
+    /***********************************************************************************/
+    template <class InputIter, class Size, class ForwardIter>
+    ForwardIter 
+    __uninitialized_move_n_aux(InputIter first, Size n, ForwardIter result, MySTL::true_type)
+    {
+        return MySTL::move(first, first + n, result);
+    }
+
+    template <class InputIter, class Size, class ForwardIter>
+    ForwardIter
+    __uninitialized_move_n_aux(InputIter first, Size n, ForwardIter result, MySTL::false_type)
+    {
+        ForwardIter cur = result;
+        try
+        {
+            for (; n > 0; --n, ++first, ++cur)
+            {
+                MySTL::construct(&*cur, MySTL::move(*first));
+            }
+        }
+        catch (...)
+        {
+            for (; result != cur; ++result) {
+                MySTL::destroy(&*result);
+            }
+            throw;
+        }
+
+        return cur;
+    }
+
+    template <class InputIter, class Size, class ForwardIter, class T1>
+    ForwardIter __uninitialized_move_n(InputIter first, Size n, ForwardIter result, T1*) {
+        using is_POD = typename __type_traits<T1>::is_POD_type;
+        return __uninitialized_move_n_aux(first, n, result, is_POD());
+    }
+
+    template <class InputIter, class Size, class ForwardIter>
+    ForwardIter uninitialized_move_n(InputIter first, Size n, ForwardIter result)
+    {
+        return MySTL::__uninitialized_move_n(first, n, result, value_type(first));
+    }
 }
 #endif
