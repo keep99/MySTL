@@ -1,138 +1,126 @@
-#ifndef _STACK_H_
-#define _STACK_H_
+#ifndef TOYSTL_SRC_STACK_H_
+#define TOYSTL_SRC_STACK_H_
+
 #include "deque.h"
 
 namespace toystl {
-    template <class T, class Container = toystl::deque<T>>
-    class stack
-    {
-    public:
-        using container_type    = Container;
-        using value_type        = typename Container::value_type;
-        using size_type         = typename Container::size_type;
-        using reference         = typename Container::reference;
-        using const_reference   = typename Container::const_reference; 
+template <class T, class Container = toystl::deque<T>>
+class stack {
+ public:
+  using container_type = Container;
+  using value_type = typename Container::value_type;
+  using size_type = typename Container::size_type;
+  using reference = typename Container::reference;
+  using const_reference = typename Container::const_reference;
 
-    private:
-        container_type c;  // 底层容器
-    
-    public:
-        stack() = default;
+ private:
+  container_type c;  // 底层容器
 
-        explicit stack(size_type n) : c(n)
-        {
-        }
+ public:
+  stack() = default;
 
-        stack(size_type n, const value_type& value) : c(n, value)
-        {
-        }
+  explicit stack(size_type n) : c(n) {}
 
-        template <class InputIter>
-        stack(InputIter first, InputIter last) : c(first, last)
-        {
-        }
+  stack(size_type n, const value_type& value) : c(n, value) {}
 
-        stack(std::initializer_list<T> ilist)  : c(ilist.begin(), ilist.end())
-        {
-        }
+  template <class InputIter>
+  stack(InputIter first, InputIter last) : c(first, last) {}
 
-        stack(const Container& c) : c(c)
-        {
-        }
+  stack(std::initializer_list<T> ilist) : c(ilist.begin(), ilist.end()) {}
 
-        stack& operator=(const stack& rhs)
-        {
-            c = rhs.c;
-            return *this;
-        }
+  stack(const Container& c) : c(c) {}
 
-        stack& operator=(std::initializer_list<T> ilist) 
-        {
-            c = ilist; 
-            return *this;
-        }
+  stack& operator=(const stack& rhs) {
+    c = rhs.c;
+    return *this;
+  }
 
-        ~stack() = default;
+  stack& operator=(std::initializer_list<T> ilist) {
+    c = ilist;
+    return *this;
+  }
 
-        // 访问元素相关操作
-        reference       top()       { return c.back(); }
-        const_reference top() const { return c.back(); }
+  ~stack() = default;
 
-        // 容量相关操作
-        bool      empty() const noexcept { return c.empty(); }
-        size_type size()  const noexcept { return c.size(); }
+  // 访问元素相关操作
+  reference top() { return c.back(); }
+  const_reference top() const { return c.back(); }
 
-        // 修改容器相关操作
+  // 容量相关操作
+  bool empty() const noexcept { return c.empty(); }
+  size_type size() const noexcept { return c.size(); }
 
-        template <class... Args>
-        void emplace(Args&& ...args)
-        { c.emplace_back(mystl::forward<Args>(args)...); }
+  // 修改容器相关操作
 
-        void push(const value_type& value)
-        { c.push_back(value); }
-        void push(value_type&& value)      
-        { c.push_back(mystl::move(value)); }
+  template <class... Args>
+  void emplace(Args&&... args) {
+    c.emplace_back(mystl::forward<Args>(args)...);
+  }
 
-        void pop() 
-        { c.pop_back(); }
+  void push(const value_type& value) { c.push_back(value); }
+  void push(value_type&& value) { c.push_back(mystl::move(value)); }
 
-        void clear() 
-        {
-            while (!empty())
-            pop();
-        }
+  void pop() { c.pop_back(); }
 
-        void swap(stack& rhs) noexcept(noexcept(mystl::swap(c, rhs.c)))
-        { mystl::swap(c, rhs.c); }
+  void clear() {
+    while (!empty()) pop();
+  }
 
-    public:
-    friend bool operator==(const stack& lhs, const stack& rhs) { return lhs.c_ == rhs.c_; }
-    friend bool operator<(const stack& lhs, const stack& rhs) { return lhs.c_ <  rhs.c_; }
-    };
+  void swap(stack& rhs) noexcept(noexcept(mystl::swap(c, rhs.c))) {
+    mystl::swap(c, rhs.c);
+  }
 
-    // 重载比较操作符
-    template <class T, class Container>
-    bool operator==(const stack<T, Container>& lhs, const stack<T, Container>& rhs)
-    {
-        return lhs == rhs;
-    }
+ public:
+  friend bool operator==(const stack& lhs, const stack& rhs) {
+    return lhs.c_ == rhs.c_;
+  }
+  friend bool operator<(const stack& lhs, const stack& rhs) {
+    return lhs.c_ < rhs.c_;
+  }
+};
 
-    template <class T, class Container>
-    bool operator<(const stack<T, Container>& lhs, const stack<T, Container>& rhs)
-    {
-        return lhs < rhs;
-    }
+// 重载比较操作符
+template <class T, class Container>
+bool operator==(const stack<T, Container>& lhs,
+                const stack<T, Container>& rhs) {
+  return lhs == rhs;
+}
 
-    template <class T, class Container>
-    bool operator!=(const stack<T, Container>& lhs, const stack<T, Container>& rhs)
-    {
-        return !(lhs == rhs);
-    }
+template <class T, class Container>
+bool operator<(const stack<T, Container>& lhs, const stack<T, Container>& rhs) {
+  return lhs < rhs;
+}
 
-    template <class T, class Container>
-    bool operator>(const stack<T, Container>& lhs, const stack<T, Container>& rhs)
-    {
-        return rhs < lhs;
-    }
+template <class T, class Container>
+bool operator!=(const stack<T, Container>& lhs,
+                const stack<T, Container>& rhs) {
+  return !(lhs == rhs);
+}
 
-    template <class T, class Container>
-    bool operator<=(const stack<T, Container>& lhs, const stack<T, Container>& rhs)
-    {
-        return !(rhs < lhs);
-    }
+template <class T, class Container>
+bool operator>(const stack<T, Container>& lhs, const stack<T, Container>& rhs) {
+  return rhs < lhs;
+}
 
-    template <class T, class Container>
-    bool operator>=(const stack<T, Container>& lhs, const stack<T, Container>& rhs)
-    {
-        return !(lhs < rhs);
-    }
+template <class T, class Container>
+bool operator<=(const stack<T, Container>& lhs,
+                const stack<T, Container>& rhs) {
+  return !(rhs < lhs);
+}
 
-    // 重载 mystl 的 swap
-    template <class T, class Container>
-    void swap(stack<T, Container>& lhs, stack<T, Container>& rhs) noexcept(noexcept(lhs.swap(rhs)))
-    {
-        lhs.swap(rhs);
-    }    
+template <class T, class Container>
+bool operator>=(const stack<T, Container>& lhs,
+                const stack<T, Container>& rhs) {
+  return !(lhs < rhs);
+}
 
-} // namespace toystl
-#endif
+// 重载 mystl 的 swap
+template <class T, class Container>
+void swap(stack<T, Container>& lhs,
+          stack<T, Container>& rhs) noexcept(noexcept(lhs.swap(rhs))) {
+  lhs.swap(rhs);
+}
+
+}  // namespace toystl
+
+#endif  // TOYSTL_SRC_STACK_H_

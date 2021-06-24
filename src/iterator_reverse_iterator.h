@@ -1,160 +1,159 @@
-#ifndef _ITERATOR_REVERSE_ITERATOR_H
-#define _ITERATOR_REVERSE_ITERATOR_H
+#ifndef TOYSTL_SRC_ITERATOR_REVERSE_ITERATOR_H_
+#define TOYSTL_SRC_ITERATOR_REVERSE_ITERATOR_H_
 
 #include "iterator_base.h"
 
 namespace toystl {
-    // 反向迭代器
-    template <class Iterator>
-    class reverse_iterator {
-    private:
-        Iterator current_;
-    public:
-        using iterator_category = typename iterator_traits<Iterator>::iterator_category;
-        using value_type        = typename iterator_traits<Iterator>::value_type;
-        using difference_type   = typename iterator_traits<Iterator>::difference_type;
-        using pointer           = typename iterator_traits<Iterator>::pointer;
-        using reference         = typename iterator_traits<Iterator>::reference;
+// 反向迭代器
+template <class Iterator>
+class reverse_iterator {
+ private:
+  Iterator current_;
 
-        using iterator_type     = Iterator;
+ public:
+  using iterator_category =
+      typename iterator_traits<Iterator>::iterator_category;
+  using value_type = typename iterator_traits<Iterator>::value_type;
+  using difference_type = typename iterator_traits<Iterator>::difference_type;
+  using pointer = typename iterator_traits<Iterator>::pointer;
+  using reference = typename iterator_traits<Iterator>::reference;
 
-        reverse_iterator() {}
-        explicit reverse_iterator(iterator_type& x) : current_(x) {}
-        
-        template <class U>
-        explicit reverse_iterator(const reverse_iterator<U>& other) : current_(other.base()) {}
-        
-        template <class U>
-        reverse_iterator& operator=(const reverse_iterator<U>& other) {
-            current_ = other.base();
-            return *this;
-        }
+  using iterator_type = Iterator;
 
-        iterator_type base() const {
-            return current_;
-        }
+  reverse_iterator() {}
+  explicit reverse_iterator(iterator_type& x) : current_(x) {}
 
-        // TO DO
-        reference operator*() const {
-            return *(current_ - 1);
-            // 以上比较关键，堆逆向迭代器取值，就是将“对应正向迭代器”后退一格而后取值
-        }
+  template <class U>
+  explicit reverse_iterator(const reverse_iterator<U>& other)
+      : current_(other.base()) {}
 
-        pointer operator->() const {
-            return &(operator*());
-        }
+  template <class U>
+  reverse_iterator& operator=(const reverse_iterator<U>& other) {
+    current_ = other.base();
+    return *this;
+  }
 
-        // operator++ 是后退
-        reverse_iterator& operator++() {
-            --current_;
-            return *this;
-        }
+  iterator_type base() const { return current_; }
 
-        // operator++ 是后退
-        reverse_iterator& operator++(int) {
-            reverse_iterator tmp = *this;
-            --current_;
-            return tmp;
-        }
+  // TO DO
+  reference operator*() const {
+    return *(current_ - 1);
+    // 以上比较关键，堆逆向迭代器取值，就是将“对应正向迭代器”后退一格而后取值
+  }
 
-        // operator-- 是前进
-        reverse_iterator& operator--() {
-            ++current_;
-            return *this;
-        }
+  pointer operator->() const { return &(operator*()); }
 
-        // operator-- 是前进
-        reverse_iterator& operator--(int) {
-            reverse_iterator tmp = *this;
-            ++current_;
-            return tmp;
-        }
+  // operator++ 是后退
+  reverse_iterator& operator++() {
+    --current_;
+    return *this;
+  }
 
-        reverse_iterator operator+(difference_type n) const {
-            return reverse_iterator(current_ - n);
-        }
+  // operator++ 是后退
+  reverse_iterator& operator++(int) {
+    reverse_iterator tmp = *this;
+    --current_;
+    return tmp;
+  }
 
-        reverse_iterator operator+=(difference_type n) {
-            current_ -= n;
-            return *this;
-        }
+  // operator-- 是前进
+  reverse_iterator& operator--() {
+    ++current_;
+    return *this;
+  }
 
-        reverse_iterator operator-(difference_type n) const {
-            return reverse_iterator(current_ + n);
-        }
+  // operator-- 是前进
+  reverse_iterator& operator--(int) {
+    reverse_iterator tmp = *this;
+    ++current_;
+    return tmp;
+  }
 
-        reverse_iterator& operator-=(difference_type n) {
-            current_ += n;
-            return *this;
-        }
+  reverse_iterator operator+(difference_type n) const {
+    return reverse_iterator(current_ - n);
+  }
 
-        reference operator[](difference_type n) const {
-            return *((*this + n));
-        }
-    };
+  reverse_iterator operator+=(difference_type n) {
+    current_ -= n;
+    return *this;
+  }
 
-    //全局函数，重载 == != > < >= <= + -
-    template <class Iterator>
-    bool operator==(reverse_iterator<Iterator> left, reverse_iterator<Iterator> right) {
-        return left.base() == right.base();
-    }
-    template <class Iterator>
-    bool operator!=(reverse_iterator<Iterator> left, reverse_iterator<Iterator> right) {
-        return left.base() != right.base();
-    }
+  reverse_iterator operator-(difference_type n) const {
+    return reverse_iterator(current_ + n);
+  }
 
-    // >
-    // >= < <= 都调用 >
-    template <class Iterator>
-    inline bool operator>(reverse_iterator<Iterator> left, reverse_iterator<Iterator> right) {
-        return right.base() > left.base();
-    }
+  reverse_iterator& operator-=(difference_type n) {
+    current_ += n;
+    return *this;
+  }
 
-    // >=
-    template <class Iterator>
-    inline bool operator>=(reverse_iterator<Iterator> left, reverse_iterator<Iterator> right) {
-        return !(right > left);
-    }
-    
-    // <
-    template <class Iterator>
-    inline bool operator<(reverse_iterator<Iterator> left, reverse_iterator<Iterator> right) {
-        return right > left;
-    }
+  reference operator[](difference_type n) const { return *((*this + n)); }
+};
 
-    // <=
-    template <class Iterator>
-    inline bool operator<=(reverse_iterator<Iterator> left, reverse_iterator<Iterator> right) {
-        return !(left > right);
-    }
-
-    template <class Iterator>
-    inline reverse_iterator<Iterator> operator+(
-            typename reverse_iterator<Iterator>::difference_type n,
-            const reverse_iterator<Iterator> &it) 
-    {
-        return reverse_iterator<Iterator>(it.base() - n);
-    }
-
-    template <class Iterator>
-    inline typename reverse_iterator<Iterator>::difference_type operator-(
-           const reverse_iterator<Iterator>& x,
-           const reverse_iterator<Iterator>& y) {
-        return y.base() - x.base();
-    }
-    
-    /**
-     * @description: 将普通迭代去转换成反向迭代器
-     * @param  {*}
-     * @return {*}
-     */
-
-    
-    template <class Iterator>
-    reverse_iterator<Iterator> make_reverse_iterator(Iterator it) {
-        return reverse_iterator<Iterator>(it);
-    }
-    
+//全局函数，重载 == != > < >= <= + -
+template <class Iterator>
+bool operator==(reverse_iterator<Iterator> left,
+                reverse_iterator<Iterator> right) {
+  return left.base() == right.base();
+}
+template <class Iterator>
+bool operator!=(reverse_iterator<Iterator> left,
+                reverse_iterator<Iterator> right) {
+  return left.base() != right.base();
 }
 
-#endif
+// >
+// >= < <= 都调用 >
+template <class Iterator>
+inline bool operator>(reverse_iterator<Iterator> left,
+                      reverse_iterator<Iterator> right) {
+  return right.base() > left.base();
+}
+
+// >=
+template <class Iterator>
+inline bool operator>=(reverse_iterator<Iterator> left,
+                       reverse_iterator<Iterator> right) {
+  return !(right > left);
+}
+
+// <
+template <class Iterator>
+inline bool operator<(reverse_iterator<Iterator> left,
+                      reverse_iterator<Iterator> right) {
+  return right > left;
+}
+
+// <=
+template <class Iterator>
+inline bool operator<=(reverse_iterator<Iterator> left,
+                       reverse_iterator<Iterator> right) {
+  return !(left > right);
+}
+
+template <class Iterator>
+inline reverse_iterator<Iterator> operator+(
+    typename reverse_iterator<Iterator>::difference_type n,
+    const reverse_iterator<Iterator>& it) {
+  return reverse_iterator<Iterator>(it.base() - n);
+}
+
+template <class Iterator>
+inline typename reverse_iterator<Iterator>::difference_type operator-(
+    const reverse_iterator<Iterator>& x, const reverse_iterator<Iterator>& y) {
+  return y.base() - x.base();
+}
+
+/**
+ * @description: 将普通迭代去转换成反向迭代器
+ * @param  {*}
+ * @return {*}
+ */
+
+template <class Iterator>
+reverse_iterator<Iterator> make_reverse_iterator(Iterator it) {
+  return reverse_iterator<Iterator>(it);
+}
+}  // namespace toystl
+
+#endif  // TOYSTL_SRC_ITERATOR_REVERSE_ITERATOR_H_

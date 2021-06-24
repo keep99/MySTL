@@ -2,7 +2,4 @@
 
 using namespace toystl::profiler;
 
-int main()
-{
-    vector_perform();
-}
+int main() { vector_perform(); }
