@@ -13,7 +13,7 @@ namespace vectortest {
 class TestVector : public ::testing::Test {
  protected:
   // using Kitten = typename toystl::TestHelper::nontrivial;
-  typedef typename toystl::TestHelper::nontrivial Kitten;
+  typedef typename toystl::testhelper::nontrivial Kitten;
   std::vector<int> std_vector_of_id{1, 2, 3, 4};
   std::vector<Kitten> std_vector_of_kitten;
   toystl::vector<Kitten> abc_vector_of_kitten;

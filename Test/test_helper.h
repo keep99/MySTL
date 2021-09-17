@@ -5,7 +5,7 @@
 #include <memory>
 
 namespace toystl {
-namespace TestHelper {
+namespace testhelper {
 template <class Container>
 void print_container(Container& container, const std::string& name = "") {
   std::cout << "Container " << name << " :";

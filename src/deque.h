@@ -451,43 +451,11 @@ class deque {
 
   // deque 的 clear，删除所有元素，并释放内存
   // 最终需要保留一个缓冲区，这是 deque 的策略，也是 deque 的初始状态
-  void clear() {
-    // 以下针对头尾之外的每一个缓冲区（他们一定是饱满的）。析构中间缓冲区中的对象
-    for (map_pointer node = start_.node_ + 1; node < finish_.node_; ++node) {
-      node_allocator::destroy(*node, *node + deque_buf_size());
-      deallocate_node(*node);
-    }
-
-    if (start_.node_ != finish_.node_) {
-      // 至少有两个缓冲区
-      // 将头缓冲区的目前所有元素析构
-      toystl::destroy(start_.current_, start_.last_);
-      // 将尾缓冲区的目前所有元素析构
-      toystl::destroy(finish_.first_, finish_.current_);
-      deallocate_node(finish_.first_);
-    } else {
-      // 只有一个缓冲区
-      // 将此唯一缓冲区内的所有元素析构
-      toystl::destroy(start_.current_, finish_.current_);
-    }
-
-    // shrink_to_fit(); // 留下一个缓冲区，回收其他缓冲区的内存空间
-    finish_ = start_;
-  }
+  void clear();
 
   /* insert */
   /* 以下实现 insert。在某点（之前）插入元素。返回被插入元素的迭代器 */
-  iterator insert(iterator position, const_reference value) {
-    if (position.current_ == begin().current_) {
-      push_front(value);  // TO DO
-      return begin();
-    } else if (position.current_ == end().current_) {
-      push_back(value);
-      return end() - 1;
-    } else {
-      return insert_aux(position, value);
-    }
-  }
+  iterator insert(iterator position, const_reference value);
 
   iterator insert(iterator position, const value_type&& value) {
     // if (position.current_ == cbegin().current_) {
@@ -521,85 +489,16 @@ class deque {
 
   /* empalce */
   template <class... Args>
-  iterator emplace(iterator position, Args&&... args) {
-    if (position.current_ == start_.current_) {
-      emplace_front(toystl::forward<Args>(args)...);
-      return start_;
-    } else if (position.current_ = finish_.current_) {
-      emplace_back(toystl::forward<Args>(args)...);
-      return finish_ - 1;
-    }
-    return insert_aux(position, toystl::forward<Args>(args)...);
-  }
+  iterator emplace(iterator position, Args&&... args);
 
   /* erase */
-  iterator erase(iterator position) {
-    iterator next = position;
-    ++next;
-    difference_type elems_before = position - start_;
-    if (elems_before < (size() / 2)) {  // position 靠近头部，则拷贝前面的元素
-      // copy_backward 函数：将 [first, last) 范围内的元素复制到 以 d_first
-      // 为终点（不包括 d_last）的范围内。
-      toystl::copy_backward(begin(), position, next);
-      pop_front();
-    } else {  // position 更靠近尾部，则拷贝后面的元素
-      toystl::copy(next, end(), position);
-      pop_back();
-    }
-
-    return start_ + elems_before;
-  }
+  iterator erase(iterator position);
 
   // 清除区间 [first, last) 上的元素
-  iterator erase(iterator first, iterator last) {
-    if (first == begin() && last == end()) {  // 如果清除区间就是整个 deque
-      clear();                                // 直接调用 clear 就行
-      return finish_;
-    } else {
-      difference_type n = last - first;                 // 清除区间的长度
-      difference_type elementBefore = first - begin();  // 清除区间前方的元素
-      difference_type elementAfter = end() - last;  // 清除区间后方的元素
-
-      if (elementBefore < elementAfter) {
-        // 前面的元素少，拷贝前面的元素
-        toystl::copy_backward(begin(), first, last);
-        auto newStart = begin() + n;
-        destroy(begin(), newStart);
-        for (auto node = start_.node_; node < newStart.node_; ++node) {
-          deallocate_node(*node);
-        }
-        start_ = newStart;
-      } else {
-        // 后面的元素少，拷贝后面的元素
-        toystl::copy(last, end(), first);
-        auto newFinish = end() - n;
-        destroy(newFinish, end());
-        for (auto node = newFinish.node_ + 1; node <= finish_.node_; ++node) {
-          deallocate_node(*node);
-        }
-        finish_ = newFinish;
-      }
-
-      return begin() + elementBefore;
-    }
-  }
+  iterator erase(iterator first, iterator last);
 
   /* push_back */
-  void push_back(const value_type& value) {
-    if (finish_.current_ != finish_.last_ - 1) {
-      // 最后缓冲区中尚有两个（含）以上的元素备用空间
-      // 如果最后就剩下一个一个元素备用空间，那么就会引发新缓冲区的配置
-      node_allocator::construct(finish_.current_, value);
-      ++finish_.current_;
-    } else {
-      // 最后一个缓冲区只剩下一个可用空间,则在尾部分配一个新的缓冲区
-      reserve_map_at_back();  // TO DO
-      *(finish_.node_ + 1) = allocate_node();
-      node_allocator::construct(finish_.current_, value);
-      finish_.set_node(finish_.node_ + 1);
-      finish_.current_ = finish_.first_;
-    }
-  }
+  void push_back(const value_type& value);
 
   void push_back(const value_type&& value) {
     emplace_back(toystl::move(value));
@@ -607,100 +506,27 @@ class deque {
 
   /* emplace_back */
   template <class... Args>
-  void emplace_back(Args&&... args) {
-    if (finish_.current_ != finish_.last_ - 1) {
-      node_allocator::construct(finish_.current_,
-                                toystl::forward<Args>(args)...);
-      ++finish_.current_;
-    } else {
-      // 最后一个缓冲区只剩下一个可用空间，则在尾部分配一个新的缓冲区。
-      reserve_map_at_back();
-      *(finish_.node_ + 1) = allocate_node();
-      node_allocator::construct(finish_.current_,
-                                toystl::forward<Args>(args)...);
-      finish_.set_node(finish_.node_ + 1);
-      finish_.current_ = finish_.first_;
-    }
-  }
+  void emplace_back(Args&&... args);
 
   /* pop_back */
-  void pop_back() {
-    if (finish_.current_ != finish_.first_) {
-      // 最后缓冲区有一个或更多元素
-      --finish_.current_;
-      node_allocator::destroy(finish_.current_);
-    } else {
-      // 最后缓冲区没有任何元素
-      deallocate_node(finish_.first_);      // 释放最后一个缓冲区
-      finish_.set_node(finish_.node_ - 1);  // 调整 finish 的状态，使指向
-      finish_.current_ = finish_.last_ - 1;  // 上一个缓冲区的最后一个元素
-      node_allocator::destroy(finish_.current_);  // 将该元素析构
-    }
-  }
+  void pop_back();
 
   /* push_front */
-  void push_front(const_reference value) {
-    if (start_.current_ != start_.first_) {
-      // 第一缓冲区中尚有备用空间
-      node_allocator::construct(start_.current_ - 1, value);
-      --start_.current_;
-    } else {
-      // 第一个缓冲区中已经没有空间了，则在头部分配一个新的缓冲区
-      reserve_map_at_front();                 // TO DO
-      *(start_.node_ - 1) = allocate_node();  // 配置一个新的节点（缓冲区）
-      start_.set_node(start_.node_ - 1);
-      start_.current_ = start_.last_ - 1;
-      node_allocator::construct(start_.current_, value);
-    }
-  }
+  void push_front(const_reference value);
 
   void push_front(const T&& value) { emplace_front(toystl::move(value)); }
 
   /* emplace_front */
   // 在头部就地构建元素
   template <class... Args>
-  void emplace_front(Args&&... args) {
-    if (start_.current_ != start_.first_) {
-      node_allocator::construct(start_.current_ - 1,
-                                toystl::forward<Args>(args)...);
-      --start_.current_;
-    } else {
-      reserve_map_at_front();
-      *(start_.node_ - 1) = allocate_node();
-      start_.set_node(start_.node_ - 1);
-      start_.current_ = start_.last_ - 1;
-      node_allocator::construct(start_.current_,
-                                toystl::forward<Args>(args)...);
-    }
-  }
+  void emplace_front(Args&&... args);
 
   /* pop_front */
-  void pop_front() {
-    if (start_.current_ != start_.last_ - 1) {
-      // 第一缓冲区有两个（或更多）元素
-      node_allocator::destroy(start_.current_);
-      ++start_.current_;
-    } else {
-      // 第一个缓冲区中只有一个元素
-      // 头元素在缓冲区尾部，需要更新 start_ 的信息
-      node_allocator::destroy(start_.current_);
-      deallocate_node(start_.first_);     // 释放第一缓冲区
-      start_.set_node(start_.node_ + 1);  // 调整 start_ 的状态
-      start_.current_ =
-          start_.first_;  // 使 current_ 指向下一个缓冲区的第一个元素
-    }
-  }
+  void pop_front();
 
   /* resize */
   // 通过 erase 和 insert 来实现
-  void resize(size_type count, const_reference value) {
-    const auto len = size();
-    if (count < len) {
-      erase(begin() + count, end());
-    } else {
-      insert(end(), count - len, value);
-    }
-  }
+  void resize(size_type count, const_reference value);
 
   void resize(size_type count) { resize(count, T()); }
 
@@ -715,164 +541,31 @@ class deque {
   // 初始化一个空的 deque
   void empty_initialize() { create_map_and_nodes(); }
 
-  void fill_initialize(size_type count, const_reference value) {
-    create_map_and_nodes(count);
-    // 为每个节点的缓冲区设定初值
-    for (auto it = start_.node_; it < finish_.node_; ++it) {
-      toystl::uninitialized_fill(*it, *it + deque_buf_size(), value);
-    }
-    // 最后一个节点的设定稍有不同（因为尾端可能有备用空间，不必设置初值）
-    toystl::uninitialized_fill(finish_.first_, finish_.current_, value);
-  }
+  void fill_initialize(size_type count, const_reference value);
 
   template <class InputIterator>
   void copy_initialize(InputIterator first, InputIterator last,
-                       input_iterator_tag) {
-    const size_type n = toystl::distance(first, last);
-    create_map_and_nodes(n);
-    for (; first != last; ++first) {
-      emplace_back(*first);
-    }
-  }
+                       input_iterator_tag);
 
   template <class ForwardIterator>
   void copy_initialize(ForwardIterator first, ForwardIterator last,
-                       forward_iterator_tag) {
-    size_type n = distance(first, last);
-    create_map_and_nodes(n);
-    // 空间肯定是够的
-    for (auto it = start_.node_; it < finish_.node_; ++it) {
-      auto next = first;
-      toystl::advance(next, deque_buf_size());
-      toystl::uninitialized_copy(first, next, *it);
-      first = next;
-    }
+                       forward_iterator_tag);
 
-    toystl::uninitialized_copy(first, last, finish_.first_);
-  }
-
-  void fill_assign(size_type n, const value_type& value) {
-    if (n > size()) {
-      // 如果赋值的 deque 的大小大于原 deque 的大小
-      toystl::fill(begin(), end(), value);  // TO DO
-      insert(end(), n - size(), value);
-    } else {
-      erase(begin() + n, end());
-      toystl::fill(begin(), end(), value);
-    }
-  }
+  void fill_assign(size_type n, const value_type& value);
 
   template <class InputIterator>
-  void copy_assign(InputIterator first, InputIterator last,
-                   input_iterator_tag) {
-    auto first1 = begin();
-    auto last1 = end();
-    for (; first != last && first1 != last1; ++first, ++first1) {
-      *first1 = *first;
-    }
-    if (first1 != last1) {
-      erase(first1, last1);
-    } else {
-      insert_dispatch(finish_, first, last, input_iterator_tag());
-    }
-  }
+  void copy_assign(InputIterator first, InputIterator last, input_iterator_tag);
 
   template <class ForwardIterator>
   void copy_assign(ForwardIterator first, ForwardIterator last,
-                   forward_iterator_tag) {
-    const size_type len1 = size();
-    const size_type len2 = toystl::distance(first, last);
-    if (len1 < len2) {
-      auto next = first;
-      toystl::advance(next, len1);
-      toystl::copy(first, next, start_);
-      insert_dispatch(finish_, next, last, forward_iterator_tag());
-    } else {
-      erase(toystl::copy(first, last, start_), finish_);
-    }
-  }
+                   forward_iterator_tag);
 
-  void fill_insert(iterator pos, size_type n, const_reference value) {
-    if (pos.current_ == start_.current_) {
-      iterator new_start = reserve_elements_at_front(n);
-      toystl::uninitialized_fill(new_start, start_, value);
-      start_ = new_start;
-    } else if (pos.current_ == finish_.current_) {
-      iterator new_finish = reserve_elements_at_back(n);
-      toystl::uninitialized_fill(finish_, new_finish, value);
-      finish_ = new_finish;
-    } else {
-      insert_aux(pos, n, value);  // TO DO
-    }
-  }
+  void fill_insert(iterator pos, size_type n, const_reference value);
 
-  /**
-   * @description: 创建并且组织好 deque 结构
-   * @param  {*} 元素个数
-   * @return {*}
-   */
-  /*  */
-  void create_map_and_nodes(size_type numElements = 0) {
-    // 缓冲区个数 = (元素个数 / 每个缓冲区的容量) + 1
-    size_type numNodes = numElements / deque_buf_size() + 1;
-    // 一个 map 最多要管理几个节点。最少是 8 个，最多是 会多配置两个缓冲区
-    mapSize_ = toystl::max(numNodes + 2, detail::min_map_size_);
-    try {
-      map_ = allocate_map();
-    } catch (...) {
-      map_ = nullptr;
-      mapSize_ = 0;
-      throw;
-    }
-
-    // 《STL 源码剖析》 P154
-    // 以下令 nstart 和 nfinish 指向 map 所拥有的全部节点的最中央区段
-    // 保持在最中央，可使头尾两端的扩充能量一样大。每个节点可对应一个缓冲区。
-    T** nStart = map_ + (mapSize_ - numNodes) / 2;
-    T** nFinish = nStart + numNodes - 1;
-
-    // TO DO : commit or rollback. Done
-    // for(auto it = nStart; it <= nFinish; ++it) {
-    //     *it = allocate_node();
-    // }
-
-    // commit or rollback
-    map_pointer cur;
-    try {
-      for (cur = nStart; cur <= nFinish; ++cur) {
-        *cur = node_allocator::allocate(deque_buf_size());
-      }
-    } catch (...) {
-      while (cur != nStart) {
-        --cur;
-        node_allocator::deallocate(*cur, deque_buf_size());
-        *cur = nullptr;
-      }
-      throw;
-    }
-
-    // 分配缓冲区，并设置迭代器
-    // 注意：只有 [nStart, nFinish) 范围分配了缓冲区
-    // 其他 map 位置还没有分配缓冲区。当需要的时候，动态扩展。
-    start_.set_node(nStart);
-    finish_.set_node(nFinish);
-    start_.current_ = start_.first_;
-    finish_.current_ = finish_.first_ + numElements % deque_buf_size();
-  }
+  void create_map_and_nodes(size_type numElements = 0);
 
   /* 分配 map 的内存空间 */
-  T** allocate_map() {
-    // 在此基础上将各个指针置为 nullptr
-    // return map_allocator::allocate(mapSize_);
-
-    map_pointer mp = nullptr;
-    mp = map_allocator::allocate(mapSize_);
-    for (size_type i = 0; i < mapSize_; ++i) {
-      *(mp + i) = nullptr;
-    }
-
-    return mp;
-  }
+  T** allocate_map();
 
   /* 回收 map 的内存空间  */
   void deallocate_map() { map_allocator::deallocate(map_, mapSize_); }
@@ -886,204 +579,29 @@ class deque {
   }
 
   /* 在前面预留 n 个元素的位置 */
-  iterator reserve_elements_at_front(size_type n) {
-    // 当前缓冲区剩下的位置个数
-    size_type nBefore = start_.current_ - start_.first_;
-    if (n > nBefore) {
-      // 空间不够，需要分配新的缓冲区
-      new_elements_at_front(n - nBefore);  // TO DO
-    }
+  iterator reserve_elements_at_front(size_type n);
 
-    return start_ - difference_type(n);
-  }
-
-  iterator reserve_elements_at_back(size_type n) {
-    size_type nAfter = finish_.last_ - finish_.current_ - 1;
-    if (n > nAfter) {
-      // 空间不够，需要分配新的缓冲区
-      new_elements_at_back(n - nAfter);  // TO DO
-    }
-
-    return finish_ + difference_type(n);
-  }
+  iterator reserve_elements_at_back(size_type n);
 
   /* 在前面预留 n 个的缓冲区 */
-  void reserve_map_at_front(size_type n = 1) {
-    // 如果 map 前端的节点备用空间不足
-    if (n > static_cast<size_type>(start_.node_ - map_)) {
-      // 符合以上条件则必须重换一个 map（配置更大的，拷贝原来的，释放原来的）
-      reallocate_map(n, true);
-    }
-  }
+  void reserve_map_at_front(size_type n = 1);
 
   /* 在后面预留 n 个缓冲区 */
-  void reserve_map_at_back(size_type n = 1) {
-    // 如果 map 后端的节点备用空间不足
-    if (n > mapSize_ - (finish_.node_ - map_ + 1)) {
-      // 符合以上条件则必须重换一个 map（配置更大的，拷贝原来的，释放原来的）
-      reallocate_map(n, false);
-    }
-  }
+  void reserve_map_at_back(size_type n = 1);
 
   /* 调整 map */
-  void reallocate_map(size_type nodesToAdd, bool addToFront) {
-    size_type oldNumNodes = finish_.node_ - start_.node_ + 1;  // 原缓冲区的个数
-    size_type newNumNodes = oldNumNodes + nodesToAdd;  // 新缓冲区的个数
-
-    T** newStart;
-    if (mapSize_ >
-        2 * newNumNodes) {  // 现在 map 有足够的位置，所以只需移动元素即可
-      // 将新的 [start_, finish_) 放在中间
-      // 如果是在前面增加元素，还要将 newStart 向后移动 nodesToAdd 个位置
-      newStart =
-          map_ + (mapSize_ - newNumNodes) / 2 + (addToFront ? nodesToAdd : 0);
-      if (newStart < start_.node_) {
-        toystl::copy(start_.node_, finish_.node_ + 1, newStart);
-      } else {
-        toystl::copy_backward(start_.node_, finish_.node_ + 1,
-                              newStart + oldNumNodes);
-      }
-    } else {  // 如果增加缓冲区后的个数的 2 倍大于等于
-              // mapSize_，则需要重新配置空间。此时，会导致所有迭代器失效。
-      size_type newMapSize_ = mapSize_ + toystl::max(mapSize_, nodesToAdd) + 2;
-      mapSize_ = newMapSize_;
-      auto newMap = allocate_map();
-      newStart =
-          newMap + (mapSize_ - newNumNodes) / 2 + (addToFront ? nodesToAdd : 0);
-      toystl::copy(start_.node_, finish_.node_ + 1, newStart);
-      deallocate_map();
-      map_ = newMap;
-    }
-
-    // 重新设置迭代器 start_ 和 finish_
-    start_.set_node(newStart);
-    finish_.set_node(newStart + oldNumNodes - 1);
-  }
+  void reallocate_map(size_type nodesToAdd, bool addToFront);
 
   /* 这个函数的功能：在 deque 的任意位置（非头非尾）插入一个元素 */
   // 参看 《STL 源码剖析》 P166。具体的过程看 画的图。
   template <class... Args>
-  iterator insert_aux(iterator position, Args&&... args) {
-    const size_type elems_before = position - start_;
-    value_type value_copy = value_type(toystl::forward<Args>(args)...);
-    if (elems_before < (size() / 2)) {
-      // 在前半段插入
-      emplace_front(front());
-      auto front1 = start_;
-      ++front1;
-      auto front2 = front1;
-      ++front2;
-      position = start_ + elems_before;
-      auto pos = position;
-      ++pos;
-      toystl::copy(front2, pos, front1);
-    } else {
-      // 在后半段插入
-      emplace_back(back());
-      auto back1 = finish_;
-      --back1;
-      auto back2 = back1;
-      --back2;
-      position = start_ + elems_before;
-      toystl::copy(position, back2, back1);
-    }
-    *position = toystl::move(value_copy);
-    return position;
-  }
+  iterator insert_aux(iterator position, Args&&... args);
 
   /* 在 position 位置之前插入 count 个 value  */
-  void insert_aux(iterator position, size_type count, const value_type& value) {
-    const difference_type elems_before = position - start_;
-    size_type len = size();
-    value_type value_copy = value;
-    if (elems_before < difference_type(len / 2)) {
-      iterator newstart = reserve_elements_at_front(count);
-      iterator oldstart = start_;
-      position = start_ + elems_before;
-
-      if (elems_before >= difference_type(count)) {
-        iterator start_n = start_ + difference_type(count);
-        uninitialized_copy(start_, start_n, newstart);
-        start_ = newstart;
-        toystl::copy(start_n, position, oldstart);
-        toystl::fill(position - difference_type(count), position, value_copy);
-      } else {
-        // __uninitialized_copy_fill(_M_start, __pos, __new_start,
-        //               _M_start, __x_copy);
-        iterator mid2 = uninitialized_copy(start_, position, newstart);
-        uninitialized_fill(mid2, start_, value_copy);
-        start_ = newstart;
-        toystl::fill(oldstart, position, value_copy);
-      }
-    } else {
-      iterator newfinish = reserve_elements_at_back(count);
-      iterator oldfinish = finish_;
-      const difference_type elems_after = difference_type(len) - elems_before;
-      position = finish_ - elems_after;
-
-      if (elems_after > difference_type(count)) {
-        iterator finish_n = finish_ - difference_type(count);
-        uninitialized_copy(finish_n, finish_, finish_);
-        finish_ = newfinish;
-        toystl::copy_backward(finish_n, finish_, oldfinish);
-        toystl::fill(position, position + difference_type(count), value_copy);
-      } else {
-        // __uninitialized_fill_copy
-        uninitialized_fill(finish_, position + difference_type(count),
-                           value_copy);
-        uninitialized_copy(position, finish_,
-                           position + difference_type(count));
-        finish_ = newfinish;
-        toystl::fill(position, oldfinish, value_copy);
-      }
-    }
-  }
+  void insert_aux(iterator position, size_type count, const value_type& value);
 
   void insert_aux(iterator position, iterator first, iterator last,
-                  size_type n) {
-    const difference_type elems_before = position - start_;
-    size_type len = size();
-    if (static_cast<size_type>(elems_before) < len / 2) {
-      iterator newstart = reserve_elements_at_front(n);
-      iterator oldstart = start_;
-      position = start_ + elems_before;
-      if (elems_before >= difference_type(n)) {
-        iterator start_n = start_ + difference_type(n);
-        uninitialized_copy(start_, start_n, newstart);
-        start_ = newstart;
-        toystl::copy(start_n, position, oldstart);
-        toystl::copy(first, last, position - difference_type(n));
-      } else {
-        iterator mid = first + (n - elems_before);
-        // __uninitialized_copy_copy(_M_start, __pos, __new_start,
-        //               _M_start, __x_copy);
-        iterator mid1 = uninitialized_copy(start_, position, newstart);
-        uninitialized_copy(first, mid, mid1);
-        start_ = newstart;
-        toystl::copy(mid, last, oldstart);
-      }
-    } else {
-      iterator newfinish = reserve_elements_at_back(n);
-      iterator oldfinish = finish_;
-      const difference_type elems_after = difference_type(len) - elems_before;
-      position = finish_ - elems_after;
-
-      if (elems_after > difference_type(n)) {
-        iterator finish_n = finish_ - difference_type(n);
-        uninitialized_copy(finish_n, finish_, finish_);
-        finish_ = newfinish;
-        toystl::copy_backward(position, finish_n, oldfinish);
-        toystl::copy(first, last, position);
-      } else {
-        iterator mid = first;
-        advance(mid, elems_after);
-        iterator mid1 = uninitialized_copy(mid, last, finish_);
-        uninitialized_copy(position, finish_, mid1);
-        finish_ = newfinish;
-        toystl::copy(first, mid, position);
-      }
-    }
-  }
+                  size_type n);
 
   template <class IIter>
   void insert_dispatch(iterator position, IIter first, IIter last,
@@ -1093,20 +611,7 @@ class deque {
 
   template <class FIter>
   void insert_dispatch(iterator position, FIter first, FIter last,
-                       forward_iterator_tag) {
-    size_type n = static_cast<size_type>(toystl::distance(first, last));
-    if (position.current_ == start_.current_) {
-      iterator newstart = reserve_elements_at_front(n);
-      uninitialized_copy(first, last, newstart);
-      start_ = newstart;
-    } else if (position.current_ == finish_.current_) {
-      iterator newfinish = reserve_elements_at_back(n);
-      uninitialized_copy(first, last, finish_);
-      finish_ = newfinish;
-    } else {
-      insert_aux(position, first, last, n);
-    }
-  }
+                       forward_iterator_tag);
 
   // template <class Integer>
   // void insert_dispatch(iterator position, Integer n, Integer x, true_type) {
@@ -1120,41 +625,661 @@ class deque {
   //     insert(position, first, last, iterator_category(first));
   // }
 
-  void new_elements_at_front(size_type new_elems) {
-    size_type new_nodes = (new_elems + deque_buf_size() - 1) / deque_buf_size();
-    reserve_map_at_front(new_nodes);
-    size_type i;
-    try {
-      for (i = 1; i <= new_nodes; ++i) {
-        *(start_.node_ - i) = allocate_node();
-      }
-    } catch (...) {
-      for (size_type j = 1; j < i; ++j) {
-        deallocate_node(*(start_.node_ - j));
-        throw;
-      }
-    }
-  }
+  void new_elements_at_front(size_type new_elems);
 
-  void new_elements_at_back(size_type new_elems) {
-    size_type new_nodes = (new_elems + deque_buf_size() - 1) / deque_buf_size();
-    reserve_map_at_back(new_nodes);
-    size_type i;
-    try {
-      for (i = 1; i <= new_nodes; ++i) {
-        *(finish_.node_ + i) = allocate_node();
-      }
-    } catch (...) {
-      for (size_type j = 1; j < i; ++j) {
-        deallocate_node(*(finish_.node_ + j));
-        throw;
-      }
-    }
-  }
+  void new_elements_at_back(size_type new_elems);
 
 };  // class deque
 
-/* 非成员函数 */
+template <class T, class Allocator>
+void deque<T, Allocator>::clear() {
+  // 以下针对头尾之外的每一个缓冲区（他们一定是饱满的）。析构中间缓冲区中的对象
+  for (map_pointer node = start_.node_ + 1; node < finish_.node_; ++node) {
+    node_allocator::destroy(*node, *node + deque_buf_size());
+    deallocate_node(*node);
+  }
+
+  if (start_.node_ != finish_.node_) {
+    // 至少有两个缓冲区
+    // 将头缓冲区的目前所有元素析构
+    toystl::destroy(start_.current_, start_.last_);
+    // 将尾缓冲区的目前所有元素析构
+    toystl::destroy(finish_.first_, finish_.current_);
+    deallocate_node(finish_.first_);
+  } else {
+    // 只有一个缓冲区
+    // 将此唯一缓冲区内的所有元素析构
+    toystl::destroy(start_.current_, finish_.current_);
+  }
+
+  // shrink_to_fit(); // 留下一个缓冲区，回收其他缓冲区的内存空间
+  finish_ = start_;
+}
+
+template <class T, class Allocator>
+typename deque<T, Allocator>::iterator deque<T, Allocator>::insert(
+    iterator position, const_reference value) {
+  if (position.current_ == begin().current_) {
+    push_front(value);  // TO DO
+    return begin();
+  } else if (position.current_ == end().current_) {
+    push_back(value);
+    return end() - 1;
+  } else {
+    return insert_aux(position, value);
+  }
+}
+
+template <class T, class Allocator>
+template <class... Args>
+typename deque<T, Allocator>::iterator deque<T, Allocator>::emplace(
+    iterator position, Args&&... args) {
+  if (position.current_ == start_.current_) {
+    emplace_front(toystl::forward<Args>(args)...);
+    return start_;
+  } else if (position.current_ = finish_.current_) {
+    emplace_back(toystl::forward<Args>(args)...);
+    return finish_ - 1;
+  }
+  return insert_aux(position, toystl::forward<Args>(args)...);
+}
+
+template <class T, class Allocator>
+typename deque<T, Allocator>::iterator deque<T, Allocator>::erase(
+    iterator position) {
+  iterator next = position;
+  ++next;
+  difference_type elems_before = position - start_;
+  if (elems_before < (size() / 2)) {  // position 靠近头部，则拷贝前面的元素
+    // copy_backward 函数：将 [first, last) 范围内的元素复制到 以 d_first
+    // 为终点（不包括 d_last）的范围内。
+    toystl::copy_backward(begin(), position, next);
+    pop_front();
+  } else {  // position 更靠近尾部，则拷贝后面的元素
+    toystl::copy(next, end(), position);
+    pop_back();
+  }
+
+  return start_ + elems_before;
+}
+
+template <class T, class Allocator>
+typename deque<T, Allocator>::iterator deque<T, Allocator>::erase(
+    iterator first, iterator last) {
+  if (first == begin() && last == end()) {  // 如果清除区间就是整个 deque
+    clear();                                // 直接调用 clear 就行
+    return finish_;
+  } else {
+    difference_type n = last - first;                 // 清除区间的长度
+    difference_type elementBefore = first - begin();  // 清除区间前方的元素
+    difference_type elementAfter = end() - last;  // 清除区间后方的元素
+
+    if (elementBefore < elementAfter) {
+      // 前面的元素少，拷贝前面的元素
+      toystl::copy_backward(begin(), first, last);
+      auto newStart = begin() + n;
+      destroy(begin(), newStart);
+      for (auto node = start_.node_; node < newStart.node_; ++node) {
+        deallocate_node(*node);
+      }
+      start_ = newStart;
+    } else {
+      // 后面的元素少，拷贝后面的元素
+      toystl::copy(last, end(), first);
+      auto newFinish = end() - n;
+      destroy(newFinish, end());
+      for (auto node = newFinish.node_ + 1; node <= finish_.node_; ++node) {
+        deallocate_node(*node);
+      }
+      finish_ = newFinish;
+    }
+
+    return begin() + elementBefore;
+  }
+}
+
+template <class T, class Allocator>
+void deque<T, Allocator>::push_back(const value_type& value) {
+  if (finish_.current_ != finish_.last_ - 1) {
+    // 最后缓冲区中尚有两个（含）以上的元素备用空间
+    // 如果最后就剩下一个一个元素备用空间，那么就会引发新缓冲区的配置
+    node_allocator::construct(finish_.current_, value);
+    ++finish_.current_;
+  } else {
+    // 最后一个缓冲区只剩下一个可用空间,则在尾部分配一个新的缓冲区
+    reserve_map_at_back();  // TO DO
+    *(finish_.node_ + 1) = allocate_node();
+    node_allocator::construct(finish_.current_, value);
+    finish_.set_node(finish_.node_ + 1);
+    finish_.current_ = finish_.first_;
+  }
+}
+
+template <class T, class Allocator>
+template <class... Args>
+void deque<T, Allocator>::emplace_back(Args&&... args) {
+  if (finish_.current_ != finish_.last_ - 1) {
+    node_allocator::construct(finish_.current_, toystl::forward<Args>(args)...);
+    ++finish_.current_;
+  } else {
+    // 最后一个缓冲区只剩下一个可用空间，则在尾部分配一个新的缓冲区。
+    reserve_map_at_back();
+    *(finish_.node_ + 1) = allocate_node();
+    node_allocator::construct(finish_.current_, toystl::forward<Args>(args)...);
+    finish_.set_node(finish_.node_ + 1);
+    finish_.current_ = finish_.first_;
+  }
+}
+
+template <class T, class Allocator>
+void deque<T, Allocator>::pop_back() {
+  if (finish_.current_ != finish_.first_) {
+    // 最后缓冲区有一个或更多元素
+    --finish_.current_;
+    node_allocator::destroy(finish_.current_);
+  } else {
+    // 最后缓冲区没有任何元素
+    deallocate_node(finish_.first_);      // 释放最后一个缓冲区
+    finish_.set_node(finish_.node_ - 1);  // 调整 finish 的状态，使指向
+    finish_.current_ = finish_.last_ - 1;  // 上一个缓冲区的最后一个元素
+    node_allocator::destroy(finish_.current_);  // 将该元素析构
+  }
+}
+
+template <class T, class Allocator>
+void deque<T, Allocator>::push_front(const_reference value) {
+  if (start_.current_ != start_.first_) {
+    // 第一缓冲区中尚有备用空间
+    node_allocator::construct(start_.current_ - 1, value);
+    --start_.current_;
+  } else {
+    // 第一个缓冲区中已经没有空间了，则在头部分配一个新的缓冲区
+    reserve_map_at_front();                 // TO DO
+    *(start_.node_ - 1) = allocate_node();  // 配置一个新的节点（缓冲区）
+    start_.set_node(start_.node_ - 1);
+    start_.current_ = start_.last_ - 1;
+    node_allocator::construct(start_.current_, value);
+  }
+}
+
+template <class T, class Allocator>
+template <class... Args>
+void deque<T, Allocator>::emplace_front(Args&&... args) {
+  if (start_.current_ != start_.first_) {
+    node_allocator::construct(start_.current_ - 1,
+                              toystl::forward<Args>(args)...);
+    --start_.current_;
+  } else {
+    reserve_map_at_front();
+    *(start_.node_ - 1) = allocate_node();
+    start_.set_node(start_.node_ - 1);
+    start_.current_ = start_.last_ - 1;
+    node_allocator::construct(start_.current_, toystl::forward<Args>(args)...);
+  }
+}
+
+template <class T, class Allocator>
+void deque<T, Allocator>::pop_front() {
+  if (start_.current_ != start_.last_ - 1) {
+    // 第一缓冲区有两个（或更多）元素
+    node_allocator::destroy(start_.current_);
+    ++start_.current_;
+  } else {
+    // 第一个缓冲区中只有一个元素
+    // 头元素在缓冲区尾部，需要更新 start_ 的信息
+    node_allocator::destroy(start_.current_);
+    deallocate_node(start_.first_);     // 释放第一缓冲区
+    start_.set_node(start_.node_ + 1);  // 调整 start_ 的状态
+    start_.current_ =
+        start_.first_;  // 使 current_ 指向下一个缓冲区的第一个元素
+  }
+}
+
+template <class T, class Allocator>
+void deque<T, Allocator>::resize(size_type count, const_reference value) {
+  const auto len = size();
+  if (count < len) {
+    erase(begin() + count, end());
+  } else {
+    insert(end(), count - len, value);
+  }
+}
+
+template <class T, class Allocator>
+void deque<T, Allocator>::fill_initialize(size_type count,
+                                          const_reference value) {
+  create_map_and_nodes(count);
+  // 为每个节点的缓冲区设定初值
+  for (auto it = start_.node_; it < finish_.node_; ++it) {
+    toystl::uninitialized_fill(*it, *it + deque_buf_size(), value);
+  }
+  // 最后一个节点的设定稍有不同（因为尾端可能有备用空间，不必设置初值）
+  toystl::uninitialized_fill(finish_.first_, finish_.current_, value);
+}
+
+template <class T, class Allocator>
+template <class InputIterator>
+void deque<T, Allocator>::copy_initialize(InputIterator first,
+                                          InputIterator last,
+                                          input_iterator_tag) {
+  const size_type n = toystl::distance(first, last);
+  create_map_and_nodes(n);
+  for (; first != last; ++first) {
+    emplace_back(*first);
+  }
+}
+
+template <class T, class Allocator>
+template <class ForwardIterator>
+void deque<T, Allocator>::copy_initialize(ForwardIterator first,
+                                          ForwardIterator last,
+                                          forward_iterator_tag) {
+  size_type n = distance(first, last);
+  create_map_and_nodes(n);
+  // 空间肯定是够的
+  for (auto it = start_.node_; it < finish_.node_; ++it) {
+    auto next = first;
+    toystl::advance(next, deque_buf_size());
+    toystl::uninitialized_copy(first, next, *it);
+    first = next;
+  }
+
+  toystl::uninitialized_copy(first, last, finish_.first_);
+}
+
+template <class T, class Allocator>
+void deque<T, Allocator>::fill_assign(size_type n, const value_type& value) {
+  if (n > size()) {
+    // 如果赋值的 deque 的大小大于原 deque 的大小
+    toystl::fill(begin(), end(), value);  // TO DO
+    insert(end(), n - size(), value);
+  } else {
+    erase(begin() + n, end());
+    toystl::fill(begin(), end(), value);
+  }
+}
+
+template <class T, class Allocator>
+template <class InputIterator>
+void deque<T, Allocator>::copy_assign(InputIterator first, InputIterator last,
+                                      input_iterator_tag) {
+  auto first1 = begin();
+  auto last1 = end();
+  for (; first != last && first1 != last1; ++first, ++first1) {
+    *first1 = *first;
+  }
+  if (first1 != last1) {
+    erase(first1, last1);
+  } else {
+    insert_dispatch(finish_, first, last, input_iterator_tag());
+  }
+}
+
+template <class T, class Allocator>
+template <class ForwardIterator>
+void deque<T, Allocator>::copy_assign(ForwardIterator first,
+                                      ForwardIterator last,
+                                      forward_iterator_tag) {
+  const size_type len1 = size();
+  const size_type len2 = toystl::distance(first, last);
+  if (len1 < len2) {
+    auto next = first;
+    toystl::advance(next, len1);
+    toystl::copy(first, next, start_);
+    insert_dispatch(finish_, next, last, forward_iterator_tag());
+  } else {
+    erase(toystl::copy(first, last, start_), finish_);
+  }
+}
+
+template <class T, class Allocator>
+void deque<T, Allocator>::fill_insert(iterator pos, size_type n,
+                                      const_reference value) {
+  if (pos.current_ == start_.current_) {
+    iterator new_start = reserve_elements_at_front(n);
+    toystl::uninitialized_fill(new_start, start_, value);
+    start_ = new_start;
+  } else if (pos.current_ == finish_.current_) {
+    iterator new_finish = reserve_elements_at_back(n);
+    toystl::uninitialized_fill(finish_, new_finish, value);
+    finish_ = new_finish;
+  } else {
+    insert_aux(pos, n, value);  // TO DO
+  }
+}
+
+template <class T, class Allocator>
+void deque<T, Allocator>::create_map_and_nodes(size_type numElements) {
+  // 缓冲区个数 = (元素个数 / 每个缓冲区的容量) + 1
+  size_type numNodes = numElements / deque_buf_size() + 1;
+  // 一个 map 最多要管理几个节点。最少是 8 个，最多是 会多配置两个缓冲区
+  mapSize_ = toystl::max(numNodes + 2, detail::min_map_size_);
+  try {
+    map_ = allocate_map();
+  } catch (...) {
+    map_ = nullptr;
+    mapSize_ = 0;
+    throw;
+  }
+
+  // 《STL 源码剖析》 P154
+  // 以下令 nstart 和 nfinish 指向 map 所拥有的全部节点的最中央区段
+  // 保持在最中央，可使头尾两端的扩充能量一样大。每个节点可对应一个缓冲区。
+  T** nStart = map_ + (mapSize_ - numNodes) / 2;
+  T** nFinish = nStart + numNodes - 1;
+
+  // TO DO : commit or rollback. Done
+  // for(auto it = nStart; it <= nFinish; ++it) {
+  //     *it = allocate_node();
+  // }
+
+  // commit or rollback
+  map_pointer cur;
+  try {
+    for (cur = nStart; cur <= nFinish; ++cur) {
+      *cur = node_allocator::allocate(deque_buf_size());
+    }
+  } catch (...) {
+    while (cur != nStart) {
+      --cur;
+      node_allocator::deallocate(*cur, deque_buf_size());
+      *cur = nullptr;
+    }
+    throw;
+  }
+
+  // 分配缓冲区，并设置迭代器
+  // 注意：只有 [nStart, nFinish) 范围分配了缓冲区
+  // 其他 map 位置还没有分配缓冲区。当需要的时候，动态扩展。
+  start_.set_node(nStart);
+  finish_.set_node(nFinish);
+  start_.current_ = start_.first_;
+  finish_.current_ = finish_.first_ + numElements % deque_buf_size();
+}
+
+template <class T, class Allocator>
+T** deque<T, Allocator>::allocate_map() {
+  // 在此基础上将各个指针置为 nullptr
+  // return map_allocator::allocate(mapSize_);
+
+  map_pointer mp = nullptr;
+  mp = map_allocator::allocate(mapSize_);
+  for (size_type i = 0; i < mapSize_; ++i) {
+    *(mp + i) = nullptr;
+  }
+
+  return mp;
+}
+
+template <class T, class Allocator>
+typename deque<T, Allocator>::iterator
+deque<T, Allocator>::reserve_elements_at_front(size_type n) {
+  // 当前缓冲区剩下的位置个数
+  size_type nBefore = start_.current_ - start_.first_;
+  if (n > nBefore) {
+    // 空间不够，需要分配新的缓冲区
+    new_elements_at_front(n - nBefore);  // TO DO
+  }
+
+  return start_ - difference_type(n);
+}
+
+template <class T, class Allocator>
+typename deque<T, Allocator>::iterator
+deque<T, Allocator>::reserve_elements_at_back(size_type n) {
+  size_type nAfter = finish_.last_ - finish_.current_ - 1;
+  if (n > nAfter) {
+    // 空间不够，需要分配新的缓冲区
+    new_elements_at_back(n - nAfter);  // TO DO
+  }
+
+  return finish_ + difference_type(n);
+}
+
+template <class T, class Allocator>
+void deque<T, Allocator>::reserve_map_at_front(size_type n) {
+  // 如果 map 前端的节点备用空间不足
+  if (n > static_cast<size_type>(start_.node_ - map_)) {
+    // 符合以上条件则必须重换一个 map（配置更大的，拷贝原来的，释放原来的）
+    reallocate_map(n, true);
+  }
+}
+
+template <class T, class Allocator>
+void deque<T, Allocator>::reserve_map_at_back(size_type n) {
+  // 如果 map 后端的节点备用空间不足
+  if (n > mapSize_ - (finish_.node_ - map_ + 1)) {
+    // 符合以上条件则必须重换一个 map（配置更大的，拷贝原来的，释放原来的）
+    reallocate_map(n, false);
+  }
+}
+
+template <class T, class Allocator>
+void deque<T, Allocator>::reallocate_map(size_type nodesToAdd,
+                                         bool addToFront) {
+  size_type oldNumNodes = finish_.node_ - start_.node_ + 1;  // 原缓冲区的个数
+  size_type newNumNodes = oldNumNodes + nodesToAdd;  // 新缓冲区的个数
+
+  T** newStart;
+  if (mapSize_ >
+      2 * newNumNodes) {  // 现在 map 有足够的位置，所以只需移动元素即可
+    // 将新的 [start_, finish_) 放在中间
+    // 如果是在前面增加元素，还要将 newStart 向后移动 nodesToAdd 个位置
+    newStart =
+        map_ + (mapSize_ - newNumNodes) / 2 + (addToFront ? nodesToAdd : 0);
+    if (newStart < start_.node_) {
+      toystl::copy(start_.node_, finish_.node_ + 1, newStart);
+    } else {
+      toystl::copy_backward(start_.node_, finish_.node_ + 1,
+                            newStart + oldNumNodes);
+    }
+  } else {  // 如果增加缓冲区后的个数的 2 倍大于等于
+            // mapSize_，则需要重新配置空间。此时，会导致所有迭代器失效。
+    size_type newMapSize_ = mapSize_ + toystl::max(mapSize_, nodesToAdd) + 2;
+    mapSize_ = newMapSize_;
+    auto newMap = allocate_map();
+    newStart =
+        newMap + (mapSize_ - newNumNodes) / 2 + (addToFront ? nodesToAdd : 0);
+    toystl::copy(start_.node_, finish_.node_ + 1, newStart);
+    deallocate_map();
+    map_ = newMap;
+  }
+
+  // 重新设置迭代器 start_ 和 finish_
+  start_.set_node(newStart);
+  finish_.set_node(newStart + oldNumNodes - 1);
+}
+
+template <class T, class Allocator>
+template <class... Args>
+typename deque<T, Allocator>::iterator deque<T, Allocator>::insert_aux(
+    iterator position, Args&&... args) {
+  const size_type elems_before = position - start_;
+  value_type value_copy = value_type(toystl::forward<Args>(args)...);
+  if (elems_before < (size() / 2)) {
+    // 在前半段插入
+    emplace_front(front());
+    auto front1 = start_;
+    ++front1;
+    auto front2 = front1;
+    ++front2;
+    position = start_ + elems_before;
+    auto pos = position;
+    ++pos;
+    toystl::copy(front2, pos, front1);
+  } else {
+    // 在后半段插入
+    emplace_back(back());
+    auto back1 = finish_;
+    --back1;
+    auto back2 = back1;
+    --back2;
+    position = start_ + elems_before;
+    toystl::copy(position, back2, back1);
+  }
+  *position = toystl::move(value_copy);
+  return position;
+}
+
+template <class T, class Allocator>
+void deque<T, Allocator>::insert_aux(iterator position, size_type count,
+                                     const value_type& value) {
+  const difference_type elems_before = position - start_;
+  size_type len = size();
+  value_type value_copy = value;
+  if (elems_before < difference_type(len / 2)) {
+    iterator newstart = reserve_elements_at_front(count);
+    iterator oldstart = start_;
+    position = start_ + elems_before;
+
+    if (elems_before >= difference_type(count)) {
+      iterator start_n = start_ + difference_type(count);
+      uninitialized_copy(start_, start_n, newstart);
+      start_ = newstart;
+      toystl::copy(start_n, position, oldstart);
+      toystl::fill(position - difference_type(count), position, value_copy);
+    } else {
+      // __uninitialized_copy_fill(_M_start, __pos, __new_start,
+      //               _M_start, __x_copy);
+      iterator mid2 = uninitialized_copy(start_, position, newstart);
+      uninitialized_fill(mid2, start_, value_copy);
+      start_ = newstart;
+      toystl::fill(oldstart, position, value_copy);
+    }
+  } else {
+    iterator newfinish = reserve_elements_at_back(count);
+    iterator oldfinish = finish_;
+    const difference_type elems_after = difference_type(len) - elems_before;
+    position = finish_ - elems_after;
+
+    if (elems_after > difference_type(count)) {
+      iterator finish_n = finish_ - difference_type(count);
+      uninitialized_copy(finish_n, finish_, finish_);
+      finish_ = newfinish;
+      toystl::copy_backward(finish_n, finish_, oldfinish);
+      toystl::fill(position, position + difference_type(count), value_copy);
+    } else {
+      // __uninitialized_fill_copy
+      uninitialized_fill(finish_, position + difference_type(count),
+                         value_copy);
+      uninitialized_copy(position, finish_, position + difference_type(count));
+      finish_ = newfinish;
+      toystl::fill(position, oldfinish, value_copy);
+    }
+  }
+}
+
+template <class T, class Allocator>
+void deque<T, Allocator>::insert_aux(iterator position, iterator first,
+                                     iterator last, size_type n) {
+  const difference_type elems_before = position - start_;
+  size_type len = size();
+  if (static_cast<size_type>(elems_before) < len / 2) {
+    iterator newstart = reserve_elements_at_front(n);
+    iterator oldstart = start_;
+    position = start_ + elems_before;
+    if (elems_before >= difference_type(n)) {
+      iterator start_n = start_ + difference_type(n);
+      uninitialized_copy(start_, start_n, newstart);
+      start_ = newstart;
+      toystl::copy(start_n, position, oldstart);
+      toystl::copy(first, last, position - difference_type(n));
+    } else {
+      iterator mid = first + (n - elems_before);
+      // __uninitialized_copy_copy(_M_start, __pos, __new_start,
+      //               _M_start, __x_copy);
+      iterator mid1 = uninitialized_copy(start_, position, newstart);
+      uninitialized_copy(first, mid, mid1);
+      start_ = newstart;
+      toystl::copy(mid, last, oldstart);
+    }
+  } else {
+    iterator newfinish = reserve_elements_at_back(n);
+    iterator oldfinish = finish_;
+    const difference_type elems_after = difference_type(len) - elems_before;
+    position = finish_ - elems_after;
+
+    if (elems_after > difference_type(n)) {
+      iterator finish_n = finish_ - difference_type(n);
+      uninitialized_copy(finish_n, finish_, finish_);
+      finish_ = newfinish;
+      toystl::copy_backward(position, finish_n, oldfinish);
+      toystl::copy(first, last, position);
+    } else {
+      iterator mid = first;
+      advance(mid, elems_after);
+      iterator mid1 = uninitialized_copy(mid, last, finish_);
+      uninitialized_copy(position, finish_, mid1);
+      finish_ = newfinish;
+      toystl::copy(first, mid, position);
+    }
+  }
+}
+
+template <class T, class Allocator>
+template <class FIter>
+void deque<T, Allocator>::insert_dispatch(iterator position, FIter first,
+                                          FIter last, forward_iterator_tag) {
+  size_type n = static_cast<size_type>(toystl::distance(first, last));
+  if (position.current_ == start_.current_) {
+    iterator newstart = reserve_elements_at_front(n);
+    uninitialized_copy(first, last, newstart);
+    start_ = newstart;
+  } else if (position.current_ == finish_.current_) {
+    iterator newfinish = reserve_elements_at_back(n);
+    uninitialized_copy(first, last, finish_);
+    finish_ = newfinish;
+  } else {
+    insert_aux(position, first, last, n);
+  }
+}
+
+// template <class Integer>
+// void insert_dispatch(iterator position, Integer n, Integer x, true_type) {
+//     fill_insert(position, static_cast<size_type>(n),
+//     static_cast<value_type>(x));
+// }
+
+// template <class InputIterator>
+// void insert_dispatch(iterator position, InputIterator first, InputIterator
+// lastm false_type) {
+//     insert(position, first, last, iterator_category(first));
+// }
+
+template <class T, class Allocator>
+void deque<T, Allocator>::new_elements_at_front(size_type new_elems) {
+  size_type new_nodes = (new_elems + deque_buf_size() - 1) / deque_buf_size();
+  reserve_map_at_front(new_nodes);
+  size_type i;
+  try {
+    for (i = 1; i <= new_nodes; ++i) {
+      *(start_.node_ - i) = allocate_node();
+    }
+  } catch (...) {
+    for (size_type j = 1; j < i; ++j) {
+      deallocate_node(*(start_.node_ - j));
+      throw;
+    }
+  }
+}
+
+template <class T, class Allocator>
+void deque<T, Allocator>::new_elements_at_back(size_type new_elems) {
+  size_type new_nodes = (new_elems + deque_buf_size() - 1) / deque_buf_size();
+  reserve_map_at_back(new_nodes);
+  size_type i;
+  try {
+    for (i = 1; i <= new_nodes; ++i) {
+      *(finish_.node_ + i) = allocate_node();
+    }
+  } catch (...) {
+    for (size_type j = 1; j < i; ++j) {
+      deallocate_node(*(finish_.node_ + j));
+      throw;
+    }
+  }
+}
+
 template <class T, class Allocator>
 bool operator==(const deque<T, Allocator>& left,
                 const deque<T, Allocator>& right) {

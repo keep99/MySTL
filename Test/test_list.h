@@ -13,7 +13,7 @@ namespace listtest {
 class Testlist : public ::testing::Test {
  protected:
   // using Kitten = typename toystl::TestHelper::nontrivial;
-  typedef typename toystl::TestHelper::nontrivial Kitten;
+  typedef typename toystl::testhelper::nontrivial Kitten;
   std::list<int> std_list_of_id{1, 2, 3, 4};
   std::list<Kitten> std_list_of_kitten;
   toystl::list<Kitten> abc_list_of_kitten;
@@ -184,22 +184,6 @@ TEST_F(Testlist, Reverse) {
   abc_list_of_kitten.reverse();
   ExpectEqual();
 }
-
-// TEST_F(Testlist, Performance) {
-// using clock = std::chrono::high_resolution_clock;
-// auto ticks = [](auto& list) {
-//     auto start = clock::now();
-//     for (int i = 0; i != 1000000; ++i) {
-//     list.emplace_back(i);
-//     }
-//     list.clear();
-//     std::chrono::duration<double> duration = clock::now() - start;
-//     return duration.count();
-// };
-// auto t_std = ticks(std_list_of_kitten);
-// auto t_abc = ticks(abc_list_of_kitten);
-// EXPECT_LT(t_abc, t_std);
-// }
 }  // namespace listtest
 }  // namespace toystl
 

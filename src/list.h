@@ -398,13 +398,6 @@ class list {
   //     merge(other, toystl::less<T>());
   // }
 
-  /**
-   * @description: 将链表 other 接合到 position 所指的位置之前， other
-   * 必须不同于 *this
-   * @param  {*}
-   * @return {*}
-   * @param {const_iterator} position
-   */
   void splice(iterator position, list& other) {
     if (!other.empty()) {
       transfer(position, other.begin(), other.end());
@@ -430,11 +423,6 @@ class list {
     }
   }
 
-  /**
-   * @description: 如果链表中有元素符合一元判断式，那么就把这个元素给删除
-   * @param  {*}
-   * @return {*}
-   */
   template <class UnaryPredicate>
   void remove_if(UnaryPredicate p);
 
@@ -462,11 +450,6 @@ class list {
   // 由于 STL 本身的排序算法 sort 接受的是随机访问迭代器，但是双向链表 list
   // 的迭代器是双向迭代器，因此，不能使用 STL 本身的排序算法 sort
   // ，必须得自己定义
-  /**
-   * @description: 对链表进行归并排序
-   * @param  {*}
-   * @return {*}
-   */
   template <class Compare>
   void sort(iterator f1, iterator f2, Compare compare);
 
@@ -523,20 +506,11 @@ class list {
   iterator insert_range_aux(const_iterator position, InputIterator first,
                             InputIterator last, false_type);
 
-  /**
-   * @description: 将 [first, last) 范围的节点移动到 position
-   * 之前。《STL源码剖析》 P139
-   * @param  {*}
-   * @return {*}
-   * @param {iterator} position
-   * @param {iterator} first
-   * @param {iterator} last
-   */
   void transfer(iterator position, iterator first, iterator last);
 
   // 清空链表
   void delete_list();
-};  // class list
+};
 
 template <class T, class Allocator>
 typename list<T, Allocator>::iterator list<T, Allocator>::erase(
@@ -816,15 +790,6 @@ typename list<T, Allocator>::iterator list<T, Allocator>::insert_range_aux(
   return result;
 }
 
-/**
- * @description: 将 [first, last) 范围的节点移动到 position
- * 之前。《STL源码剖析》 P139
- * @param  {*}
- * @return {*}
- * @param {iterator} position
- * @param {iterator} first
- * @param {iterator} last
- */
 template <class T, class Allocator>
 void list<T, Allocator>::transfer(iterator position, iterator first,
                                   iterator last) {

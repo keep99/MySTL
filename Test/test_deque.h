@@ -13,7 +13,7 @@ namespace dequetest {
 class TestDeque : public ::testing::Test {
  protected:
   // using Kitten = typename toystl::TestHelper::nontrivial;
-  typedef typename toystl::TestHelper::nontrivial Kitten;
+  typedef typename toystl::testhelper::nontrivial Kitten;
   std::deque<int> std_deque_of_id{1, 2, 3, 4};
   std::deque<Kitten> std_deque_of_kitten;
   toystl::deque<Kitten> abc_deque_of_kitten;

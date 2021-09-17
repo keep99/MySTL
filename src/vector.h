@@ -270,103 +270,34 @@ class vector {
   // 如果 newCapacity 大于当前的 capacity_，则分配新存储；否则，不做任何事情。
   // 如果 vector 不断地 push_back
   // 元素，会进行内存的重新分配问题，涉及到分配内存空间，拷贝元素，开销大
-  void reserve(size_type newCapacity) {
-    if (newCapacity > capacity()) {
-      const size_type old_size = size();
-      iterator tmp = data_allocator::allocate(newCapacity);
-      toystl::uninitialized_copy(start_, finish_, tmp);
-      data_allocator::destroy(start_, finish_);
-      data_allocator::deallocate(
-          start_, static_cast<std::size_t>(end_of_storage_ - start_));
-      start_ = tmp;
-      finish_ = tmp + old_size;
-      end_of_storage_ = tmp + newCapacity;
-    }
-  }
+  void reserve(size_type newCapacity);
 
   // resize():重新申请并改变当前vector对象的有效空间大小
   // reserve():重新申请并改变当前vector对象的总空间（_capacity）大小
-  void resize(size_type newSize, const_reference x) {
-    if (newSize < size()) {
-      erase(begin() + newSize, end());
-    } else {
-      insert(end(), newSize - size(), x);
-    }
-  }
+  void resize(size_type newSize, const_reference x);
 
   void resize(size_type newSize) { resize(newSize, T()); }
 
   // Requests the container to reduce its capacity to fit its size.
   // 请求容器降低其容量和 size 匹配。
-  void shrink_to_fit() {
-    if (finish_ < end_of_storage_) {
-      auto shrink_to_size = size();
-      iterator tmp = data_allocator::allocate(shrink_to_size);
-      toystl::uninitialized_copy(start_, finish_, tmp);
-      data_allocator::destroy(start_, finish_);
-      data_allocator::deallocate(
-          start_, static_cast<std::size_t>(end_of_storage_ - start_));
-      start_ = tmp;
-      finish_ = tmp + shrink_to_size;
-      end_of_storage_ = tmp + shrink_to_size;
-    }
-  }
+  void shrink_to_fit();
 
   /* 修改容器相关操作 */
 
   // erase 指定位置的元素
-  iterator erase(iterator position) {
-    // 如果清除的元素不是最后一个元素，那么需要把清除位置的后面元素往前面挪
-    if (position + 1 != end()) {
-      // copy 函数，输出区间的起点与输入区间不重叠，没有问题。
-      toystl::copy(position + 1, finish_, position);
-    }
-    --finish_;
-    data_allocator::destroy(finish_);
-
-    return position;
-  }
+  iterator erase(iterator position);
 
   // erase [first, end) 中的所有元素
-  iterator erase(iterator first, iterator last) {
-    iterator newEnd = toystl::copy(last, finish_, first);
-    data_allocator::destroy(newEnd, end());  // 销毁元素
-    finish_ = finish_ - (last - first);
-    return first;
-  }
+  iterator erase(iterator first, iterator last);
 
   // clear vector 中的所有元素，直接调用的 erase
   void clear() { erase(begin(), end()); }
 
   /* insert */
   // 在指定的位置插入一个元素
-  iterator insert(const_iterator position, const_reference value) {
-    iterator xposition = const_cast<iterator>(position);
-    const size_type n = xposition - begin();
-    if (finish_ != end_of_storage_ && xposition == finish_) {
-      // 有空间并且是插入点是最后一个位置
-      data_allocator::construct(&*finish_, value);
-      ++finish_;
-    } else {
-      insert_aux(xposition, value);
-    }
+  iterator insert(const_iterator position, const_reference value);
 
-    return begin() + n;
-  }
-
-  iterator insert(const_iterator position, const T&& value) {
-    iterator xposition = const_cast<iterator>(position);
-    const size_type n = xposition - begin();
-    if (finish_ != end_of_storage_ && xposition == finish_) {
-      // 有空间并且是插入点是最后一个位置
-      data_allocator::construct(&*finish_, toystl::move(value));
-      ++finish_;
-    } else {
-      insert_aux(xposition, std::move(value));
-    }
-
-    return begin() + n;
-  }
+  iterator insert(const_iterator position, const T&& value);
 
   iterator insert(const_iterator position, size_type count,
                   const_reference value) {
@@ -408,46 +339,15 @@ class vector {
   // 2、其次，当 empalce 将这些参数传递给 construct 时，我们必须使用 forward
   // 来保持实参的原始类型
   template <class... Args>
-  iterator emplace(const_iterator position, Args&&... args) {
-    iterator xpos = const_cast<iterator>(position);
-    const size_type n = xpos - start_;
-    if (finish_ != end_of_storage_ && xpos == finish_) {
-      data_allocator::construct(&*finish_, toystl::forward<Args>(args)...);
-      ++finish_;
-    } else if (finish_ != end_of_storage_) {
-      auto newfinish = finish_;
-      data_allocator::construct(&*finish_, *(finish_ - 1));
-      ++newfinish;
-      toystl::copy_backward(xpos, finish_ - 1, finish_);
-      *xpos = value_type(toystl::forward<Args>(args)...);
-    } else {
-      reallocate_emplace(xpos, toystl::forward<Args>(args)...);
-    }
-
-    return begin() + n;
-  }
+  iterator emplace(const_iterator position, Args&&... args);
 
   // 在容器末尾就地构造元素
   template <class... Args>
-  void emplace_back(Args&&... args) {
-    if (finish_ < end_of_storage_) {
-      data_allocator::construct(&*finish_, toystl::forward<Args>(args)...);
-      ++finish_;
-    } else {
-      reallocate_emplace(finish_, toystl::forward<Args>(args)...);
-    }
-  }
+  void emplace_back(Args&&... args);
 
   // TO DO : added
   // push_back
-  void push_back(const value_type& value) {
-    if (finish_ != end_of_storage_) {
-      data_allocator::construct(finish_, value);
-      ++finish_;
-    } else {
-      insert_aux(end(), value);
-    }
-  }
+  void push_back(const value_type& value);
 
   // 这里直接代码重用
   void push_back() { push_back(T()); }
@@ -468,36 +368,15 @@ class vector {
   }
 
  private:
-  void fill_initialize(size_type n, const_reference x) {
-    iterator result =
-        data_allocator::allocate(n);  // 分配可以容纳 n 个 T 类型大小的内存空间
-    toystl::uninitialized_fill_n(result, n,
-                                 x);  // 在内存空间上构造 n 个 T 类型的元素
-
-    start_ = result;
-    finish_ = start_ + n;
-    end_of_storage_ = finish_;
-  }
+  void fill_initialize(size_type n, const_reference x);
 
   template <class ForwardIterator>
   void copy_initialize(ForwardIterator first, ForwardIterator last,
-                       forward_iterator_tag) {
-    auto copySize = static_cast<size_type>(distance(first, last));
-    start_ = data_allocator::allocate(copySize);
-    finish_ = toystl::uninitialized_copy(first, last, start_);
-    end_of_storage_ = finish_;
-  }
+                       forward_iterator_tag);
 
   template <class InputIterator>
   void copy_initialize(InputIterator first, InputIterator last,
-                       input_iterator_tag) {
-    while (first != last) {
-      if (capacity() == size()) {
-        reallocate(empty() ? 1 : 2 * size());
-      }
-      push_back(*first);
-    }
-  }
+                       input_iterator_tag);
 
   // template <class InputIterator>
   // void initialize_aux(InputIterator first, InputIterator last, true_type) {
@@ -536,104 +415,9 @@ class vector {
     }
   }
 
-  void insert_aux(iterator position, const value_type& value) {
-    if (finish_ != end_of_storage_) {  // 如果还有备用空间
-      // 在备用空间起始处构造一个元素，并以 vector 的最后一个元素值为其初值
-      data_allocator::construct(finish_, *(finish_ - 1));
-      ++finish_;
-      T value_copy = value;
-      toystl::copy_backward(position, finish_ - 2, finish_ - 1);
-      *position = value_copy;
-    } else {  // 已无备用空间
-      const size_type old_size = size();
-      const size_type len = (old_size != 0) ? (old_size * 2) : 1;
-      iterator newstart = data_allocator::allocate(len);
-      iterator newfinish = newstart;
-      T value_copy = value;
-      try {
-        newfinish = toystl::uninitialized_move(start_, position, newstart);
-        data_allocator::construct(&(*newfinish), value_copy);
-        ++newfinish;
-        newfinish = toystl::uninitialized_move(position, finish_, newfinish);
-      } catch (...) {
-        data_allocator::destroy(newstart, newfinish);
-        data_allocator::deallocate(newstart, static_cast<std::size_t>(len));
-        throw;
-      }
+  void insert_aux(iterator position, const value_type& value);
 
-      // 以下清除并释放旧的 vector
-      data_allocator::destroy(start_, finish_);
-      data_allocator::deallocate(
-          start_, static_cast<std::size_t>(end_of_storage_ - start_));
-      start_ = newstart;
-      finish_ = newfinish;
-      end_of_storage_ = newstart + len;
-    }
-  }
-
-  iterator fill_insert(iterator pos, size_type n, const value_type& value) {
-    if (n == 0) {
-      return pos;
-    }
-
-    const size_type before_pos = pos - start_;
-    const value_type value_copy = value;
-    if (static_cast<size_type>(end_of_storage_ - finish_) >= n) {
-      // 如果备用空间大于等于增加的空间
-      const size_type elems_after = finish_ - pos;
-      auto old_finish = finish_;
-      if (elems_after > n) {
-        // 如果插入点后的现有元素个数 大于 新增元素个数
-        // 1、将源区间[finish-n, finish)填充到目标区间[finish, finish+n)
-        // 把插入点后的元素往后面搬，搬到 从 finish_ 开始，给新增元素腾地方
-        // 注意，和下面的 copy
-        // 不同，这里不仅仅需要拷贝，还需要在相应的位置构造元素
-        toystl::uninitialized_copy(finish_ - n, finish_, finish_);
-        finish_ = finish_ + n;
-        // 2、将源区间[position,old_finish-n)从逆向cpoy到目标区间[old_finish-n,
-        // old_finish)
-        // 这里的话，直接拷贝就好了
-        // 注意，这里是 copy_backward ，将 [first, last)
-        // 区间内的每一个元素，以逆行的方向复制到 以 result - 1
-        // 为起点，方向也为逆行的区间上。
-        toystl::copy_backward(pos, old_finish - n, old_finish);
-        // 3、将目标区间[position, position+n) 填充成 x_copy
-        toystl::fill(pos, pos + n, value_copy);
-      } else {
-        // 如果插入点之后的现有元素个数 小于等于 新增元素个数
-        toystl::uninitialized_fill_n(finish_, n - elems_after, value_copy);
-        finish_ += n - elems_after;
-        toystl::uninitialized_copy(pos, old_finish, finish_);
-        fill(pos, old_finish, value_copy);
-      }
-    } else {
-      // 如果备用空间不足，配置额外的内存
-      const size_type old_size = size();
-      const size_type len = old_size + toystl::max(old_size, n);
-      iterator new_start = data_allocator::allocate(len);
-      iterator new_finish = new_start;
-      try {
-        new_finish = toystl::uninitialized_copy(start_, pos, new_start);
-        new_finish = toystl::uninitialized_fill_n(new_finish, n, value_copy);
-        new_finish = toystl::uninitialized_copy(pos, finish_, new_finish);
-      } catch (...) {
-        data_allocator::destroy(new_start, new_finish);
-        data_allocator::deallocate(new_start, static_cast<std::size_t>(len));
-        throw;
-      }
-
-      // 以下清除并释放旧的 vector
-      data_allocator::destroy(start_, finish_);
-      data_allocator::deallocate(
-          start_, static_cast<std::size_t>(end_of_storage_ - start_));
-      // 以下调整 start finish end_of_storage 到新的 vector
-      start_ = new_start;
-      finish_ = new_finish;
-      end_of_storage_ = new_start + len;
-    }
-
-    return start_ + before_pos;
-  }
+  iterator fill_insert(iterator pos, size_type n, const value_type& value);
 
   template <class InputIterator>
   void range_insert(iterator pos, InputIterator first, InputIterator last,
@@ -644,16 +428,202 @@ class vector {
                     forward_iterator_tag);
 
   template <class... Args>
-  void reallocate_emplace(iterator pos, Args&&... args) {
-    const size_type oldsize = size();
-    const size_type len = (oldsize != 0) ? (2 * oldsize) : 1;
-    auto newstart = data_allocator::allocate(len);
+  void reallocate_emplace(iterator pos, Args&&... args);
+
+  template <class Iter>
+  void range_initialize(Iter first, Iter last);
+};
+
+template <class T, class Alloc>
+void vector<T, Alloc>::reserve(size_type newCapacity) {
+  if (newCapacity > capacity()) {
+    const size_type old_size = size();
+    iterator tmp = data_allocator::allocate(newCapacity);
+    toystl::uninitialized_copy(start_, finish_, tmp);
+    data_allocator::destroy(start_, finish_);
+    data_allocator::deallocate(
+        start_, static_cast<std::size_t>(end_of_storage_ - start_));
+    start_ = tmp;
+    finish_ = tmp + old_size;
+    end_of_storage_ = tmp + newCapacity;
+  }
+}
+template <class T, class Alloc>
+void vector<T, Alloc>::resize(size_type newSize, const_reference x) {
+  if (newSize < size()) {
+    erase(begin() + newSize, end());
+  } else {
+    insert(end(), newSize - size(), x);
+  }
+}
+
+template <class T, class Alloc>
+void vector<T, Alloc>::shrink_to_fit() {
+  if (finish_ < end_of_storage_) {
+    auto shrink_to_size = size();
+    iterator tmp = data_allocator::allocate(shrink_to_size);
+    toystl::uninitialized_copy(start_, finish_, tmp);
+    data_allocator::destroy(start_, finish_);
+    data_allocator::deallocate(
+        start_, static_cast<std::size_t>(end_of_storage_ - start_));
+    start_ = tmp;
+    finish_ = tmp + shrink_to_size;
+    end_of_storage_ = tmp + shrink_to_size;
+  }
+}
+
+template <class T, class Alloc>
+typename vector<T, Alloc>::iterator vector<T, Alloc>::erase(iterator position) {
+  // 如果清除的元素不是最后一个元素，那么需要把清除位置的后面元素往前面挪
+  if (position + 1 != end()) {
+    // copy 函数，输出区间的起点与输入区间不重叠，没有问题。
+    toystl::copy(position + 1, finish_, position);
+  }
+  --finish_;
+  data_allocator::destroy(finish_);
+
+  return position;
+}
+
+template <class T, class Alloc>
+typename vector<T, Alloc>::iterator vector<T, Alloc>::erase(iterator first,
+                                                            iterator last) {
+  iterator newEnd = toystl::copy(last, finish_, first);
+  data_allocator::destroy(newEnd, end());  // 销毁元素
+  finish_ = finish_ - (last - first);
+  return first;
+}
+
+template <class T, class Alloc>
+typename vector<T, Alloc>::iterator vector<T, Alloc>::insert(
+    const_iterator position, const_reference value) {
+  iterator xposition = const_cast<iterator>(position);
+  const size_type n = xposition - begin();
+  if (finish_ != end_of_storage_ && xposition == finish_) {
+    // 有空间并且是插入点是最后一个位置
+    data_allocator::construct(&*finish_, value);
+    ++finish_;
+  } else {
+    insert_aux(xposition, value);
+  }
+
+  return begin() + n;
+}
+
+template <class T, class Alloc>
+typename vector<T, Alloc>::iterator vector<T, Alloc>::insert(
+    const_iterator position, const T&& value) {
+  iterator xposition = const_cast<iterator>(position);
+  const size_type n = xposition - begin();
+  if (finish_ != end_of_storage_ && xposition == finish_) {
+    // 有空间并且是插入点是最后一个位置
+    data_allocator::construct(&*finish_, toystl::move(value));
+    ++finish_;
+  } else {
+    insert_aux(xposition, std::move(value));
+  }
+
+  return begin() + n;
+}
+
+template <class T, class Alloc>
+template <class... Args>
+typename vector<T, Alloc>::iterator vector<T, Alloc>::emplace(
+    const_iterator position, Args&&... args) {
+  iterator xpos = const_cast<iterator>(position);
+  const size_type n = xpos - start_;
+  if (finish_ != end_of_storage_ && xpos == finish_) {
+    data_allocator::construct(&*finish_, toystl::forward<Args>(args)...);
+    ++finish_;
+  } else if (finish_ != end_of_storage_) {
+    auto newfinish = finish_;
+    data_allocator::construct(&*finish_, *(finish_ - 1));
+    ++newfinish;
+    toystl::copy_backward(xpos, finish_ - 1, finish_);
+    *xpos = value_type(toystl::forward<Args>(args)...);
+  } else {
+    reallocate_emplace(xpos, toystl::forward<Args>(args)...);
+  }
+
+  return begin() + n;
+}
+
+template <class T, class Alloc>
+template <class... Args>
+void vector<T, Alloc>::emplace_back(Args&&... args) {
+  if (finish_ < end_of_storage_) {
+    data_allocator::construct(&*finish_, toystl::forward<Args>(args)...);
+    ++finish_;
+  } else {
+    reallocate_emplace(finish_, toystl::forward<Args>(args)...);
+  }
+}
+
+template <class T, class Alloc>
+void vector<T, Alloc>::push_back(const value_type& value) {
+  if (finish_ != end_of_storage_) {
+    data_allocator::construct(finish_, value);
+    ++finish_;
+  } else {
+    insert_aux(end(), value);
+  }
+}
+
+template <class T, class Alloc>
+void vector<T, Alloc>::fill_initialize(size_type n, const_reference x) {
+  iterator result =
+      data_allocator::allocate(n);  // 分配可以容纳 n 个 T 类型大小的内存空间
+  toystl::uninitialized_fill_n(result, n,
+                               x);  // 在内存空间上构造 n 个 T 类型的元素
+
+  start_ = result;
+  finish_ = start_ + n;
+  end_of_storage_ = finish_;
+}
+
+template <class T, class Alloc>
+template <class ForwardIterator>
+void vector<T, Alloc>::copy_initialize(ForwardIterator first,
+                                       ForwardIterator last,
+                                       forward_iterator_tag) {
+  auto copySize = static_cast<size_type>(distance(first, last));
+  start_ = data_allocator::allocate(copySize);
+  finish_ = toystl::uninitialized_copy(first, last, start_);
+  end_of_storage_ = finish_;
+}
+
+template <class T, class Alloc>
+template <class InputIterator>
+void vector<T, Alloc>::copy_initialize(InputIterator first, InputIterator last,
+                                       input_iterator_tag) {
+  while (first != last) {
+    if (capacity() == size()) {
+      reallocate(empty() ? 1 : 2 * size());
+    }
+    push_back(*first);
+  }
+}
+
+template <class T, class Alloc>
+void vector<T, Alloc>::insert_aux(iterator position, const value_type& value) {
+  if (finish_ != end_of_storage_) {  // 如果还有备用空间
+    // 在备用空间起始处构造一个元素，并以 vector 的最后一个元素值为其初值
+    data_allocator::construct(finish_, *(finish_ - 1));
+    ++finish_;
+    T value_copy = value;
+    toystl::copy_backward(position, finish_ - 2, finish_ - 1);
+    *position = value_copy;
+  } else {  // 已无备用空间
+    const size_type old_size = size();
+    const size_type len = (old_size != 0) ? (old_size * 2) : 1;
+    iterator newstart = data_allocator::allocate(len);
     iterator newfinish = newstart;
+    T value_copy = value;
     try {
-      newfinish = uninitialized_move(start_, pos, newstart);
-      data_allocator::construct(&(*newfinish), toystl::forward<Args>(args)...);
+      newfinish = toystl::uninitialized_move(start_, position, newstart);
+      data_allocator::construct(&(*newfinish), value_copy);
       ++newfinish;
-      newfinish = uninitialized_move(pos, finish_, newfinish);
+      newfinish = toystl::uninitialized_move(position, finish_, newfinish);
     } catch (...) {
       data_allocator::destroy(newstart, newfinish);
       data_allocator::deallocate(newstart, static_cast<std::size_t>(len));
@@ -668,31 +638,73 @@ class vector {
     finish_ = newfinish;
     end_of_storage_ = newstart + len;
   }
+}
 
-  template <class Iter>
-  void range_initialize(Iter first, Iter last) {
-    size_type len = distance(first, last);
-    const size_type initsize = toystl::max(static_cast<size_type>(last - first),
-                                           static_cast<size_type>(16));
+template <class T, class Alloc>
+typename vector<T, Alloc>::iterator vector<T, Alloc>::fill_insert(
+    iterator pos, size_type n, const value_type& value) {
+  if (n == 0) {
+    return pos;
+  }
+
+  const size_type before_pos = pos - start_;
+  const value_type value_copy = value;
+  if (static_cast<size_type>(end_of_storage_ - finish_) >= n) {
+    // 如果备用空间大于等于增加的空间
+    const size_type elems_after = finish_ - pos;
+    auto old_finish = finish_;
+    if (elems_after > n) {
+      // 如果插入点后的现有元素个数 大于 新增元素个数
+      // 1、将源区间[finish-n, finish)填充到目标区间[finish, finish+n)
+      // 把插入点后的元素往后面搬，搬到 从 finish_ 开始，给新增元素腾地方
+      // 注意，和下面的 copy
+      // 不同，这里不仅仅需要拷贝，还需要在相应的位置构造元素
+      toystl::uninitialized_copy(finish_ - n, finish_, finish_);
+      finish_ = finish_ + n;
+      // 2、将源区间[position,old_finish-n)从逆向cpoy到目标区间[old_finish-n,
+      // old_finish)
+      // 这里的话，直接拷贝就好了
+      // 注意，这里是 copy_backward ，将 [first, last)
+      // 区间内的每一个元素，以逆行的方向复制到 以 result - 1
+      // 为起点，方向也为逆行的区间上。
+      toystl::copy_backward(pos, old_finish - n, old_finish);
+      // 3、将目标区间[position, position+n) 填充成 x_copy
+      toystl::fill(pos, pos + n, value_copy);
+    } else {
+      // 如果插入点之后的现有元素个数 小于等于 新增元素个数
+      toystl::uninitialized_fill_n(finish_, n - elems_after, value_copy);
+      finish_ += n - elems_after;
+      toystl::uninitialized_copy(pos, old_finish, finish_);
+      fill(pos, old_finish, value_copy);
+    }
+  } else {
+    // 如果备用空间不足，配置额外的内存
+    const size_type old_size = size();
+    const size_type len = old_size + toystl::max(old_size, n);
+    iterator new_start = data_allocator::allocate(len);
+    iterator new_finish = new_start;
     try {
-      start_ = data_allocator::allocate(initsize);
-      finish_ = start_ + len;
-      end_of_storage_ = start_ + initsize;
+      new_finish = toystl::uninitialized_copy(start_, pos, new_start);
+      new_finish = toystl::uninitialized_fill_n(new_finish, n, value_copy);
+      new_finish = toystl::uninitialized_copy(pos, finish_, new_finish);
     } catch (...) {
-      data_allocator::deallocate(start_, static_cast<std::size_t>(len));
-      start_ = nullptr;
-      finish_ = nullptr;
-      end_of_storage_ = nullptr;
+      data_allocator::destroy(new_start, new_finish);
+      data_allocator::deallocate(new_start, static_cast<std::size_t>(len));
       throw;
     }
 
-    toystl::uninitialized_copy(first, last, start_);
-
-    // for(; first != last; ++first) {
-    //     emplace_back(*first);
-    // }
+    // 以下清除并释放旧的 vector
+    data_allocator::destroy(start_, finish_);
+    data_allocator::deallocate(
+        start_, static_cast<std::size_t>(end_of_storage_ - start_));
+    // 以下调整 start finish end_of_storage 到新的 vector
+    start_ = new_start;
+    finish_ = new_finish;
+    end_of_storage_ = new_start + len;
   }
-};
+
+  return start_ + before_pos;
+}
 
 template <class T, class Alloc>
 template <class InputIterator>
@@ -772,6 +784,58 @@ void vector<T, Alloc>::range_insert(iterator pos, ForwardIterator first,
       end_of_storage_ = new_start + len;
     }
   }
+}
+
+template <class T, class Alloc>
+template <class... Args>
+void vector<T, Alloc>::reallocate_emplace(iterator pos, Args&&... args) {
+  const size_type oldsize = size();
+  const size_type len = (oldsize != 0) ? (2 * oldsize) : 1;
+  auto newstart = data_allocator::allocate(len);
+  iterator newfinish = newstart;
+  try {
+    newfinish = uninitialized_move(start_, pos, newstart);
+    data_allocator::construct(&(*newfinish), toystl::forward<Args>(args)...);
+    ++newfinish;
+    newfinish = uninitialized_move(pos, finish_, newfinish);
+  } catch (...) {
+    data_allocator::destroy(newstart, newfinish);
+    data_allocator::deallocate(newstart, static_cast<std::size_t>(len));
+    throw;
+  }
+
+  // 以下清除并释放旧的 vector
+  data_allocator::destroy(start_, finish_);
+  data_allocator::deallocate(
+      start_, static_cast<std::size_t>(end_of_storage_ - start_));
+  start_ = newstart;
+  finish_ = newfinish;
+  end_of_storage_ = newstart + len;
+}
+
+template <class T, class Alloc>
+template <class Iter>
+void vector<T, Alloc>::range_initialize(Iter first, Iter last) {
+  size_type len = distance(first, last);
+  const size_type initsize = toystl::max(static_cast<size_type>(last - first),
+                                         static_cast<size_type>(16));
+  try {
+    start_ = data_allocator::allocate(initsize);
+    finish_ = start_ + len;
+    end_of_storage_ = start_ + initsize;
+  } catch (...) {
+    data_allocator::deallocate(start_, static_cast<std::size_t>(len));
+    start_ = nullptr;
+    finish_ = nullptr;
+    end_of_storage_ = nullptr;
+    throw;
+  }
+
+  toystl::uninitialized_copy(first, last, start_);
+
+  // for(; first != last; ++first) {
+  //     emplace_back(*first);
+  // }
 }
 
 // 下面是一些全局函数
